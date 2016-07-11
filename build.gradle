@@ -1,0 +1,74 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:1.3.5.RELEASE")
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'maven'
+apply plugin: 'spring-boot'
+
+repositories {
+
+    jcenter()
+
+    mavenLocal()
+    mavenCentral()
+
+    maven { url "https://oss.jfrog.org/libs-snapshot/" }
+    maven { url "https://dl.bintray.com/ethereum/maven/" }
+    maven { url "https://repo.spring.io/libs-snapshot" }
+}
+
+dependencies {
+    compile "org.springframework.boot:spring-boot-starter-web"
+    compile "org.springframework.boot:spring-boot-starter-actuator"
+    compile "org.springframework.boot:spring-boot-starter-websocket"
+    compile "org.springframework.boot:spring-boot-devtools"
+
+    compile "com.google.guava:guava:19.0"
+
+    compile "org.springframework:spring-context:4.2.0.BUILD-SNAPSHOT"
+
+
+//    compile ("org.ethereum:ethereumj-core:1.3.0-RC2-RELEASE"){
+//        exclude group: "log4j"
+//        exclude group: "org.slf4j", module: "log4j-over-slf4j"
+//        exclude group: "org.slf4j", module: "slf4j-log4j12"
+//    }
+
+    compile "org.projectlombok:lombok:1.16.4"
+
+    testCompile "junit:junit"
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.2.1'
+}
+
+task stage {
+    dependsOn bootRepackage
+}
+
+bootRun {
+    systemProperties = System.properties
+
+    def args = ["-server", "-Xss32m", "-XX:+UseCompressedOops", "-XX:+HeapDumpOnOutOfMemoryError", "-XX:-OmitStackTraceInFastThrow"]
+    if ( project.hasProperty('jvmArgs') ) {
+        args.addAll(project.jvmArgs.split('\\s+'))
+    }
+
+    jvmArgs = args
+
+    addResources = true
+}
+
+
+//configurations.all {
+//    // check for updates every build
+//    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+//}

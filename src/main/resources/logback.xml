@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/state.log</file>
+        <!--
+                <append>true</append>
+                <withJansi>true</withJansi>
+                <encoder>
+                    <pattern>%d %highlight(%-5level) [%thread] %cyan(%logger{35}) - %msg%n</pattern>
+                </encoder>
+        -->
+        <encoder>
+            <pattern>%d %-5level [%thread] %logger{35} - %msg%n</pattern>
+        </encoder>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/state-%d{yyyy-MM-dd_HH}.%i.log</fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>100MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+    </appender>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>ERROR</level>
+        </filter>
+
+        <encoder>
+            <pattern>%d %-5level [%thread] %logger{35} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="FILE"/>
+        <appender-ref ref="STDOUT"/>
+    </root>
+
+    <!--Query debugging-->
+    <!--
+        <logger level="TRACE" name="org.hibernate.type"/>
+        <logger level="TRACE" name="org.hibernate.engine.query"/>
+        <logger level="TRACE" name="org.hibernate.jdbc"/>
+        <logger level="DEBUG" name="org.hibernate.SQL"/>
+    -->
+
+    <logger level="INFO" name="org.springframework.web.servlet.DispatcherServlet"/>
+    <logger level="INFO" name="com.ethercamp.harmony"/>
+    <logger level="INFO" name="blockchain"/>
+    <logger level="INFO" name="blockqueue"/>
+    <logger level="INFO" name="ethereum-service"/>
+    <logger level="INFO" name="report"/>
+    <logger level="INFO" name="general"/>
+    <logger level="INFO" name="system"/>
+    <logger level="INFO" name="facade"/>
+    <logger level="INFO" name="block"/>
+
+    <logger level="INFO" name="web-profiler"/>
+    <logger level="DEBUG" name="block-saver"/>
+    <logger level="DEBUG" name="batch-size-adviser"/>
+    <logger level="DEBUG" name="pg-data-copier"/>
+    <logger level="INFO" name="blocks-holder"/>
+    <logger level="INFO" name="contract-data"/>
+    <logger level="DEBUG" name="stat"/>
+
+    <logger level="INFO" name="sync"/>
+    <logger level="TRACE" name="notification"/>
+    <logger level="ERROR" name="wallet"/>
+    <logger level="DEBUG" name="net"/>
+    <logger level="DEBUG" name="db"/>
+    <logger level="ERROR" name="peerdiscovery"/>
+    <logger level="ERROR" name="peermonitor"/>
+    <logger level="ERROR" name="java.nio"/>
+    <logger level="ERROR" name="io.netty"/>
+    <logger level="ERROR" name="wire"/>
+    <logger level="ERROR" name="VM"/>
+    <logger level="ERROR" name="main"/>
+    <logger level="ERROR" name="trie"/>
+    <logger level="ERROR" name="state"/>
+    <logger level="ERROR" name="repository"/>
+    <logger level="ERROR" name="txs"/>
+    <logger level="ERROR" name="ui"/>
+    <logger level="ERROR" name="gas"/>
+    <logger level="ERROR" name="vmtrace"/>
+    <logger level="ERROR" name="execute"/>
+
+
+</configuration>
