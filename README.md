@@ -1,8 +1,8 @@
 # Ethereum Harmony
 
-System should have already installed: Oracle Java 8, Gradle, Bower
+System should have already installed: Oracle Java 8, Bower
 
 First `bower install`
 
-Then to run: `gradle bootRun`
+Then to run: `gradlew bootRun`
 
