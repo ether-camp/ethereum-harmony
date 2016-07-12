@@ -104,13 +104,18 @@
 
                 <!-- Instant stats -->
                 <li class="nav-info">
-                    <i class="pe pe-7s-shield text-accent"></i>
+
+                    <h5 class="m-t-md m-b-xs v-c">
+                        <i class="pe pe-7s-shield text-warning"></i>
+                        Machine Info
+                    </h5>
+                    <!--pe pe-7s-global text-warning-->
 
                     <!-- CPU -->
                     <div class="m-t-xs">
                         CPU usage: <span class="c-white" ng-cloak>{{vm.data.cpuUsage}} %</span>
                     </div>
-                    <div class="m-t-sm">
+                    <div class="">
                         <div class="progress m-t-xs full progress-small">
                             <div id="cpuUsageProgress" style="width: 0%" aria-valuemax="100" aria-valuemin="0" aria-valuenow="35" role="progressbar" class=" progress-bar progress-bar-warning">
                                 <span class="sr-only">{{vm.data.cpuUsage}}%</span>
@@ -122,7 +127,7 @@
                     <div class="m-t-xs">
                         Memory used: <span class="c-white" ng-cloak>{{vm.data.memoryOccupied}}</span>
                     </div>
-                    <div class="m-t-sm">
+                    <div class="m-b-md">
                         <div class="progress m-t-xs full progress-small">
                             <div id="memoryUsageProgress" style="width: 0%" aria-valuemax="100" aria-valuemin="0" aria-valuenow="35" role="progressbar" class=" progress-bar progress-bar-warning">
                                 <span class="sr-only">{{vm.data.memoryOccupied}}</span>
@@ -131,7 +136,7 @@
                     </div>
 
                     <!-- Disk -->
-                    <div class="m-t-xs">
+                    <div class="m-t-sm">
                         Free space: <span class="c-white" ng-cloak>{{vm.data.freeSpace}}</span>
                     </div>
 

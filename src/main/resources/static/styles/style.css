@@ -2650,3 +2650,14 @@ fieldset[disabled] .form-control {
     color: #ffffff !important;
     padding: 6px 12px !important;
 }
+
+.v-c {
+    display: table-cell;
+    vertical-align: middle;
+}
+.v-c i {
+    position: relative;
+    top: -3px;
+    margin-right: 4px;
+    vertical-align: middle;
+}
