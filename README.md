@@ -8,5 +8,3 @@ First `bower install`
 Then to run: `gradlew bootRun`
 
 
-
-test push
