@@ -43,6 +43,7 @@
                     stompClient.subscribe('/app/machineInfo', onMachineInfoResult);
                     // subscribe for updates
                     stompClient.subscribe('/topic/machineInfo', onMachineInfoResult);
+                    stompClient.subscribe('/topic/blockchainInfo', onBlockchainInfoResult);
                 },
                 function(error) {
                     disconnect();
@@ -74,7 +75,32 @@
             }, 10);
         }
 
-        function updateProgressBar(view, percentage, label) {
+        var simpleSuffixes = {
+            suffixes: {
+                B: "",
+                KB: "K",
+                MB: "M",
+                GB: "G",
+                TB: "T"
+            }
+        };
+
+        function onBlockchainInfoResult(data) {
+            var info = JSON.parse(data.body);
+
+            $timeout(function() {
+                vm.data.lastBlockNumber         = info.lastBlockNumber;
+                vm.data.lastBlockTime           = info.lastBlockTime;
+                vm.data.lastBlockTimeMoment     = moment(info.lastBlockTime * 1000).fromNow();
+                vm.data.lastBlockTimeString     = moment(info.lastBlockTime * 1000).calendar();
+                vm.data.lastBlockTransactions   = info.lastBlockTransactions;
+                vm.data.difficulty              = filesize(info.difficulty, simpleSuffixes);
+                vm.data.lastReforkTime          = info.lastReforkTime;
+                vm.data.networkHashRate         = filesize(info.networkHashRate, simpleSuffixes) + "Hash/sec";
+            }, 10);
+        }
+
+        function updateProgressBar(view, percentage) {
             $(view).css('width', percentage + "%");
             $(view).attr('aria-valuenow', percentage);
         }

@@ -33,6 +33,7 @@
     <script src="bower_components/filesize/lib/filesize.min.js"></script>
     <script src="bower_components/PACE/pace.min.js"></script>
     <script src="bower_components/toastr/toastr.min.js"></script>
+    <script src="bower_components/moment/moment.js"></script>
 
     <!-- Vendor styles -->
     <link rel="stylesheet" href="bower_components/font-awesome/css/font-awesome.css"/>
@@ -73,13 +74,76 @@
                         <i class="stroke-hamburgermenu"></i>
                     </a>
                 </div>
-                <ul class="nav navbar-nav navbar-right">
-                    <!--<li class=" profil-link">-->
-                        <!--<a href="login.html">-->
-                            <!--<span class="profile-address">luna@company.io</span>-->
-                            <!--<img src="images/profile.jpg" class="img-circle" alt="">-->
-                        <!--</a>-->
-                    <!--</li>-->
+
+                <ul class="list-inline" style="margin-bottom: 0">
+                    <li>
+                        <div class="panel" style="margin-bottom: 0px;">
+                            <div class="panel-body">
+                                <span class="m-b-none" ng-cloak>
+                                    {{vm.data.lastBlockNumber}}
+                                </span>
+                                <div class="small">Block number</div>
+                            </div>
+                        </div>
+                    </li>
+
+                    <li>
+                        <div class="panel" style="margin-bottom: 0px;">
+                            <div class="panel-body">
+                                <span class="m-b-none" ng-cloak>
+                                    {{vm.data.lastBlockTimeMoment}}
+                                </span>
+                                <div class="small">Block time</div>
+                            </div>
+                        </div>
+                    </li>
+
+                    <li>
+                        <div class="panel" style="margin-bottom: 0px;">
+                            <div class="panel-body">
+                                <span class="m-b-none" ng-cloak>
+                                    {{vm.data.lastBlockTransactions}}
+                                </span>
+                                <div class="small">Block tx count</div>
+                            </div>
+                        </div>
+                    </li>
+
+                    <li>
+                        <div class="panel" style="margin-bottom: 0px;">
+                            <div class="panel-body">
+                                <span class="m-b-none" ng-cloak>
+                                    {{vm.data.difficulty}}
+                                </span>
+                                <div class="small">Difficulty</div>
+                            </div>
+                        </div>
+                    </li>
+
+                    <li>
+                        <div class="panel" style="margin-bottom: 0px;">
+                            <div class="panel-body">
+                                <span class="m-b-none" ng-cloak>
+                                    {{vm.data.lastReforkTime}}
+                                </span>
+                                <div class="small">Last fork time</div>
+                            </div>
+                        </div>
+                    </li>
+
+                    <li>
+                        <div class="panel" style="margin-bottom: 0px;">
+                            <div class="panel-body">
+                                <span class="m-b-none" ng-cloak>
+                                    {{vm.data.networkHashRate}}
+                                </span>
+                                <div class="small">Hash Rate</div>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+
+                <ul class="nav navbar-nav">
                 </ul>
             </div>
         </div>

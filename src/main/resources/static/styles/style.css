@@ -1353,6 +1353,14 @@ sup {
     text-transform: lowercase;
 }
 
+.topbar-text {
+    height: 40px;
+}
+
+.profil-link .profile-address {
+    text-transform: lowercase;
+}
+
 #mobile-menu {
     display: none;
 }

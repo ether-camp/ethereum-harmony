@@ -26,7 +26,7 @@
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
 
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>ERROR</level>
+            <level>INFO</level>
         </filter>
 
         <encoder>
@@ -39,6 +39,7 @@
         <appender-ref ref="STDOUT"/>
     </root>
 
+
     <!--Query debugging-->
     <!--
         <logger level="TRACE" name="org.hibernate.type"/>
@@ -48,9 +49,9 @@
     -->
 
     <logger level="INFO" name="org.springframework.web.servlet.DispatcherServlet"/>
-    <logger level="INFO" name="com.ethercamp.harmony"/>
-    <logger level="INFO" name="blockchain"/>
-    <logger level="INFO" name="blockqueue"/>
+    <logger level="DEBUG" name="com.ethercamp.harmony"/>
+    <logger level="ERROR" name="blockchain"/>
+    <logger level="ERROR" name="blockqueue"/>
     <logger level="INFO" name="ethereum-service"/>
     <logger level="INFO" name="report"/>
     <logger level="INFO" name="general"/>

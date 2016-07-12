@@ -1,11 +1,13 @@
 package com.ethercamp.harmony.domain;
 
-import lombok.Data;
+import lombok.AllArgsConstructor;
+import lombok.Value;
 
 /**
  * Created by Stan Reshetnyk on 11.07.16.
  */
-@Data
+@Value
+@AllArgsConstructor
 public class MachineInfoDTO {
 
     /**
@@ -28,10 +30,4 @@ public class MachineInfoDTO {
      */
     private Long freeSpace;
 
-    public MachineInfoDTO(Integer cpuUsage, Long memoryFree, Long memoryTotal, Long freeSpace) {
-        this.cpuUsage = cpuUsage;
-        this.memoryFree = memoryFree;
-        this.memoryTotal = memoryTotal;
-        this.freeSpace = freeSpace;
-    }
 }
