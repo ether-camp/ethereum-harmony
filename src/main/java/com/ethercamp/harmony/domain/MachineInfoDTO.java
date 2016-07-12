@@ -8,18 +8,30 @@ import lombok.Data;
 @Data
 public class MachineInfoDTO {
 
+    /**
+     * Percentage 0..100
+     */
     private Integer cpuUsage;
 
-    private Long memoryUsage;
+    /**
+     * In bytes.
+     */
+    private Long memoryFree;
 
+    /**
+     * In bytes.
+     */
     private Long memoryTotal;
 
-    private Long diskUsage;
+    /**
+     * In bytes.
+     */
+    private Long freeSpace;
 
-    public MachineInfoDTO(Integer cpuUsage, Long memoryUsage, Long memoryTotal, Long diskUsage) {
+    public MachineInfoDTO(Integer cpuUsage, Long memoryFree, Long memoryTotal, Long freeSpace) {
         this.cpuUsage = cpuUsage;
-        this.memoryUsage = memoryUsage;
+        this.memoryFree = memoryFree;
         this.memoryTotal = memoryTotal;
-        this.diskUsage = diskUsage;
+        this.freeSpace = freeSpace;
     }
 }

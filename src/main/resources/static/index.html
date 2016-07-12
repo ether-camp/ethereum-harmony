@@ -113,7 +113,7 @@
                     <div class="m-t-sm">
                         <div class="progress m-t-xs full progress-small">
                             <div id="cpuUsageProgress" style="width: 0%" aria-valuemax="100" aria-valuemin="0" aria-valuenow="35" role="progressbar" class=" progress-bar progress-bar-warning">
-                                <span class="sr-only">10% Complete (success)</span>
+                                <span class="sr-only">{{vm.data.cpuUsage}}%</span>
                             </div>
                         </div>
                     </div>
@@ -121,12 +121,12 @@
 
                     <!-- Memory -->
                     <div class="m-t-xs">
-                        Memory usage: <span class="c-white" ng-cloak>{{vm.data.memoryUsage}}</span>
+                        Memory used: <span class="c-white" ng-cloak>{{vm.data.memoryOccupied}}</span>
                     </div>
                     <div class="m-t-sm">
                         <div class="progress m-t-xs full progress-small">
                             <div id="memoryUsageProgress" style="width: 0%" aria-valuemax="100" aria-valuemin="0" aria-valuenow="35" role="progressbar" class=" progress-bar progress-bar-warning">
-                                <span class="sr-only">{{vm.data.memoryUsage}}</span>
+                                <span class="sr-only">{{vm.data.memoryOccupied}}</span>
                             </div>
                         </div>
                     </div>
@@ -134,7 +134,7 @@
 
                     <!-- Disk -->
                     <div class="m-t-xs">
-                        Disk usage: <span class="c-white" ng-cloak>{{vm.data.diskUsage}}</span>
+                        Free space: <span class="c-white" ng-cloak>{{vm.data.freeSpace}}</span>
                     </div>
 
                 </li>
@@ -189,9 +189,9 @@
                         <div class="panel panel-filled">
                             <div class="panel-body">
                                 <h2 class="m-b-none">
-                                    {{vm.data.memoryUsage}} / {{vm.data.memoryTotal}} <!-- <span class="slight"><i class="fa fa-play fa-rotate-90 c-white"> </i> 5%</span>-->
+                                    {{vm.data.memoryOccupied}} / {{vm.data.memoryFree}} <!-- <span class="slight"><i class="fa fa-play fa-rotate-90 c-white"> </i> 5%</span>-->
                                 </h2>
-                                <div class="small">Memory usage (current / total)</div>
+                                <div class="small">Memory usage (occupied / free)</div>
                                 <!--<div class="slight m-t-sm"><i class="fa fa-clock-o"> </i> Updated: <span class="c-white">9:10am</span> </div>-->
                             </div>
                         </div>
@@ -202,9 +202,9 @@
                         <div class="panel panel-filled">
                             <div class="panel-body">
                                 <h2 class="m-b-none">
-                                    {{vm.data.diskUsage}} <!--<span class="slight"><i class="fa fa-play fa-rotate-270 text-warning"> </i> +56%</span>-->
+                                    {{vm.data.freeSpace}} <!--<span class="slight"><i class="fa fa-play fa-rotate-270 text-warning"> </i> +56%</span>-->
                                 </h2>
-                                <div class="small">Space used</div>
+                                <div class="small">Free disk space</div>
                                 <!--<div class="slight m-t-sm"><i class="fa fa-clock-o"> </i> Updated: <span class="c-white">05:42pm</span> </div>-->
                             </div>
                         </div>

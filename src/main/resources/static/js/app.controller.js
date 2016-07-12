@@ -11,9 +11,9 @@
 
         vm.data = {
             cpuUsage: 0,
-            memoryUsage: 0,
-            memoryTotal: 0,
-            diskUsage: 0
+            memoryOccupied: "",
+            memoryFree: "",
+            freeSpace: ""
         };
 
         var stompClient = null;
@@ -55,11 +55,15 @@
 
             $timeout(function() {
                 vm.data.cpuUsage = info.cpuUsage;
-                vm.data.memoryUsage = filesize(info.memoryUsage);
-                vm.data.memoryTotal = filesize(info.memoryTotal);
-                vm.data.diskUsage = filesize(info.diskUsage);
+                vm.data.memoryOccupied = filesize(info.memoryTotal - info.memoryFree);
+                vm.data.memoryFree = filesize(info.memoryFree);
+                vm.data.freeSpace = filesize(info.freeSpace);
 
-                var memoryPercentage = info.memoryTotal == 0 ? 0 : Math.round(100 * info.memoryUsage / info.memoryTotal);
+                var memoryPercentage = 0;
+                if (info.memoryTotal != 0) {
+                    memoryPercentage = Math.round(100 * (info.memoryTotal - info.memoryFree) / info.memoryTotal);
+                }
+                console.log(filesize(info.memoryTotal), filesize(info.memoryFree));
 
                 updateProgressBar('#memoryUsageProgress', memoryPercentage);
                 updateProgressBar('#cpuUsageProgress', info.cpuUsage);
