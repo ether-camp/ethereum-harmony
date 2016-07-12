@@ -52,7 +52,7 @@ public class MachineInfoService {
         // Using free space of disk which holds database
         File currentDir = new File(".");
         for (Path root : FileSystems.getDefault().getRootDirectories()) {
-            System.out.print(root.toAbsolutePath() + ": " + currentDir.getAbsolutePath());
+            log.debug(root.toAbsolutePath() + " vs current " + currentDir.getAbsolutePath());
             try {
                 FileStore store = Files.getFileStore(root);
 
