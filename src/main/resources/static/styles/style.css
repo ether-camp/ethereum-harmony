@@ -2685,7 +2685,7 @@ fieldset[disabled] .form-control {
 }
 
 .tp-panel .top-bar-line {
-    border-top: 2px solid #f7d870;
+    border-top: 1px solid #f7d870;
     width: 100%;
 }
 

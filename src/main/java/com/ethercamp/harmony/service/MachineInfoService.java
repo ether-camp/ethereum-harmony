@@ -102,9 +102,8 @@ public class MachineInfoService {
                 )
         );
 
-        log.info("doCheckStatus " + bestBlock.getNumber() + " " + LocalDateTime.ofEpochSecond(bestBlock.getTimestamp(), 0, ZoneOffset.UTC));
-        log.info("HashRate " + calculateHashRate());
-        log.info("");
+//        log.info("doCheckStatus " + bestBlock.getNumber() + " " + LocalDateTime.ofEpochSecond(bestBlock.getTimestamp(), 0, ZoneOffset.UTC));
+//        log.info("HashRate " + calculateHashRate());
 
         clientMessageService.sendToTopic("/topic/blockchainInfo", blockchainInfo.get());
     }
