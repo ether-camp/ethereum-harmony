@@ -9,6 +9,11 @@ import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.messaging.simp.annotation.SubscribeMapping;
 import org.springframework.stereotype.Controller;
+import org.springframework.stereotype.Repository;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 @Controller
 public class WebSocketController {
@@ -27,5 +32,10 @@ public class WebSocketController {
     @MessageMapping("/initialInfo")
     public InitialInfoDTO getInitialInfo() {
         return machineInfoService.getInitialInfo();
+    }
+
+    @RequestMapping({"/", "/serverLog"})
+    public String index() {
+        return "index.html";
     }
 }

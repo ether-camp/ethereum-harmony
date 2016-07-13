@@ -4,7 +4,8 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="http://static.tumblr.com/etzljwn/Vnro7mdr7/logo-2.png">
+    <link rel="icon" href="images/favicon.png">
+    <base href="/">
 
     <link href='http://fonts.googleapis.com/css?family=Roboto:300,400,500,700,900' rel='stylesheet' type='text/css'>
 
@@ -28,6 +29,7 @@
     <script src="bower_components/jquery/dist/jquery.js"></script>
     <script src="bower_components/bootstrap/dist/js/bootstrap.js"></script>
     <script src="bower_components/angular/angular.js"></script>
+    <script src="bower_components/angular-route/angular-route.js"></script>
     <script src="bower_components/angular-animate/angular-animate.js"></script>
     <script src="bower_components/sockjs-client/dist/sockjs-0.3.4.min.js"></script>
     <script src="bower_components/filesize/lib/filesize.min.js"></script>
@@ -58,15 +60,13 @@
             <div class="navbar-header">
                 <div id="mobile-menu">
                     <div class="left-nav-toggle">
-                        <a href="#">
+                        <a href="/">
                             <i class="stroke-hamburgermenu"></i>
                         </a>
                     </div>
                 </div>
-                <a class="navbar-brand" href="#" style="padding: 10px 10px">
-                    <!--ADMIN-->
+                <a class="navbar-brand" href="/" style="padding: 10px 10px">
                     <img src="images/harmony-title.svg" onerror="this.src='images/harmony-logo.png'"/>
-                    <!--<span>v.1.0</span>-->
                 </a>
             </div>
             <div id="navbar" class="navbar-collapse collapse">
@@ -139,13 +139,11 @@
             <ul class="nav luna-nav">
 
                 <li class="active">
-                    <a href="index.html">
-                        Dashboard
-                    </a>
+                    <a href="/">Home</a>
                 </li>
 
                 <li>
-                    <a href="activity.html">Not implemented</a>
+                    <a href="/serverLog">Server Logs</a>
                 </li>
 
 
@@ -203,87 +201,26 @@
     </aside>
     <!-- End navigation-->
 
+    <!-- MAIN CONTENT AND INJECTED VIEWS -->
+    <div id="main">
 
-    <!-- Main content-->
-    <section class="content">
-            <div class="container-fluid">
+        <!-- angular templating -->
+        <!-- this is where content will be injected -->
+        <div ng-view></div>
 
-                <div class="row">
-                    <div class="col-lg-12">
-                        <div class="view-header">
-                            <div class="pull-right text-right" style="line-height: 14px">
-                                <small>Ethereum Harmony<br>Dashboard<br> <span class="c-white">v.1.0</span></small>
-                            </div>
-                            <div class="header-icon">
-                                <i class="pe page-header-icon pe-7s-shield"></i>
-                            </div>
-                            <div class="header-title">
-                                <h3 class="m-b-xs">Machine Info</h3>
-                                <small>
-                                    Special minimal admin theme with Dark UI style for monitoring or administration web applications.
-                                </small>
-                            </div>
-                        </div>
-                        <hr>
-                    </div>
-                </div>
-
-                <div class="row">
-
-                    <!-- CPU -->
-                    <div class="col-lg-2 col-xs-6">
-                        <div class="panel panel-filled">
-
-                            <div class="panel-body">
-                                <h2 class="m-b-none" ng-cloak>
-                                    {{vm.data.cpuUsage}}% <!--<span class="slight"><i class="fa fa-play fa-rotate-270 text-warning"> </i> +20%</span>-->
-                                </h2>
-                                <div class="small">Cpu usage</div>
-                                <!--<div class="slight m-t-sm"><i class="fa fa-clock-o"> </i> Updated: <span class="c-white">10:22pm</span>  </div>-->
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Memory -->
-                    <div class="col-lg-4 col-xs-6">
-                        <div class="panel panel-filled">
-                            <div class="panel-body">
-                                <h2 class="m-b-none">
-                                    {{vm.data.memoryOccupied}} / {{vm.data.memoryFree}} <!-- <span class="slight"><i class="fa fa-play fa-rotate-90 c-white"> </i> 5%</span>-->
-                                </h2>
-                                <div class="small">Memory usage (occupied / free)</div>
-                                <!--<div class="slight m-t-sm"><i class="fa fa-clock-o"> </i> Updated: <span class="c-white">9:10am</span> </div>-->
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Disc -->
-                    <div class="col-lg-2 col-xs-6">
-                        <div class="panel panel-filled">
-                            <div class="panel-body">
-                                <h2 class="m-b-none">
-                                    {{vm.data.freeSpace}} <!--<span class="slight"><i class="fa fa-play fa-rotate-270 text-warning"> </i> +56%</span>-->
-                                </h2>
-                                <div class="small">Free disk space</div>
-                                <!--<div class="slight m-t-sm"><i class="fa fa-clock-o"> </i> Updated: <span class="c-white">05:42pm</span> </div>-->
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-    </section>
-    <!-- End main content-->
+    </div>
 
 </div>
 <!-- End wrapper-->
 
 <!-- App scripts -->
 <script src="js/luna.js"></script>
+<script src="js/ansi_up.js"></script>
 
 <script src="js/app.module.js"></script>
 <script src="js/data.factory.js"></script>
 <script src="js/app.controller.js"></script>
+<script src="js/serverLog.controller.js"></script>
 
 </body>
 

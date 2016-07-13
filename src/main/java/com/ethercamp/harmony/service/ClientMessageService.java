@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 public class ClientMessageService {
 
     @Autowired
-    SimpMessagingTemplate messagingTemplate;
+    private SimpMessagingTemplate messagingTemplate;
 
     public void sendToTopic(String topic, Object dto) {
         messagingTemplate.convertAndSend(topic, dto);

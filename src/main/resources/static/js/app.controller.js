@@ -1,11 +1,36 @@
 (function() {
     'use strict';
-    angular.module('HarmonyApp').controller('AppCtrl', AppCtrl);
+    var mainApp = angular.module('HarmonyApp', ['ngRoute']);
 
-    AppCtrl.$inject = ['$scope', '$timeout', 'DataService'];
+    mainApp.controller('AppCtrl', AppCtrl);
 
-    function AppCtrl ($scope, $timeout, DataService) {
+    mainApp.config(function($routeProvider, $locationProvider) {
+        $routeProvider
+
+            // route for the home page
+            .when('/', {
+                templateUrl : 'pages/home.html',
+                controller  : 'AppCtrl'
+            })
+
+            // route for the about page
+            .when('/serverLog', {
+                templateUrl : 'pages/serverLog.html',
+                controller  : 'ServerLogCtrl'
+            });
+
+        $locationProvider.html5Mode(true);
+    });
+
+    AppCtrl.$inject = ['$scope', '$timeout', '$route', '$location'];
+
+    function AppCtrl ($scope, $timeout, $route, $location) {
         var vm = this;
+
+        $scope.$on('$routeChangeSuccess', function(next, current) {
+            console.log('$routeChangeStart ' + current + " " + next);
+            console.log($location.path());
+        });
 
         var connectionLostOnce = false;
 
@@ -24,6 +49,7 @@
             appVersion: "n/a",
             ethereumJVersion: "n/a"
         };
+        vm.list = [];
 
         var stompClient = null;
 
@@ -52,6 +78,7 @@
                     stompClient.subscribe('/topic/initialInfo', onInitialInfoResult);
                     stompClient.subscribe('/topic/machineInfo', onMachineInfoResult);
                     stompClient.subscribe('/topic/blockchainInfo', onBlockchainInfoResult);
+                    stompClient.subscribe('/topic/serverLog', onServerLogResult);
 
                     // get immediate result
                     stompClient.send('/app/machineInfo');
@@ -61,6 +88,15 @@
                     disconnect();
                 }
             );
+        }
+
+        function onServerLogResult(data) {
+            var msg = data.body;
+
+            vm.list = vm.list || [];
+            vm.list.push(msg);
+
+            $scope.$broadcast('serverLogEvent', msg);
         }
 
         function onMachineInfoResult(data) {
@@ -76,14 +112,10 @@
                 if (info.memoryTotal != 0) {
                     memoryPercentage = Math.round(100 * (info.memoryTotal - info.memoryFree) / info.memoryTotal);
                 }
-                console.log(filesize(info.memoryTotal), filesize(info.memoryFree));
+                //console.log(filesize(info.memoryTotal), filesize(info.memoryFree));
 
                 updateProgressBar('#memoryUsageProgress', memoryPercentage);
                 updateProgressBar('#cpuUsageProgress', info.cpuUsage);
-
-                //console.log("memoryPercentage " + memoryPercentage);
-                //console.log("cpuUsage " + info.cpuUsage);
-
             }, 10);
         }
 
@@ -117,7 +149,7 @@
                 vm.data.lastBlockNumber         = info.lastBlockNumber;
                 vm.data.lastBlockTime           = info.lastBlockTime;
                 vm.data.lastBlockTimeMoment     = moment(info.lastBlockTime * 1000).fromNow();
-                vm.data.lastBlockTimeString     = moment(info.lastBlockTime * 1000).format('ss:mm:hh MMM. d, YYYY');
+                vm.data.lastBlockTimeString     = moment(info.lastBlockTime * 1000).format('hh:mm:ss MMM DD YYYY');
                 vm.data.lastBlockTransactions   = info.lastBlockTransactions;
                 vm.data.difficulty              = filesize(info.difficulty, simpleSuffixes);
                 vm.data.lastReforkTime          = info.lastReforkTime;
