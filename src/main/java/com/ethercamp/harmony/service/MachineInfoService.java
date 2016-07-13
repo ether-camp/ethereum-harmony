@@ -85,7 +85,7 @@ public class MachineInfoService {
         initialInfo.set(new InitialInfoDTO(env.getProperty("ethereumJ.version"), env.getProperty("app.version")));
 
         LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
-        Logger logger = context.getLogger("dynamic_logger");
+//        Logger logger = context.getLogger("dynamic_logger");
 
         PatternLayout patternLayout = new PatternLayout();
         patternLayout.setPattern("%d %-5level [%thread] %logger{35} - %msg%n");
@@ -93,7 +93,7 @@ public class MachineInfoService {
         patternLayout.start();
 
         // Don't inherit root appender
-        logger.setAdditive(false);
+//        logger.setAdditive(false);
 
         UnsynchronizedAppenderBase messagingAppender = new UnsynchronizedAppenderBase() {
             @Override
@@ -112,7 +112,11 @@ public class MachineInfoService {
         // Attach appender to logger
         Arrays.asList("blockchain", "sync", "facade", "net", "general")
                 .stream()
-                .forEach(l -> context.getLogger(l).addAppender(messagingAppender));
+                .forEach(l -> {
+                    Logger logger = context.getLogger(l);
+                    logger.setLevel(Level.INFO);
+                    logger.addAppender(messagingAppender);
+                });
 
 //        context.getLoggerList().stream()
 //                .forEach(l -> l.addAppender(messagingAppender));
