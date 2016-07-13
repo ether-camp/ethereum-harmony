@@ -77,9 +77,9 @@
 
                 <ul class="list-inline navbar-right" style="margin-bottom: 0">
                     <li>
-                        <div class="panel tp-panel">
+                        <div class="panel tp-panel" ng-cloak>
                             <div class="panel-body" data-toggle="tooltip" title="Created at {{vm.data.lastBlockTimeString}}">
-                                <span class="m-b-none" ng-cloak>
+                                <span class="m-b-none">
                                     #<span id="blockCounter" class="tp-title">0</span> ({{vm.data.lastBlockTimeMoment}})
                                 </span>
                                 <div class="top-bar-line"/>
@@ -90,8 +90,8 @@
 
                     <li>
                         <div class="panel tp-panel">
-                            <div class="panel-body">
-                                <span class="m-b-none tp-title" ng-cloak>
+                            <div class="panel-body" ng-cloak>
+                                <span class="m-b-none tp-title">
                                     {{vm.data.lastBlockTransactions}}
                                 </span>
                                 <div class="top-bar-line"/>
@@ -102,8 +102,8 @@
 
                     <li>
                         <div class="panel tp-panel">
-                            <div class="panel-body">
-                                <span class="m-b-none tp-title" ng-cloak>
+                            <div class="panel-body" ng-cloak>
+                                <span class="m-b-none tp-title">
                                     {{vm.data.difficulty}}
                                 </span>
                                 <div class="top-bar-line"/>
@@ -114,8 +114,8 @@
 
                     <li>
                         <div class="panel tp-panel">
-                            <div class="panel-body">
-                                <span class="m-b-none tp-title" ng-cloak>
+                            <div class="panel-body" ng-cloak>
+                                <span class="m-b-none tp-title">
                                     {{vm.data.networkHashRate}}
                                 </span>
                                 <div class="top-bar-line"/>

@@ -13,7 +13,13 @@
             cpuUsage: 0,
             memoryOccupied: "",
             memoryFree: "",
-            freeSpace: ""
+            freeSpace: "",
+
+            lastBlockNumber: 0,
+            lastBlockTimeMoment: "loading...",
+            lastBlockTransactions: "N/A",
+            difficulty: "N/A",
+            networkHashRate: "N/A"
         };
 
         var stompClient = null;
