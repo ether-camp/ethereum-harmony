@@ -75,44 +75,33 @@
                     </a>
                 </div>
 
-                <ul class="list-inline" style="margin-bottom: 0">
+                <ul class="list-inline navbar-right" style="margin-bottom: 0">
                     <li>
-                        <div class="panel" style="margin-bottom: 0px;">
-                            <div class="panel-body">
+                        <div class="panel tp-panel">
+                            <div class="panel-body" data-toggle="tooltip" title="Created at {{vm.data.lastBlockTimeString}}">
                                 <span class="m-b-none" ng-cloak>
-                                    {{vm.data.lastBlockNumber}}
+                                    #<span id="blockCounter" class="tp-title">0</span> ({{vm.data.lastBlockTimeMoment}})
                                 </span>
-                                <div class="small">Block number</div>
+                                <div class="small">Block Imported</div>
                             </div>
                         </div>
                     </li>
 
                     <li>
-                        <div class="panel" style="margin-bottom: 0px;">
+                        <div class="panel tp-panel">
                             <div class="panel-body">
-                                <span class="m-b-none" ng-cloak>
-                                    {{vm.data.lastBlockTimeMoment}}
-                                </span>
-                                <div class="small">Block time</div>
-                            </div>
-                        </div>
-                    </li>
-
-                    <li>
-                        <div class="panel" style="margin-bottom: 0px;">
-                            <div class="panel-body">
-                                <span class="m-b-none" ng-cloak>
+                                <span class="m-b-none tp-title" ng-cloak>
                                     {{vm.data.lastBlockTransactions}}
                                 </span>
-                                <div class="small">Block tx count</div>
+                                <div class="small">Transactions</div>
                             </div>
                         </div>
                     </li>
 
                     <li>
-                        <div class="panel" style="margin-bottom: 0px;">
+                        <div class="panel tp-panel">
                             <div class="panel-body">
-                                <span class="m-b-none" ng-cloak>
+                                <span class="m-b-none tp-title" ng-cloak>
                                     {{vm.data.difficulty}}
                                 </span>
                                 <div class="small">Difficulty</div>
@@ -121,20 +110,9 @@
                     </li>
 
                     <li>
-                        <div class="panel" style="margin-bottom: 0px;">
+                        <div class="panel tp-panel">
                             <div class="panel-body">
-                                <span class="m-b-none" ng-cloak>
-                                    {{vm.data.lastReforkTime}}
-                                </span>
-                                <div class="small">Last fork time</div>
-                            </div>
-                        </div>
-                    </li>
-
-                    <li>
-                        <div class="panel" style="margin-bottom: 0px;">
-                            <div class="panel-body">
-                                <span class="m-b-none" ng-cloak>
+                                <span class="m-b-none tp-title" ng-cloak>
                                     {{vm.data.networkHashRate}}
                                 </span>
                                 <div class="small">Hash Rate</div>

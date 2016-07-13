@@ -2669,3 +2669,17 @@ fieldset[disabled] .form-control {
     margin-right: 4px;
     vertical-align: middle;
 }
+
+.tp-title {
+    color: #666;
+    font-weight: 500;
+}
+
+.tp-panel {
+    font-height: 1.5;
+    margin-bottom: 0px;
+}
+
+.tp-panel .panel-body {
+    padding: 10px 15px 5px 15px;
+}

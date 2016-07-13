@@ -54,6 +54,7 @@ public class MachineInfoService {
 
     @PostConstruct
     private void postConstruct() {
+        // gather blocks to calculate hash rate
         ethereum.addListener(new EthereumListenerAdapter() {
             @Override
             public void onBlock(Block block, List<TransactionReceipt> receipts) {

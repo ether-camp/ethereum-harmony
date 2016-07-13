@@ -89,6 +89,7 @@
             var info = JSON.parse(data.body);
 
             $timeout(function() {
+                updateBlockCounter(info.lastBlockNumber);
                 vm.data.lastBlockNumber         = info.lastBlockNumber;
                 vm.data.lastBlockTime           = info.lastBlockTime;
                 vm.data.lastBlockTimeMoment     = moment(info.lastBlockTime * 1000).fromNow();
@@ -98,6 +99,19 @@
                 vm.data.lastReforkTime          = info.lastReforkTime;
                 vm.data.networkHashRate         = filesize(info.networkHashRate, simpleSuffixes) + "Hash/sec";
             }, 10);
+        }
+
+        function updateBlockCounter(value) {
+            var blockCounter = $('#blockCounter');
+            blockCounter.prop('Counter', blockCounter.text()).stop().animate({
+                Counter: '' + value
+            }, {
+                duration: 1500,
+                easing: 'swing',
+                step: function(now) {
+                    blockCounter.text(Math.ceil(now));
+                }
+            });
         }
 
         function updateProgressBar(view, percentage) {
