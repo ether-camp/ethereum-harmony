@@ -93,25 +93,31 @@
                 vm.data.lastBlockNumber         = info.lastBlockNumber;
                 vm.data.lastBlockTime           = info.lastBlockTime;
                 vm.data.lastBlockTimeMoment     = moment(info.lastBlockTime * 1000).fromNow();
-                vm.data.lastBlockTimeString     = moment(info.lastBlockTime * 1000).calendar();
+                vm.data.lastBlockTimeString     = moment(info.lastBlockTime * 1000).format('ss:mm:hh MMM. d, YYYY');
                 vm.data.lastBlockTransactions   = info.lastBlockTransactions;
                 vm.data.difficulty              = filesize(info.difficulty, simpleSuffixes);
                 vm.data.lastReforkTime          = info.lastReforkTime;
-                vm.data.networkHashRate         = filesize(info.networkHashRate, simpleSuffixes) + "Hash/sec";
+                vm.data.networkHashRate         = filesize(info.networkHashRate, simpleSuffixes) + "H/s";
             }, 10);
         }
 
         function updateBlockCounter(value) {
             var blockCounter = $('#blockCounter');
-            blockCounter.prop('Counter', blockCounter.text()).stop().animate({
+            blockCounter.prop('Counter', blockCounter.attr('value')).stop().animate({
                 Counter: '' + value
             }, {
                 duration: 1500,
-                easing: 'swing',
+                easing: 'linear',
                 step: function(now) {
-                    blockCounter.text(Math.ceil(now));
+                    var value = Math.ceil(now);
+                    blockCounter.attr('value', value);
+                    blockCounter.text(numberWithCommas(value));
                 }
             });
+        }
+
+        function numberWithCommas(x) {
+            return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
         }
 
         function updateProgressBar(view, percentage) {

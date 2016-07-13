@@ -86,7 +86,7 @@ public class MachineInfoService {
         clientMessageService.sendToTopic("/topic/machineInfo", machineInfo.get());
     }
 
-    @Scheduled(fixedRate = 1000)
+    @Scheduled(fixedRate = 2000)
     private void doUpdateBlockchainStatus() {
 
         Block bestBlock = ethereum.getBlockchain().getBestBlock();

@@ -2676,10 +2676,20 @@ fieldset[disabled] .form-control {
 }
 
 .tp-panel {
-    font-height: 1.5;
+    font-size: 20px;
     margin-bottom: 0px;
+}
+
+.tp-panel .small {
+    font-size: 10px;
+}
+
+.tp-panel .top-bar-line {
+    border-top: 2px solid #f7d870;
+    width: 100%;
 }
 
 .tp-panel .panel-body {
     padding: 10px 15px 5px 15px;
+    text-align: center;
 }
