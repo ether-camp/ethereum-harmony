@@ -19,7 +19,10 @@
             lastBlockTimeMoment: "loading...",
             lastBlockTransactions: "N/A",
             difficulty: "N/A",
-            networkHashRate: "N/A"
+            networkHashRate: "N/A",
+
+            appVersion: "n/a",
+            ethereumJVersion: "n/a"
         };
 
         var stompClient = null;
@@ -43,13 +46,16 @@
                         showToastr("Connection established", "");
                     }
 
-                    console.log('Connected: ' + frame);
+                    console.log('Connected');
 
-                    // get immediate result
-                    stompClient.subscribe('/app/machineInfo', onMachineInfoResult);
                     // subscribe for updates
+                    stompClient.subscribe('/topic/initialInfo', onInitialInfoResult);
                     stompClient.subscribe('/topic/machineInfo', onMachineInfoResult);
                     stompClient.subscribe('/topic/blockchainInfo', onBlockchainInfoResult);
+
+                    // get immediate result
+                    stompClient.send('/app/machineInfo');
+                    stompClient.send('/app/initialInfo');
                 },
                 function(error) {
                     disconnect();
@@ -75,10 +81,22 @@
                 updateProgressBar('#memoryUsageProgress', memoryPercentage);
                 updateProgressBar('#cpuUsageProgress', info.cpuUsage);
 
-                console.log("memoryPercentage " + memoryPercentage);
-                console.log("cpuUsage " + info.cpuUsage);
+                //console.log("memoryPercentage " + memoryPercentage);
+                //console.log("cpuUsage " + info.cpuUsage);
 
             }, 10);
+        }
+
+        function onInitialInfoResult(data) {
+            var info = JSON.parse(data.body);
+
+            $timeout(function() {
+                vm.data.appVersion = info.appVersion;
+                vm.data.ethereumJVersion = info.ethereumJVersion;
+            }, 10);
+
+            console.log("App version " + info.appVersion);
+            stompClient.unsubscribe('/topic/initialInfo');
         }
 
         var simpleSuffixes = {
@@ -140,7 +158,7 @@
             }
             setConnected(false);
             console.log("Disconnected. Retry ...");
-            setTimeout(connect, 2000);
+            setTimeout(connect, 5000);
         }
 
         function showToastr(topMessage, bottomMessage) {

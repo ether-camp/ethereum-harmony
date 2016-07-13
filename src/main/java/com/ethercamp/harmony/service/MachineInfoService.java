@@ -1,13 +1,16 @@
 package com.ethercamp.harmony.service;
 
 import com.ethercamp.harmony.domain.BlockchainInfoDTO;
+import com.ethercamp.harmony.domain.InitialInfoDTO;
 import com.ethercamp.harmony.domain.MachineInfoDTO;
 import com.ethercamp.harmony.ethereum.Ethereum;
 import com.sun.management.OperatingSystemMXBean;
 import lombok.extern.slf4j.Slf4j;
-import org.ethereum.core.*;
+import org.ethereum.core.Block;
+import org.ethereum.core.TransactionReceipt;
 import org.ethereum.listener.EthereumListenerAdapter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -17,8 +20,6 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.nio.file.*;
 import java.text.DecimalFormat;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Queue;
@@ -33,6 +34,9 @@ import java.util.concurrent.atomic.AtomicReference;
 public class MachineInfoService {
 
     private final int BLOCK_COUNT_FOR_HASH_RATE = 100;
+
+    @Autowired
+    Environment env;
 
     @Autowired
     ClientMessageService clientMessageService;
@@ -52,6 +56,8 @@ public class MachineInfoService {
     private final AtomicReference<BlockchainInfoDTO> blockchainInfo =
             new AtomicReference<>(new BlockchainInfoDTO(0l, 0l, 0, 0l, 0l, 0l));
 
+    private final AtomicReference<InitialInfoDTO> initialInfo = new AtomicReference<>(new InitialInfoDTO("", ""));
+
     @PostConstruct
     private void postConstruct() {
         // gather blocks to calculate hash rate
@@ -64,6 +70,8 @@ public class MachineInfoService {
                 }
             }
         });
+
+        initialInfo.set(new InitialInfoDTO(env.getProperty("app.version"), env.getProperty("ethereumJ.version")));
     }
 
     public MachineInfoDTO getMachineInfo() {
@@ -154,5 +162,9 @@ public class MachineInfoService {
         final String[] units = new String[] { "B", "kB", "MB", "GB", "TB" };
         int digitGroups = (int) (Math.log10(size)/Math.log10(1024));
         return new DecimalFormat("#,##0.#").format(size/Math.pow(1024, digitGroups)) + " " + units[digitGroups];
+    }
+
+    public InitialInfoDTO getInitialInfo() {
+        return initialInfo.get();
     }
 }
