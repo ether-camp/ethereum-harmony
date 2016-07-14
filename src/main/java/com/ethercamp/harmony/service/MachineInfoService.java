@@ -194,7 +194,7 @@ public class MachineInfoService {
             protected void append(Object eventObject) {
                 LoggingEvent event = (LoggingEvent) eventObject;
                 String message = patternLayout.doLayout(event);
-                clientMessageService.sendToTopic("/topic/serverLog", message);
+                clientMessageService.sendToTopic("/topic/systemLog", message);
             }
         };
 

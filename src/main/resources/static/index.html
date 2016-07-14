@@ -25,7 +25,7 @@
         };
     </script>
 
-    <script src="stomp.js"></script>
+    <script src="js/stomp.js"></script>
     <script src="bower_components/jquery/dist/jquery.js"></script>
     <script src="bower_components/bootstrap/dist/js/bootstrap.js"></script>
     <script src="bower_components/angular/angular.js"></script>
@@ -138,12 +138,16 @@
         <nav style="height: 100%">
             <ul class="nav luna-nav">
 
-                <li class="active">
+                <li ng-class="{active: vm.data.currentPage == '/'}">
                     <a href="/">Home</a>
                 </li>
 
-                <li>
-                    <a href="/serverLog">Server Logs</a>
+                <li ng-class="{active: vm.data.currentPage == '/peers'}">
+                    <a href="/peers">Ethereum Peers</a>
+                </li>
+
+                <li ng-class="{active: vm.data.currentPage == '/systemLog'}">
+                    <a href="/systemLog">System Logs</a>
                 </li>
 
 
@@ -220,7 +224,7 @@
 <script src="js/app.module.js"></script>
 <script src="js/data.factory.js"></script>
 <script src="js/app.controller.js"></script>
-<script src="js/serverLog.controller.js"></script>
+<script src="js/systemLog.controller.js"></script>
 
 </body>
 

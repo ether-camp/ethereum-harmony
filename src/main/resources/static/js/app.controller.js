@@ -1,5 +1,6 @@
 (function() {
     'use strict';
+
     var mainApp = angular.module('HarmonyApp', ['ngRoute']);
 
     mainApp.controller('AppCtrl', AppCtrl);
@@ -14,9 +15,13 @@
                 templateUrl : 'pages/home.html'
             })
 
-            .when('/serverLog', {
-                templateUrl : 'pages/serverLog.html',
-                controller  : 'ServerLogCtrl'
+            .when('/systemLog', {
+                templateUrl : 'pages/systemLog.html',
+                controller  : 'SystemLogCtrl'
+            })
+
+            .when('/peers', {
+                templateUrl : 'pages/peers.html'
             });
 
         $locationProvider.html5Mode(true);
@@ -29,26 +34,18 @@
     AppCtrl.$inject = ['$scope', '$timeout', '$route', '$location'];
 
     function AppCtrl ($scope, $timeout, $route, $location) {
-        var vm = this;
-        vm.isConnected = false;
 
         var isLogPageActive = false;
         var logSubscription = null;
-
-        /**
-         * Listen for page changes and subscribe to 'serverLog' topic only when we stay on that page.
-         * Unsubscribe otherwise.
-         */
-        $scope.$on('$routeChangeSuccess', function(event, data) {
-            var path = data.$$route.originalPath;
-            console.log('Page changed ' + path);
-            isLogPageActive = path == '/serverLog';
-            updateLogVisible(isLogPageActive);
-        });
-
         var connectionLostOnce = false;
+        var stompClient = null;
 
+
+        var vm = this;
+        vm.isConnected = false;
         vm.data = {
+            currentPage: "/",
+
             cpuUsage: 0,
             memoryOccupied: "",
             memoryFree: "",
@@ -63,13 +60,27 @@
             appVersion: "n/a",
             ethereumJVersion: "n/a"
         };
-        vm.list = [];
 
-        var stompClient = null;
+        /**
+         * Listen for page changes and subscribe to 'systemLog' topic only when we stay on that page.
+         * Unsubscribe otherwise.
+         */
+        $scope.$on('$routeChangeSuccess', function(event, data) {
+            var path = data.$$route.originalPath;
+            console.log('Page changed ' + path);
+            vm.data.currentPage = path;
+
+            // #1 Change subscription
+            isLogPageActive = path == '/systemLog';
+            updateLogVisible(isLogPageActive);
+
+            // #2 Change body scroll behavior for logs page
+            $('body').css('overflow', isLogPageActive ? 'hidden' : 'auto');
+        });
 
         function setConnected(value) {
             if (!value) {
-                logSubscription = false;
+                logSubscription = null;
             }
             vm.isConnected = value;
             console.log("Connected status " + value);
@@ -113,37 +124,37 @@
                 var subscribed = logSubscription != null;
                 if (doSubscribe != subscribed ) {
                     if (doSubscribe) {
-                        logSubscription = stompClient.subscribe('/topic/serverLog', onServerLogResult);
+                        logSubscription = stompClient.subscribe('/topic/systemLog', onSystemLogResult);
                     } else {
                         logSubscription.unsubscribe();
                         logSubscription = null;
                     }
                 }
-                console.log("Changed subscription to serverLog topic " + doSubscribe);
+                console.log("Changed subscription to systemLog topic " + doSubscribe);
             }
         }
 
-        function onServerLogResult(data) {
+        function onSystemLogResult(data) {
             var msg = data.body;
-            console.log(msg);
+            //console.log(msg);
 
-            $scope.$broadcast('serverLogEvent', msg);
+            // send event to SystemLogCtrl
+            $scope.$broadcast('systemLogEvent', msg);
         }
 
         function onMachineInfoResult(data) {
             var info = JSON.parse(data.body);
 
             $timeout(function() {
-                vm.data.cpuUsage = info.cpuUsage;
-                vm.data.memoryOccupied = filesize(info.memoryTotal - info.memoryFree);
-                vm.data.memoryFree = filesize(info.memoryFree);
-                vm.data.freeSpace = filesize(info.freeSpace);
+                vm.data.cpuUsage        = info.cpuUsage;
+                vm.data.memoryOccupied  = filesize(info.memoryTotal - info.memoryFree);
+                vm.data.memoryFree      = filesize(info.memoryFree);
+                vm.data.freeSpace       = filesize(info.freeSpace);
 
                 var memoryPercentage = 0;
                 if (info.memoryTotal != 0) {
                     memoryPercentage = Math.round(100 * (info.memoryTotal - info.memoryFree) / info.memoryTotal);
                 }
-                //console.log(filesize(info.memoryTotal), filesize(info.memoryFree));
 
                 updateProgressBar('#memoryUsageProgress', memoryPercentage);
                 updateProgressBar('#cpuUsageProgress', info.cpuUsage);

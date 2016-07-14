@@ -34,7 +34,7 @@ public class WebSocketController {
         return machineInfoService.getInitialInfo();
     }
 
-    @RequestMapping({"/", "/serverLog"})
+    @RequestMapping({"/", "/systemLog", "/peers"})
     public String index() {
         return "index.html";
     }

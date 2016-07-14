@@ -10,7 +10,7 @@
 (function() {
     'use strict';
     angular.module('HarmonyApp')
-        .controller('ServerLogCtrl', ['$scope', '$timeout', function($scope, $timeout) {
+        .controller('SystemLogCtrl', ['$scope', '$timeout', function($scope, $timeout) {
 
             var _logContainer;
             var _filterInput;
@@ -18,7 +18,6 @@
             var _linesLimit = 1000;
             var _highlightConfig;
             var logScrollContainer = document.getElementById("log-scroll-container");
-
 
             // Checkbox
             $scope.isAutoScroll = true;
@@ -33,8 +32,8 @@
             };
 
             // handling event from main controller
-            $scope.$on('serverLogEvent', function(event, data) {
-                //console.log("serverLogEvent " + data);
+            $scope.$on('systemLogEvent', function(event, data) {
+                //console.log("systemLogEvent " + data);
                 log(data);
             });
 
