@@ -950,6 +950,7 @@ body {
     background: #2f323b;
     font-family: 'Roboto', sans-serif;
     color: #949ba2;
+    overflow: hidden;
 }
 
 .content {

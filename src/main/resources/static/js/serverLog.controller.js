@@ -1,4 +1,9 @@
 /**
+ * Rendering logs component with features:
+ *  - auto-scroll to bottom;
+ *  - filtering by string;
+ *  - line selection.
+ *
  * Log UI and logic were used from https://github.com/mthenw/frontail
  */
 
@@ -7,35 +12,44 @@
     angular.module('HarmonyApp')
         .controller('ServerLogCtrl', ['$scope', '$timeout', function($scope, $timeout) {
 
-            $scope.list = [];
-
-            $scope.$on('serverLogEvent', function(event, data) {
-                //console.log("serverLogEvent " + data);
-                log(data);
-
-                $timeout(function() {
-                    $scope.list.push({
-                        message: data
-                    });
-
-                    var line = '<p><span>' + data + '</span></p>';
-                    $('#log').append(line);
-
-                    if ($scope.list.length > 1000) {
-                        $scope.list.splice(0, 1);
-                    }
-                }, 10);
-            });
-
             var _logContainer;
             var _filterInput;
             var _filterValue = '';
-            var _topbar;
-            var _body;
             var _linesLimit = 1000;
-            var _newLinesCount = 0;
-            var _isWindowFocused = true;
             var _highlightConfig;
+            var logScrollContainer = document.getElementById("log-scroll-container");
+
+
+            // Checkbox
+            $scope.isAutoScroll = true;
+
+            $scope.onAutoScrollChange = function() {
+                console.log("Auto scroll value: " + $scope.isAutoScroll);
+                if ($scope.isAutoScroll) {
+                    scrollToBottom();
+                }
+                // return focus back to filtering input
+                _filterInput.focus();
+            };
+
+            // handling event from main controller
+            $scope.$on('serverLogEvent', function(event, data) {
+                //console.log("serverLogEvent " + data);
+                log(data);
+            });
+
+
+            /**
+             * Resize logs element to fit all available space.
+             * Otherwise many HTML changes are required to achieve same result
+             */
+            $(window).ready(resizeLogContainer);
+            $(window).resize(resizeLogContainer);
+            function resizeLogContainer() {
+                var rect = logScrollContainer.getBoundingClientRect();
+                var newHeight = $(window).height();
+                $(logScrollContainer).css('maxHeight', (newHeight - rect.top - 30) + 'px');
+            }
 
             /**
              * Hide element if doesn't contain filter value
@@ -64,27 +78,14 @@
                     _filterElement(collection[i - 1]);
                     i -= 1;
                 }
-                //window.scrollTo(0, document.body.scrollHeight);
-            };
-
-            var _isScrolledBottom = function () {
-                var currentScroll = document.documentElement.scrollTop || document.body.scrollTop;
-                var totalHeight = document.body.offsetHeight;
-                var clientHeight = document.documentElement.clientHeight;
-                return totalHeight <= currentScroll + clientHeight;
-            };
-
-            var _faviconReset = function () {
-                _newLinesCount = 0;
-            };
-
-            var _updateFaviconCounter = function () {
-                if (_isWindowFocused) {
-                    return;
+                if ($scope.isAutoScroll) {
+                    scrollToBottom();
                 }
-
-                _newLinesCount += 1;
             };
+
+            function scrollToBottom() {
+                logScrollContainer.scrollTop = logScrollContainer.scrollHeight;
+            }
 
             var _highlightWord = function (line) {
                 if (_highlightConfig) {
@@ -124,11 +125,8 @@
             init({
                 container: document.getElementsByClassName('log')[0],
                 filterInput: document.getElementsByClassName('query')[0],
-                topbar: document.getElementsByClassName('topbar')[0],
                 body: document.getElementsByTagName('body')[0]
             });
-
-            var self = this;
 
             function init(opts) {
 
@@ -136,8 +134,6 @@
                 _logContainer = opts.container;
                 _filterInput = opts.filterInput;
                 _filterInput.focus();
-                _topbar = opts.topbar;
-                _body = opts.body;
 
                 // Filter input bind
                 _filterInput.addEventListener('keyup', function (e) {
@@ -150,22 +146,12 @@
                     }
                     _filterLogs();
                 });
-
-                // Favicon counter bind
-                window.addEventListener('blur', function () {
-                    _isWindowFocused = false;
-                }, true);
-                window.addEventListener('focus', function () {
-                    _isWindowFocused = true;
-                    _faviconReset();
-                }, true);
             }
 
             /**
              * Main method for adding new log line
              */
             function log(data) {
-                var wasScrolledBottom = _isScrolledBottom();
                 var div = document.createElement('div');
                 var p = document.createElement('p');
                 p.className = 'inner-line';
@@ -193,11 +179,9 @@
                     _logContainer.removeChild(_logContainer.children[0]);
                 }
 
-                if (wasScrolledBottom) {
-                    window.scrollTo(0, document.body.scrollHeight);
+                if ($scope.isAutoScroll) {
+                    scrollToBottom();
                 }
-
-                _updateFaviconCounter();
             }
         }]);
 })();
