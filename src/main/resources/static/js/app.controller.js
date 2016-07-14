@@ -4,16 +4,17 @@
 
     mainApp.controller('AppCtrl', AppCtrl);
 
+    /**
+     * Routing area
+     */
     mainApp.config(function($routeProvider, $locationProvider) {
         $routeProvider
 
-            // route for the home page
             .when('/', {
                 templateUrl : 'pages/home.html',
                 controller  : 'AppCtrl'
             })
 
-            // route for the about page
             .when('/serverLog', {
                 templateUrl : 'pages/serverLog.html',
                 controller  : 'ServerLogCtrl'
@@ -21,6 +22,10 @@
 
         $locationProvider.html5Mode(true);
     });
+
+    /**
+     * App Controller
+     */
 
     AppCtrl.$inject = ['$scope', '$timeout', '$route', '$location'];
 
@@ -62,6 +67,8 @@
 
             var socket = new SockJS('/websocket');
             stompClient = Stomp.over(socket);
+            // disable network data traces
+            stompClient.debug = null;
             stompClient.connect(
                 {
                     //server: "ws://127.0.0.1:8080/ws"

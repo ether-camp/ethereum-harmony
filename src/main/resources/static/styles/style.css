@@ -1396,6 +1396,21 @@ sup {
     background-color: #24262d;
 }
 
+.luna-nav {
+    height: 100%;
+}
+
+.luna-nav .ul {
+    height: 100%;
+    position: relative;
+}
+
+.nav-info {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+}
+
 .luna-nav.nav .nav-info i {
     font-size: 34px;
 }
@@ -2670,6 +2685,10 @@ fieldset[disabled] .form-control {
     vertical-align: middle;
 }
 
+
+/**
+ * Top bar area
+ */
 .tp-title {
     color: #666;
     font-weight: 500;
@@ -2694,6 +2713,9 @@ fieldset[disabled] .form-control {
     text-align: center;
 }
 
+/**
+ * Server log page
+ */
 .log {
     white-space: pre-wrap;
     color: #7F8289;

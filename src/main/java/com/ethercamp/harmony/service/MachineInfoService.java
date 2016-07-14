@@ -1,14 +1,12 @@
 package com.ethercamp.harmony.service;
 
-import ch.qos.logback.classic.*;
-import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.PatternLayout;
 import ch.qos.logback.classic.filter.LevelFilter;
-import ch.qos.logback.classic.filter.ThresholdFilter;
-import ch.qos.logback.classic.spi.LoggerContextListener;
 import ch.qos.logback.classic.spi.LoggingEvent;
-import ch.qos.logback.core.OutputStreamAppender;
 import ch.qos.logback.core.UnsynchronizedAppenderBase;
-import ch.qos.logback.core.filter.Filter;
 import com.ethercamp.harmony.domain.BlockchainInfoDTO;
 import com.ethercamp.harmony.domain.InitialInfoDTO;
 import com.ethercamp.harmony.domain.MachineInfoDTO;
@@ -19,7 +17,6 @@ import org.ethereum.core.Block;
 import org.ethereum.core.TransactionReceipt;
 import org.ethereum.listener.EthereumListenerAdapter;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -47,18 +44,18 @@ public class MachineInfoService {
     private final int BLOCK_COUNT_FOR_HASH_RATE = 100;
 
     @Autowired
-    Environment env;
+    private Environment env;
 
     @Autowired
-    ClientMessageService clientMessageService;
+    private ClientMessageService clientMessageService;
 
     @Autowired
-    Ethereum ethereum;
+    private Ethereum ethereum;
 
     /**
      * Concurrent queue of last blocks.
-     * Ethereum writes items when available.
-     * Server reads items with interval.
+     * Ethereum adds items when available.
+     * Service reads items with interval.
      */
     private final Queue<Block> lastBlocksForHashRate = new ConcurrentLinkedQueue();
 
@@ -68,6 +65,12 @@ public class MachineInfoService {
             new AtomicReference<>(new BlockchainInfoDTO(0l, 0l, 0, 0l, 0l, 0l));
 
     private final AtomicReference<InitialInfoDTO> initialInfo = new AtomicReference<>(new InitialInfoDTO("", ""));
+
+
+    public InitialInfoDTO getInitialInfo() {
+        return initialInfo.get();
+    }
+
 
     @PostConstruct
     private void postConstruct() {
@@ -84,42 +87,7 @@ public class MachineInfoService {
 
         initialInfo.set(new InitialInfoDTO(env.getProperty("ethereumJ.version"), env.getProperty("app.version")));
 
-        LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
-//        Logger logger = context.getLogger("dynamic_logger");
-
-        PatternLayout patternLayout = new PatternLayout();
-        patternLayout.setPattern("%d %-5level [%thread] %logger{35} - %msg%n");
-        patternLayout.setContext(context);
-        patternLayout.start();
-
-        // Don't inherit root appender
-//        logger.setAdditive(false);
-
-        UnsynchronizedAppenderBase messagingAppender = new UnsynchronizedAppenderBase() {
-            @Override
-            protected void append(Object eventObject) {
-                LoggingEvent event = (LoggingEvent) eventObject;
-                String message = patternLayout.doLayout(event);
-//                System.out.println("Added log entry " + event.getLoggerName() + " " + message);
-                clientMessageService.sendToTopic("/topic/serverLog", message);
-            }
-        };
-        LevelFilter filter = new LevelFilter();
-        filter.setLevel(Level.INFO);
-        messagingAppender.addFilter(filter);
-        messagingAppender.start();
-
-        // Attach appender to logger
-        Arrays.asList("blockchain", "sync", "facade", "net", "general")
-                .stream()
-                .forEach(l -> {
-                    Logger logger = context.getLogger(l);
-                    logger.setLevel(Level.INFO);
-                    logger.addAppender(messagingAppender);
-                });
-
-//        context.getLoggerList().stream()
-//                .forEach(l -> l.addAppender(messagingAppender));
+        createLogAppenderForMessaging();
     }
 
     public MachineInfoDTO getMachineInfo() {
@@ -157,9 +125,6 @@ public class MachineInfoService {
                         calculateHashRate()
                 )
         );
-
-//        log.info("doCheckStatus " + bestBlock.getNumber() + " " + LocalDateTime.ofEpochSecond(bestBlock.getTimestamp(), 0, ZoneOffset.UTC));
-//        log.info("HashRate " + calculateHashRate());
 
         clientMessageService.sendToTopic("/topic/blockchainInfo", blockchainInfo.get());
     }
@@ -212,7 +177,46 @@ public class MachineInfoService {
         return new DecimalFormat("#,##0.#").format(size/Math.pow(1024, digitGroups)) + " " + units[digitGroups];
     }
 
-    public InitialInfoDTO getInitialInfo() {
-        return initialInfo.get();
+    /**
+     * Create log appender, which will subscribe to loggers, we are interested in.
+     * Appender will send logs to messaging topic then (for delivering to client side).
+     */
+    private void createLogAppenderForMessaging() {
+        LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
+
+        PatternLayout patternLayout = new PatternLayout();
+        patternLayout.setPattern("%d %-5level [%thread] %logger{35} - %msg%n");
+        patternLayout.setContext(context);
+        patternLayout.start();
+
+        UnsynchronizedAppenderBase messagingAppender = new UnsynchronizedAppenderBase() {
+            @Override
+            protected void append(Object eventObject) {
+                LoggingEvent event = (LoggingEvent) eventObject;
+                String message = patternLayout.doLayout(event);
+                clientMessageService.sendToTopic("/topic/serverLog", message);
+            }
+        };
+
+        // No effect of this
+        LevelFilter filter = new LevelFilter();
+        filter.setLevel(Level.INFO);
+        messagingAppender.addFilter(filter);
+        messagingAppender.setName("ClientMessagingAppender");
+
+        messagingAppender.start();
+
+        // Attach appender to logger
+        Arrays.asList("blockchain", "sync", "facade", "net", "general")
+                .stream()
+                .forEach(l -> {
+                    Logger logger = context.getLogger(l);
+                    logger.setLevel(Level.INFO);
+                    logger.addAppender(messagingAppender);
+                });
+
+        // way to subscribe to all loggers existing at the moment
+//        context.getLoggerList().stream()
+//                .forEach(l -> l.addAppender(messagingAppender));
     }
 }

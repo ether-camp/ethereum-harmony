@@ -1,10 +1,13 @@
+/**
+ * Log UI and logic were used from https://github.com/mthenw/frontail
+ */
+
 (function() {
     'use strict';
     angular.module('HarmonyApp')
         .controller('ServerLogCtrl', ['$scope', '$timeout', function($scope, $timeout) {
 
             $scope.list = [];
-            $scope.message = "Server Logs";
 
             $scope.$on('serverLogEvent', function(event, data) {
                 //console.log("serverLogEvent " + data);
@@ -36,9 +39,6 @@
 
             /**
              * Hide element if doesn't contain filter value
-             *
-             * @param {Object} element
-             * @private
              */
             var _filterElement = function (element) {
                 var pattern = new RegExp(_filterValue, 'i');
@@ -51,9 +51,6 @@
 
             /**
              * Filter logs based on _filterValue
-             *
-             * @function
-             * @private
              */
             var _filterLogs = function () {
                 var collection = _logContainer.childNodes;
@@ -67,13 +64,9 @@
                     _filterElement(collection[i - 1]);
                     i -= 1;
                 }
-                window.scrollTo(0, document.body.scrollHeight);
+                //window.scrollTo(0, document.body.scrollHeight);
             };
 
-            /**
-             * @return {Boolean}
-             * @private
-             */
             var _isScrolledBottom = function () {
                 var currentScroll = document.documentElement.scrollTop || document.body.scrollTop;
                 var totalHeight = document.body.offsetHeight;
@@ -81,37 +74,18 @@
                 return totalHeight <= currentScroll + clientHeight;
             };
 
-            /**
-             * @return void
-             * @private
-             */
             var _faviconReset = function () {
                 _newLinesCount = 0;
-                Tinycon.setBubble(0);
             };
 
-            /**
-             * @return void
-             * @private
-             */
             var _updateFaviconCounter = function () {
                 if (_isWindowFocused) {
                     return;
                 }
 
                 _newLinesCount += 1;
-
-                if (_newLinesCount > 99) {
-                    Tinycon.setBubble(99);
-                } else {
-                    Tinycon.setBubble(_newLinesCount);
-                }
             };
 
-            /**
-             * @return String
-             * @private
-             */
             var _highlightWord = function (line) {
                 if (_highlightConfig) {
                     if (_highlightConfig.words) {
@@ -185,28 +159,11 @@
                     _isWindowFocused = true;
                     _faviconReset();
                 }, true);
-
-                // socket.io init
-                //_socket = opts.socket;
-                //_socket
-                //    .on('options:lines', function (limit) {
-                //        _linesLimit = limit;
-                //    })
-                //    .on('options:hide-topbar', function () {
-                //        _topbar.className += ' hide';
-                //        _body.className = 'no-topbar';
-                //    })
-                //    .on('options:no-indent', function () {
-                //        _logContainer.className += ' no-indent';
-                //    })
-                //    .on('options:highlightConfig', function (highlightConfig) {
-                //        _highlightConfig = highlightConfig;
-                //    })
-                //    .on('line', function (line) {
-                //        self.log(line);
-                //    });
             }
 
+            /**
+             * Main method for adding new log line
+             */
             function log(data) {
                 var wasScrolledBottom = _isScrolledBottom();
                 var div = document.createElement('div');
