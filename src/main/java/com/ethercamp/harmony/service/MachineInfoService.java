@@ -10,12 +10,16 @@ import ch.qos.logback.core.UnsynchronizedAppenderBase;
 import com.ethercamp.harmony.domain.BlockchainInfoDTO;
 import com.ethercamp.harmony.domain.InitialInfoDTO;
 import com.ethercamp.harmony.domain.MachineInfoDTO;
+import com.ethercamp.harmony.domain.PeerDTO;
 import com.ethercamp.harmony.ethereum.Ethereum;
+import com.maxmind.geoip.Country;
+import com.maxmind.geoip.LookupService;
 import com.sun.management.OperatingSystemMXBean;
 import lombok.extern.slf4j.Slf4j;
 import org.ethereum.core.Block;
 import org.ethereum.core.TransactionReceipt;
 import org.ethereum.listener.EthereumListenerAdapter;
+import org.ethereum.net.peerdiscovery.PeerInfo;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -28,11 +32,10 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.nio.file.*;
 import java.text.DecimalFormat;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 /**
  * Created by Stan Reshetnyk on 11.07.16.
@@ -51,6 +54,10 @@ public class MachineInfoService {
 
     @Autowired
     private Ethereum ethereum;
+
+    private LookupService lookupService;
+
+    private Map<String, Locale> localeMap;
 
     /**
      * Concurrent queue of last blocks.
@@ -88,6 +95,21 @@ public class MachineInfoService {
         initialInfo.set(new InitialInfoDTO(env.getProperty("ethereumJ.version"), env.getProperty("app.version")));
 
         createLogAppenderForMessaging();
+
+
+        String[] countries = Locale.getISOCountries();
+        localeMap = new HashMap<>(countries.length);
+        for (String country : countries) {
+            Locale locale = new Locale("", country);
+            localeMap.put(locale.getISO3Country().toUpperCase(), locale);
+        }
+        try {
+            lookupService = new LookupService(
+                    "./maxmind/GeoIP.dat",
+                    LookupService.GEOIP_MEMORY_CACHE | LookupService.GEOIP_CHECK_CACHE);
+        } catch (IOException e) {
+            log.error("Failed to create geo service " + e);
+        }
     }
 
     public MachineInfoDTO getMachineInfo() {
@@ -97,7 +119,7 @@ public class MachineInfoService {
     @Scheduled(fixedRate = 5000)
     private void doUpdateMachineInfoStatus() {
 
-        OperatingSystemMXBean bean = (OperatingSystemMXBean) ManagementFactory
+        final OperatingSystemMXBean bean = (OperatingSystemMXBean) ManagementFactory
                 .getOperatingSystemMXBean();
 
         machineInfo.set(new MachineInfoDTO(
@@ -113,8 +135,8 @@ public class MachineInfoService {
     @Scheduled(fixedRate = 2000)
     private void doUpdateBlockchainStatus() {
 
-        Block bestBlock = ethereum.getBlockchain().getBestBlock();
-        bestBlock.getNumber();
+        final Block bestBlock = ethereum.getBlockchain().getBestBlock();
+
         blockchainInfo.set(
                 new BlockchainInfoDTO(
                         bestBlock.getNumber(),
@@ -129,8 +151,34 @@ public class MachineInfoService {
         clientMessageService.sendToTopic("/topic/blockchainInfo", blockchainInfo.get());
     }
 
+    @Scheduled(fixedRate = 2000)
+    private void doSendPeersInfo() {
+        final Set<PeerInfo> peers = ethereum.getPeers();
+
+        final List<PeerDTO> list;
+
+        synchronized (peers) {
+             list = peers.stream().map(p -> new PeerDTO(
+                    p.getPeerId(),
+                    p.getAddress().getHostAddress(),
+                    null,
+                    p.getLastCheckTime(),
+                    0l,
+                    0
+            )).collect(Collectors.toList());
+        }
+
+        // update country
+        list.forEach(p -> {
+            Country country = lookupService.getCountry(p.getIp());
+            p.setCountry(iso2CountryCodeToIso3CountryCode(country.getCode()));
+        });
+
+        clientMessageService.sendToTopic("/topic/peers", list);
+    }
+
     private long calculateHashRate() {
-        List<Block> blocks = Arrays.asList(lastBlocksForHashRate.toArray(new Block[0]));
+        final List<Block> blocks = Arrays.asList(lastBlocksForHashRate.toArray(new Block[0]));
 
         if (blocks.isEmpty()) {
             return 0;
@@ -149,15 +197,15 @@ public class MachineInfoService {
      * Not tested against sym links
      */
     private long getFreeDiskSpace() {
-        File currentDir = new File(".");
+        final File currentDir = new File(".");
         for (Path root : FileSystems.getDefault().getRootDirectories()) {
             log.debug(root.toAbsolutePath() + " vs current " + currentDir.getAbsolutePath());
             try {
-                FileStore store = Files.getFileStore(root);
+                final FileStore store = Files.getFileStore(root);
 
-                boolean isCurrentDirBelongsToRoot = Paths.get(currentDir.getAbsolutePath()).startsWith(root.toAbsolutePath());
+                final boolean isCurrentDirBelongsToRoot = Paths.get(currentDir.getAbsolutePath()).startsWith(root.toAbsolutePath());
                 if (isCurrentDirBelongsToRoot) {
-                    long usableSpace = store.getUsableSpace();
+                    final long usableSpace = store.getUsableSpace();
                     log.debug("Disk available:" + readableFileSize(usableSpace)
                             + ", total:" + readableFileSize(store.getTotalSpace()));
                     return usableSpace;
@@ -171,10 +219,10 @@ public class MachineInfoService {
 
     // for better logs
     private String readableFileSize(long size) {
-        if(size <= 0) return "0";
-        final String[] units = new String[] { "B", "kB", "MB", "GB", "TB" };
-        int digitGroups = (int) (Math.log10(size)/Math.log10(1024));
-        return new DecimalFormat("#,##0.#").format(size/Math.pow(1024, digitGroups)) + " " + units[digitGroups];
+        if (size <= 0) return "0";
+        final String[] units = new String[]{"B", "kB", "MB", "GB", "TB"};
+        int digitGroups = (int) (Math.log10(size) / Math.log10(1024));
+        return new DecimalFormat("#,##0.#").format(size / Math.pow(1024, digitGroups)) + " " + units[digitGroups];
     }
 
     /**
@@ -182,14 +230,14 @@ public class MachineInfoService {
      * Appender will send logs to messaging topic then (for delivering to client side).
      */
     private void createLogAppenderForMessaging() {
-        LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
+        final LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
 
-        PatternLayout patternLayout = new PatternLayout();
+        final PatternLayout patternLayout = new PatternLayout();
         patternLayout.setPattern("%d %-5level [%thread] %logger{35} - %msg%n");
         patternLayout.setContext(context);
         patternLayout.start();
 
-        UnsynchronizedAppenderBase messagingAppender = new UnsynchronizedAppenderBase() {
+        final UnsynchronizedAppenderBase messagingAppender = new UnsynchronizedAppenderBase() {
             @Override
             protected void append(Object eventObject) {
                 LoggingEvent event = (LoggingEvent) eventObject;
@@ -199,7 +247,7 @@ public class MachineInfoService {
         };
 
         // No effect of this
-        LevelFilter filter = new LevelFilter();
+        final LevelFilter filter = new LevelFilter();
         filter.setLevel(Level.INFO);
         messagingAppender.addFilter(filter);
         messagingAppender.setName("ClientMessagingAppender");
@@ -218,5 +266,10 @@ public class MachineInfoService {
         // way to subscribe to all loggers existing at the moment
 //        context.getLoggerList().stream()
 //                .forEach(l -> l.addAppender(messagingAppender));
+    }
+
+    private String iso2CountryCodeToIso3CountryCode(String iso2CountryCode){
+        Locale locale = new Locale("", iso2CountryCode);
+        return locale.getISO3Country();
     }
 }

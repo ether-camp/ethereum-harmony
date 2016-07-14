@@ -21,7 +21,8 @@
             })
 
             .when('/peers', {
-                templateUrl : 'pages/peers.html'
+                templateUrl : 'pages/peers.html',
+                controller  : 'PeersCtrl'
             });
 
         $locationProvider.html5Mode(true);
@@ -107,6 +108,7 @@
                     stompClient.subscribe('/topic/initialInfo', onInitialInfoResult);
                     stompClient.subscribe('/topic/machineInfo', onMachineInfoResult);
                     stompClient.subscribe('/topic/blockchainInfo', onBlockchainInfoResult);
+                    stompClient.subscribe('/topic/peers', onPeersListResult);
                     updateLogVisible(isLogPageActive);
 
                     // get immediate result
@@ -117,6 +119,12 @@
                     disconnect();
                 }
             );
+        }
+
+        function onPeersListResult(data) {
+            var items = JSON.parse(data.body);
+
+            $scope.$broadcast('peersListEvent', items);
         }
 
         function updateLogVisible(doSubscribe) {

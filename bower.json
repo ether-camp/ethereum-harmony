@@ -12,6 +12,7 @@
     "font-awesome": "fontawesome#^4.6.3",
     "animate.css": "^3.5.2",
     "moment": "^2.14.1",
-    "angular-route": "^1.5.7"
+    "angular-route": "^1.5.7",
+    "datamaps": "^0.5.7"
   }
 }
