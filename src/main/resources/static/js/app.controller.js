@@ -11,8 +11,7 @@
         $routeProvider
 
             .when('/', {
-                templateUrl : 'pages/home.html',
-                controller  : 'AppCtrl'
+                templateUrl : 'pages/home.html'
             })
 
             .when('/serverLog', {
@@ -31,10 +30,20 @@
 
     function AppCtrl ($scope, $timeout, $route, $location) {
         var vm = this;
+        vm.isConnected = false;
 
-        $scope.$on('$routeChangeSuccess', function(next, current) {
-            console.log('$routeChangeStart ' + current + " " + next);
-            console.log($location.path());
+        var isLogPageActive = false;
+        var logSubscription = null;
+
+        /**
+         * Listen for page changes and subscribe to 'serverLog' topic only when we stay on that page.
+         * Unsubscribe otherwise.
+         */
+        $scope.$on('$routeChangeSuccess', function(event, data) {
+            var path = data.$$route.originalPath;
+            console.log('Page changed ' + path);
+            isLogPageActive = path == '/serverLog';
+            updateLogVisible(isLogPageActive);
         });
 
         var connectionLostOnce = false;
@@ -58,8 +67,12 @@
 
         var stompClient = null;
 
-        function setConnected(connected) {
-            console.log("Connected status " + connected);
+        function setConnected(value) {
+            if (!value) {
+                logSubscription = false;
+            }
+            vm.isConnected = value;
+            console.log("Connected status " + value);
         }
 
         function connect() {
@@ -67,12 +80,10 @@
 
             var socket = new SockJS('/websocket');
             stompClient = Stomp.over(socket);
-            // disable network data traces
+            // disable network data traces from Stomp library
             stompClient.debug = null;
             stompClient.connect(
-                {
-                    //server: "ws://127.0.0.1:8080/ws"
-                },
+                {},
                 function(frame) {
                     setConnected(true);
                     if (connectionLostOnce) {
@@ -85,7 +96,7 @@
                     stompClient.subscribe('/topic/initialInfo', onInitialInfoResult);
                     stompClient.subscribe('/topic/machineInfo', onMachineInfoResult);
                     stompClient.subscribe('/topic/blockchainInfo', onBlockchainInfoResult);
-                    stompClient.subscribe('/topic/serverLog', onServerLogResult);
+                    updateLogVisible(isLogPageActive);
 
                     // get immediate result
                     stompClient.send('/app/machineInfo');
@@ -97,11 +108,24 @@
             );
         }
 
+        function updateLogVisible(doSubscribe) {
+            if (vm.isConnected) {
+                var subscribed = logSubscription != null;
+                if (doSubscribe != subscribed ) {
+                    if (doSubscribe) {
+                        logSubscription = stompClient.subscribe('/topic/serverLog', onServerLogResult);
+                    } else {
+                        logSubscription.unsubscribe();
+                        logSubscription = null;
+                    }
+                }
+                console.log("Changed subscription to serverLog topic " + doSubscribe);
+            }
+        }
+
         function onServerLogResult(data) {
             var msg = data.body;
-
-            vm.list = vm.list || [];
-            vm.list.push(msg);
+            console.log(msg);
 
             $scope.$broadcast('serverLogEvent', msg);
         }
