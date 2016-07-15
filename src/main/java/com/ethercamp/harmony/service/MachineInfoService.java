@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
 /**
  * Created by Stan Reshetnyk on 11.07.16.
  */
-@Slf4j
+@Slf4j(topic = "harmony")
 @Service
 public class MachineInfoService {
 
@@ -55,9 +55,9 @@ public class MachineInfoService {
     @Autowired
     private Ethereum ethereum;
 
-    private LookupService lookupService;
+    private Optional<LookupService> lookupService = Optional.empty();
 
-    private Map<String, Locale> localeMap;
+    private final Map<String, Locale> localeMap = new HashMap<>();
 
     /**
      * Concurrent queue of last blocks.
@@ -96,20 +96,7 @@ public class MachineInfoService {
 
         createLogAppenderForMessaging();
 
-
-        String[] countries = Locale.getISOCountries();
-        localeMap = new HashMap<>(countries.length);
-        for (String country : countries) {
-            Locale locale = new Locale("", country);
-            localeMap.put(locale.getISO3Country().toUpperCase(), locale);
-        }
-        try {
-            lookupService = new LookupService(
-                    "./maxmind/GeoIP.dat",
-                    LookupService.GEOIP_MEMORY_CACHE | LookupService.GEOIP_CHECK_CACHE);
-        } catch (IOException e) {
-            log.error("Failed to create geo service " + e);
-        }
+        createGeoDatabase();
     }
 
     public MachineInfoDTO getMachineInfo() {
@@ -168,11 +155,13 @@ public class MachineInfoService {
             )).collect(Collectors.toList());
         }
 
-        // update country
-        list.forEach(p -> {
-            Country country = lookupService.getCountry(p.getIp());
-            p.setCountry(iso2CountryCodeToIso3CountryCode(country.getCode()));
-        });
+        // Translate IP to Country if service is available
+        lookupService.ifPresent(service ->
+            list.forEach(p -> {
+                Country country = service.getCountry(p.getIp());
+                p.setCountry(iso2CountryCodeToIso3CountryCode(country.getCode()));
+            })
+        );
 
         clientMessageService.sendToTopic("/topic/peers", list);
     }
@@ -268,8 +257,35 @@ public class MachineInfoService {
 //                .forEach(l -> l.addAppender(messagingAppender));
     }
 
+    /**
+     * Create MaxMind lookup service to find country by IP.
+     * IPv6 is not used.
+     */
+    private void createGeoDatabase() {
+        final String[] countries = Locale.getISOCountries();
+        final String dbFilePath = env.getProperty("maxmind.file");
+
+        for (String country : countries) {
+            Locale locale = new Locale("", country);
+            localeMap.put(locale.getISO3Country().toUpperCase(), locale);
+        }
+        try {
+            lookupService = Optional.of(new LookupService(
+                    dbFilePath,
+                    LookupService.GEOIP_MEMORY_CACHE | LookupService.GEOIP_CHECK_CACHE));
+        } catch (IOException e) {
+            log.error("Please download file and put to " + dbFilePath);
+            log.error("Wasn't able to create maxmind location service. Country information will not be available.", e);
+        }
+    }
+
     private String iso2CountryCodeToIso3CountryCode(String iso2CountryCode){
         Locale locale = new Locale("", iso2CountryCode);
-        return locale.getISO3Country();
+        try {
+            return locale.getISO3Country();
+        } catch (MissingResourceException e) {
+            // silent
+        }
+        return "";
     }
 }

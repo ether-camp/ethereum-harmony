@@ -8,4 +8,5 @@
 logs
 build
 database*
+maxmind*
 unsaved-data
