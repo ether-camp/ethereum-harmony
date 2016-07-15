@@ -1,12 +1,20 @@
 <section class="content">
-    <div class="container-fluid">
 
+    <div class="container-fluid">
 
         <div class="row">
             <div class="col-lg-12">
-                <div class="panel m-b-none">
-                    <div class="panel-body">
-                        <h3 class="m-b-xs"><i class="pe pe-7s-graph1 text-warning m-r-xs"></i> Ethereum Peers</h3>
+                <div class="view-header">
+                        <div class="header-icon">
+                            <i class="pe page-header-icon pe-7s-world"></i>
+                        </div>
+
+                        <div class="header-title">
+                            <h3 class="m-b-xs">Ethereum Peers</h3>
+                            <small>
+                                Displaying INFO logs for general, facade, net, blockchain, sync loggers.
+                            </small>
+                        </div>
                         <hr>
                     </div>
                 </div>
@@ -22,16 +30,13 @@
                 <div class="panel">
                     <div class="panel-body">
 
-                        <h4 class="m-t-n-sm m-b-xs">Peers location <sup>(total {{peersCount}})</sup></h4>
+                        <h4 class="m-t-n-sm m-b-xs">Peers location <sup>(active {{peersCount}})</sup></h4>
                         <samll>Real time geographically activity</samll>
-                        <div style="position: relative; padding-bottom: 56.25%;" id="serverMap">
+                        <div style="position: relative; padding-bottom: 50%;" id="serverMap">
                             <div style="z-index: 10001; position: absolute;" class="datamaps-hoverover"></div>
                         </div>
 
-
                         <div class="row">
-
-
 
                         </div>
 
@@ -43,8 +48,8 @@
                 <div class="panel panel-filled">
                     <div class="panel-body">
 
-                        <div class="table-responsive">
-                            <table class="table" id="logsTable">
+                        <div class="table-responsive" id="peers-scroll-container" style="overflow-y: scroll">
+                            <table class="table">
                                 <thead>
                                     <tr>
                                         <th>
@@ -85,8 +90,6 @@
                         </div>
                     </div>
                 </div>
-
-
             </div>
         </div>
 

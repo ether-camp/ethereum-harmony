@@ -13,6 +13,11 @@
     function onResize() {
         console.log("Peers page resize");
         wordmap.resize();
+
+        var scrollContainer = document.getElementById("peers-scroll-container");
+        var rect = scrollContainer.getBoundingClientRect();
+        var newHeight = $(window).height();
+        $(scrollContainer).css('maxHeight', (newHeight - rect.top - 30) + 'px');
     }
 
     function PeersCtrl($scope, $timeout) {
@@ -42,9 +47,19 @@
             }
         });
 
+        /**
+         * Resize peers table to fit all available space.
+         * Otherwise many HTML changes are required to achieve same result
+         */
+        $(window).ready(onResize);
         $scope.$on('windowResizeEvent', onResize);
 
         $scope.$on('peersListEvent', function(event, items) {
+            angular.forEach(items, function(value, key){
+                // round double value from Java
+                value.pingLatency = Math.round(value.pingLatency * 10) / 10;
+            });
+
             $timeout(function() {
                 $scope.peers = items;
                 $scope.peersCount = items.length;

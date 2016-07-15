@@ -956,7 +956,7 @@ body {
     margin-top: 60px;
     margin-left: 200px;
     position: relative;
-    padding: 30px;
+    padding: 20px;
     transition: margin-left 0.3s ease-out;
     -webkit-transition: margin-left 0.3s ease-out;
 }
@@ -1560,7 +1560,7 @@ sup {
 }
 
 .view-header {
-    margin: 20px 0;
+    margin: 0px 0;
     min-height: 50px;
     padding: 0 15px;
 }
@@ -2739,4 +2739,10 @@ fieldset[disabled] .form-control {
 
 .log .line-selected {
     background-color: #302436;
+}
+
+/* Text selection color */
+::selection {
+    color: #f7af3e;
+    background: #24262d;
 }

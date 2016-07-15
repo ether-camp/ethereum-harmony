@@ -7,6 +7,7 @@ import ch.qos.logback.classic.PatternLayout;
 import ch.qos.logback.classic.filter.LevelFilter;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.UnsynchronizedAppenderBase;
+import ch.qos.logback.core.util.StringCollectionUtil;
 import com.ethercamp.harmony.domain.BlockchainInfoDTO;
 import com.ethercamp.harmony.domain.InitialInfoDTO;
 import com.ethercamp.harmony.domain.MachineInfoDTO;
@@ -20,6 +21,7 @@ import org.ethereum.core.Block;
 import org.ethereum.core.TransactionReceipt;
 import org.ethereum.listener.EthereumListenerAdapter;
 import org.ethereum.net.peerdiscovery.PeerInfo;
+import org.ethereum.net.server.Channel;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -90,6 +92,16 @@ public class MachineInfoService {
                     lastBlocksForHashRate.poll();
                 }
             }
+
+            @Override
+            public void onPeerAddedToSyncPool(Channel peer) {
+                log.info("onPeerAddedToSyncPool peer: " + peer.getPeerId());
+            }
+
+            @Override
+            public void onPeerDisconnect(String host, long port) {
+                log.info("onPeerDisconnect host:" + host + ", port:" + port);
+            }
         });
 
         initialInfo.set(new InitialInfoDTO(env.getProperty("ethereumJ.version"), env.getProperty("app.version")));
@@ -138,32 +150,68 @@ public class MachineInfoService {
         clientMessageService.sendToTopic("/topic/blockchainInfo", blockchainInfo.get());
     }
 
-    @Scheduled(fixedRate = 2000)
+    /**
+     * UNDER CONSTRUCTION
+     */
+    @Scheduled(fixedRate = 1500)
     private void doSendPeersInfo() {
+        // convert active peers to DTO
+        final List<PeerDTO> list = ethereum.getChannelManager().getActivePeers()
+                .stream()
+                .map(p -> new PeerDTO(
+                        p.getPeerId(),
+                        p.getNode().getHost(),
+                        getCountryByIp(p.getNode().getHost()),
+                        0l,
+                        p.getPeerStats().getAvgLatency(),
+                        p.getNodeStatistics().getReputation()))
+                .collect(Collectors.toList());
+
         final Set<PeerInfo> peers = ethereum.getPeers();
 
-        final List<PeerDTO> list;
-
+        // retrieve peer's last check info values from all known peers
+        // and set to our active peers
         synchronized (peers) {
-             list = peers.stream().map(p -> new PeerDTO(
-                    p.getPeerId(),
-                    p.getAddress().getHostAddress(),
-                    null,
-                    p.getLastCheckTime(),
-                    0l,
-                    0
-            )).collect(Collectors.toList());
+            list.stream()
+                    .forEach(p -> p.setLastPing(
+                            peers.stream()                                  // find peer with same peerId
+                                    .filter(pi -> pi.getPeerId().equals(p.getNodeId()))
+                                    .findFirst()
+                                    .map(pi -> pi.getLastCheckTime())       // using value from found peer
+                                    .orElse(-1l)                            // -1 means we don't know last check
+                                                                            // time for that peer
+            ));
         }
 
-        // Translate IP to Country if service is available
-        lookupService.ifPresent(service ->
-            list.forEach(p -> {
-                Country country = service.getCountry(p.getIp());
-                p.setCountry(iso2CountryCodeToIso3CountryCode(country.getCode()));
-            })
-        );
-
         clientMessageService.sendToTopic("/topic/peers", list);
+
+//        final Set<PeerInfo> peers = ethereum.getPeers();
+//        synchronized (peers) {
+//             list = peers.stream()
+//                     //.filter(p -> p.isOnline())
+//                     .map(p -> new PeerDTO(
+//                            p.getPeerId(),
+//                            p.getAddress().getHostAddress(),
+//                            null,
+//                            p.getLastCheckTime(),
+//                            0,
+//                            0))
+//                     .collect(Collectors.toList());
+//        }
+
+//        // Translate IP to Country if service is available
+//        lookupService.ifPresent(service ->
+//            list.forEach(p -> {
+//                Country country = service.getCountry(p.getIp());
+//                p.setCountry(iso2CountryCodeToIso3CountryCode(country.getCode()));
+//            })
+//        );
+    }
+
+    private String getCountryByIp(String ip) {
+        return lookupService
+                .map(service -> iso2CountryCodeToIso3CountryCode(service.getCountry(ip).getCode()))
+                .orElse("");
     }
 
     private long calculateHashRate() {

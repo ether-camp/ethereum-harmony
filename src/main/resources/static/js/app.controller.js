@@ -32,8 +32,11 @@
      * App Controller
      */
 
-    var isLogPageActive = false;
-    var logSubscription = null;
+    var isLogPageActive = false;        // TODO move to related controller
+    var isPeersPageActive = false;      // TODO move to related controller
+
+    var topicStorage = {};
+
     var connectionLostOnce = false;
     var stompClient = null;
     var simpleSuffixes = {
@@ -83,7 +86,7 @@
             "closeButton": true,
             "progressBar": true,
             "showEasing": "swing",
-            "timeOut": "6000"
+            "timeOut": "4000"
         };
         toastr.warning('<strong>' + topMessage + '</strong> <br/><small>' + bottomMessage + '</small>');
     }
@@ -111,6 +114,9 @@
             ethereumJVersion: "n/a"
         };
 
+        var updateLogSubscription = updateSubscriptionFun('/topic/systemLog', onSystemLogResult);
+        var updatePeersSubscription = updateSubscriptionFun('/topic/peers', onPeersListResult);
+
         /**
          * Listen for page changes and subscribe to 'systemLog' topic only when we stay on that page.
          * Unsubscribe otherwise.
@@ -122,10 +128,13 @@
 
             // #1 Change subscription
             isLogPageActive = path == '/systemLog';
-            updateLogVisible(isLogPageActive);
+            isPeersPageActive = path == '/peers';
+            var isMainPageActive = path == '/';
+            updateLogSubscription(isLogPageActive);
+            updatePeersSubscription(isPeersPageActive);
 
-            // #2 Change body scroll behavior for logs page
-            $('body').css('overflow', isLogPageActive ? 'hidden' : 'auto');
+            // #2 Change body scroll behavior depending on selected page
+            $('body').css('overflow', isMainPageActive ? 'auto' : 'hidden');
         });
 
         /**
@@ -138,7 +147,8 @@
 
         function setConnected(value) {
             if (!value) {
-                logSubscription = null;
+                // remove all saved subscriptions
+                topicStorage = {};
             }
             vm.isConnected = value;
             console.log("Connected status " + value);
@@ -165,8 +175,8 @@
                     stompClient.subscribe('/topic/initialInfo', onInitialInfoResult);
                     stompClient.subscribe('/topic/machineInfo', onMachineInfoResult);
                     stompClient.subscribe('/topic/blockchainInfo', onBlockchainInfoResult);
-                    stompClient.subscribe('/topic/peers', onPeersListResult);
-                    updateLogVisible(isLogPageActive);
+                    updateLogSubscription(isLogPageActive);
+                    updatePeersSubscription(isPeersPageActive);
 
                     // get immediate result
                     stompClient.send('/app/machineInfo');
@@ -180,23 +190,26 @@
 
         function onPeersListResult(data) {
             var items = JSON.parse(data.body);
+            console.log("onPeersListResult");
 
             $scope.$broadcast('peersListEvent', items);
         }
 
-        function updateLogVisible(doSubscribe) {
-            if (vm.isConnected) {
-                var subscribed = logSubscription != null;
-                if (doSubscribe != subscribed ) {
-                    if (doSubscribe) {
-                        logSubscription = stompClient.subscribe('/topic/systemLog', onSystemLogResult);
-                    } else {
-                        logSubscription.unsubscribe();
-                        logSubscription = null;
+        function updateSubscriptionFun(topic, handler) {
+            return function(doSubscribe) {
+                if (vm.isConnected) {
+                    var subscribed = topicStorage[topic] != null;
+                    if (doSubscribe != subscribed ) {
+                        if (doSubscribe) {
+                            topicStorage[topic] = stompClient.subscribe(topic, handler);
+                        } else {
+                            topicStorage[topic].unsubscribe();
+                            topicStorage[topic] = null;
+                        }
                     }
+                    console.log("Changed subscription to systemLog topic " + doSubscribe);
                 }
-                console.log("Changed subscription to systemLog topic " + doSubscribe);
-            }
+            };
         }
 
         function onSystemLogResult(data) {

@@ -2,8 +2,6 @@ package com.ethercamp.harmony.domain;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.Setter;
-import lombok.Value;
 
 /**
  * Created by Stan Reshetnyk on 14.07.16.
@@ -20,11 +18,11 @@ public class PeerDTO {
 
     private Long lastPing;
 
-    private Long pingLatency;
+    private Double pingLatency;
 
     private Integer reputation;
 
-    public void setCountry(String country) {
-        this.country = country;
+    public void setLastPing(Long lastPing) {
+        this.lastPing = lastPing;
     }
 }
