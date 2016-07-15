@@ -32,16 +32,65 @@
      * App Controller
      */
 
-    AppCtrl.$inject = ['$scope', '$timeout', '$route', '$location'];
+    var isLogPageActive = false;
+    var logSubscription = null;
+    var connectionLostOnce = false;
+    var stompClient = null;
+    var simpleSuffixes = {
+        suffixes: {
+            B: "",
+            KB: "K",
+            MB: "M",
+            GB: "G",
+            TB: "T"
+        }
+    };
 
-    function AppCtrl ($scope, $timeout, $route, $location) {
+    function updateBlockCounter(value) {
+        var blockCounter = $('#blockCounter');
+        blockCounter.prop('Counter', blockCounter.attr('value')).stop().animate({
+            Counter: '' + value
+        }, {
+            duration: 1500,
+            easing: 'linear',
+            step: function(now) {
+                var value = Math.ceil(now);
+                blockCounter.attr('value', value);
+                blockCounter.text(numberWithCommas(value));
+            }
+        });
+    }
 
-        var isLogPageActive = false;
-        var logSubscription = null;
-        var connectionLostOnce = false;
-        var stompClient = null;
+    /**
+     * @example 1000 -> "1,000"
+     */
+    function numberWithCommas(x) {
+        return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
 
+    function updateProgressBar(view, percentage) {
+        $(view).css('width', percentage + "%");
+        $(view).attr('aria-valuenow', percentage);
+    }
 
+    /**
+     * Show top right bubble
+     */
+    function showToastr(topMessage, bottomMessage) {
+        toastr.clear()
+        toastr.options = {
+            "positionClass": "toast-top-right",
+            "closeButton": true,
+            "progressBar": true,
+            "showEasing": "swing",
+            "timeOut": "6000"
+        };
+        toastr.warning('<strong>' + topMessage + '</strong> <br/><small>' + bottomMessage + '</small>');
+    }
+
+    AppCtrl.$inject = ['$scope', '$timeout', '$route', '$location', '$window'];
+
+    function AppCtrl ($scope, $timeout, $route, $location, $window) {
         var vm = this;
         vm.isConnected = false;
         vm.data = {
@@ -77,6 +126,14 @@
 
             // #2 Change body scroll behavior for logs page
             $('body').css('overflow', isLogPageActive ? 'hidden' : 'auto');
+        });
+
+        /**
+         * Listed for window resize and broadcast to all interested controllers.
+         * In that way sub controllers should care of bind and unbind for this event manually
+         */
+        angular.element($window).bind('resize', function() {
+            $scope.$broadcast('windowResizeEvent');
         });
 
         function setConnected(value) {
@@ -181,16 +238,6 @@
             stompClient.unsubscribe('/topic/initialInfo');
         }
 
-        var simpleSuffixes = {
-            suffixes: {
-                B: "",
-                KB: "K",
-                MB: "M",
-                GB: "G",
-                TB: "T"
-            }
-        };
-
         function onBlockchainInfoResult(data) {
             var info = JSON.parse(data.body);
 
@@ -207,30 +254,6 @@
             }, 10);
         }
 
-        function updateBlockCounter(value) {
-            var blockCounter = $('#blockCounter');
-            blockCounter.prop('Counter', blockCounter.attr('value')).stop().animate({
-                Counter: '' + value
-            }, {
-                duration: 1500,
-                easing: 'linear',
-                step: function(now) {
-                    var value = Math.ceil(now);
-                    blockCounter.attr('value', value);
-                    blockCounter.text(numberWithCommas(value));
-                }
-            });
-        }
-
-        function numberWithCommas(x) {
-            return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-        }
-
-        function updateProgressBar(view, percentage) {
-            $(view).css('width', percentage + "%");
-            $(view).attr('aria-valuenow', percentage);
-        }
-
         function disconnect() {
             connectionLostOnce = true;
             showToastr("Connection Lost", "Reconnecting...");
@@ -241,18 +264,6 @@
             setConnected(false);
             console.log("Disconnected. Retry ...");
             setTimeout(connect, 5000);
-        }
-
-        function showToastr(topMessage, bottomMessage) {
-            toastr.clear()
-            toastr.options = {
-                "positionClass": "toast-top-right",
-                "closeButton": true,
-                "progressBar": true,
-                "showEasing": "swing",
-                "timeOut": "6000"
-            };
-            toastr.warning('<strong>' + topMessage + '</strong> <br/><small>' + bottomMessage + '</small>');
         }
 
         connect();
