@@ -55,7 +55,7 @@
         $scope.$on('windowResizeEvent', onResize);
 
         $scope.$on('peersListEvent', function(event, items) {
-            angular.forEach(items, function(value, key){
+            angular.forEach(items, function(value, key) {
                 // round double value from Java
                 value.pingLatency = Math.round(value.pingLatency * 10) / 10;
             });
