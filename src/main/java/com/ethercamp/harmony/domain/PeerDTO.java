@@ -28,4 +28,6 @@ public class PeerDTO {
 
     private Integer reputation;
 
+    private Boolean isActive;
+
 }

@@ -7,12 +7,10 @@ import ch.qos.logback.classic.PatternLayout;
 import ch.qos.logback.classic.filter.LevelFilter;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.UnsynchronizedAppenderBase;
-import ch.qos.logback.core.util.StringCollectionUtil;
 import com.ethercamp.harmony.domain.BlockchainInfoDTO;
 import com.ethercamp.harmony.domain.InitialInfoDTO;
 import com.ethercamp.harmony.domain.MachineInfoDTO;
 import com.ethercamp.harmony.domain.PeerDTO;
-import com.maxmind.geoip.Country;
 import com.maxmind.geoip.LookupService;
 import com.sun.management.OperatingSystemMXBean;
 import lombok.extern.slf4j.Slf4j;
@@ -160,46 +158,55 @@ public class MachineInfoService {
 
         // create copy of all peers info for later use
         synchronized (peersNotSafe) {
-            peers = new LinkedHashSet<PeerInfo>(peersNotSafe);
+            peers = new HashSet<>(peersNotSafe);
         }
 
         // convert active peers to DTO
-        final List<PeerDTO> list = ethereum.getChannelManager().getActivePeers()
+        final List<PeerDTO> resultPeers = ethereum.getChannelManager().getActivePeers()
                 .stream()
-                .map(p -> {
-                    final String ip = p.getNode().getHost();
-
-                    // code or ""
-                    final String country2Code = lookupService
-                            .map(service -> service.getCountry(ip).getCode())
-                            .orElse("");
-
-                    // code or ""
-                    final String country3Code = iso2CountryCodeToIso3CountryCode(country2Code);
-
-                    return new PeerDTO(
-                            p.getPeerId(),
-                            p.getNode().getHost(),
-                            country3Code,
-                            country2Code,
-                            findLastPing(peers, p.getPeerId()),
-                            p.getPeerStats().getAvgLatency(),
-                            p.getNodeStatistics().getReputation());
-                })
+                .map(p -> createPeerDTO(
+                        p.getPeerId(),
+                        p.getNode().getHost(),
+                        p.getPeerStats().getAvgLatency(),
+                        p.getNodeStatistics().getReputation(),
+                        true))
                 .collect(Collectors.toList());
 
-        clientMessageService.sendToTopic("/topic/peers", list);
+        peers.forEach(peer -> {
+            boolean isPeerAdded = resultPeers.stream()
+                    .anyMatch(addedPeer -> addedPeer.getNodeId().equals(peer.getPeerId()));
+            if (!isPeerAdded) {
+                resultPeers.add(createPeerDTO(
+                        peer.getPeerId(),
+                        peer.getAddress().getHostAddress(),
+                        0.0,
+                        0,
+                        false
+                ));
+            }
+        });
+
+        clientMessageService.sendToTopic("/topic/peers", resultPeers);
     }
 
-    /**
-     * @return found last ping value or -1
-     */
-    private long findLastPing(Set<PeerInfo> peers, final String peerId) {
-        return peers.stream()
-                .filter(pi -> pi.getPeerId().equals(peerId))
-                .findFirst()
-                .map(pi -> pi.getLastCheckTime())
-                .orElse(-1l);
+    private PeerDTO createPeerDTO(String peerId, String ip, double avgLatency, int reputation, boolean isActive) {
+        // code or ""
+        final String country2Code = lookupService
+                .map(service -> service.getCountry(ip).getCode())
+                .orElse("");
+
+        // code or ""
+        final String country3Code = iso2CountryCodeToIso3CountryCode(country2Code);
+
+        return new PeerDTO(
+                peerId,
+                ip,
+                country3Code,
+                country2Code,
+                0l,     // not implemented yet
+                avgLatency,
+                reputation,
+                isActive);
     }
 
     private long calculateHashRate() {

@@ -36,7 +36,7 @@
                 <div class="panel">
                     <div class="panel-body">
 
-                        <h4 class="m-t-n-sm m-b-xs">Peers location <sup>(active {{peersCount}})</sup></h4>
+                        <h4 class="m-t-n-sm m-b-xs">Peers location <sup>(total {{peersCount}})</sup></h4>
                         <samll>Real time geographically activity</samll>
                         <div style="position: relative; padding-bottom: 50%;" id="serverMap">
                             <div style="z-index: 10001; position: absolute;" class="datamaps-hoverover"></div>
@@ -52,7 +52,33 @@
             <div class="col-lg-7">
 
                 <div class="panel panel-filled">
+
                     <div class="panel-body">
+
+                        <form class="navbar-form" role="search">
+                            <ul class="list-inline">
+                                <!--<li>-->
+                                    <!--<div class="checkbox">-->
+                                        <!--<label>-->
+                                            <!--<input type="checkbox"-->
+                                                   <!--ng-model="showActive"-->
+                                                   <!--ng-change="onShowActiveChange()">-->
+                                            <!--Active-->
+                                        <!--</label>-->
+                                    <!--</div>-->
+                                <!--</li>-->
+                                <li>
+                                    <div class="checkbox">
+                                        <label style="font-size: 16px">
+                                            <input type="checkbox"
+                                                   ng-model="showInactive"
+                                                   ng-change="onShowInactiveChange()">
+                                            Show Non-Active Nodes
+                                        </label>
+                                    </div>
+                                </li>
+                            </ul>
+                        </form>
 
                         <div class="table-responsive" id="peers-scroll-container" style="overflow-y: scroll">
                             <table class="table peers-table">
@@ -80,9 +106,11 @@
                                 </thead>
                                 <tbody>
 
-                                    <tr ng-repeat="peer in peers" ng-cloak>
+                                    <tr ng-repeat="peer in peers | filter: { isActive: !showInactive }"
+                                        ng-cloak
+                                        ng-class="{'peer-active': peer.isActive}">
                                         <td data-toggle="tooltip" title="{{peer.nodeId}}">
-                                            0x{{peer.nodeId | limitTo : 8 : 0}}...
+                                            0x{{peer.nodeId | limitTo : 12 : 0}}...
                                         </td>
                                         <td>{{peer.ip}}</td>
                                         <td style="padding-top: 0;padding-bottom: 0" data-toggle="tooltip" title="{{peer.country3Code}}">
@@ -91,7 +119,7 @@
                                             </ul>
                                         </td>
                                         <td class="text-right">{{peer.lastPing}}</td>
-                                        <td class="text-right">{{peer.pingLatency}} (ms)</td>
+                                        <td class="text-right">{{peer.pingLatency}} ms</td>
                                         <td class="text-right">{{peer.reputation}}</td>
                                     </tr>
 

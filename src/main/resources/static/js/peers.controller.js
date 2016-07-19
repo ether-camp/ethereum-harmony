@@ -62,6 +62,8 @@
         $scope.peers = $scope.peers || [];
         $scope.opts = $scope.opts || {};
         $scope.peersCount = $scope.peersCount || 0;
+        $scope.showActive = true;
+        $scope.showInactive = false;
 
         $scope.$on('$destroy', function() {
             console.log('Peers controller exited.');
@@ -94,8 +96,9 @@
             $timeout(function() {
                 synchronizeArrays(items, $scope.peers, function(oldValue, newValue) {
                     // round double value from Java
-                    oldValue.pingLatency   = Math.round(newValue.pingLatency * 10) / 10;
-                    oldValue.lastPing      = !newValue.lastPing ? "No info" : moment(newValue.lastPing).fromNow();
+                    oldValue.pingLatency    = Math.round(newValue.pingLatency * 10) / 10;
+                    oldValue.lastPing       = !newValue.lastPing ? "No info" : Math.round(newValue.lastPing / 1000) + " seconds ago";
+                    oldValue.isActive       = newValue.isActive;
                 });
                 $scope.peersCount = items.length;
             }, 10);
@@ -112,6 +115,13 @@
             wordmap.updateChoropleth(opts);
             //console.log('Updated map');
         });
+
+        $scope.onShowActiveChange = function() {
+
+        };
+        $scope.onShowInactiveChange = function() {
+
+        };
     }
 
     angular.module('HarmonyApp')
