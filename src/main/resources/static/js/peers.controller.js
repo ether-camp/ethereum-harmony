@@ -110,7 +110,7 @@
                 opts[value.country3Code] = FILLED;
             });
             wordmap.updateChoropleth(opts);
-            console.log('Updated map');
+            //console.log('Updated map');
         });
     }
 

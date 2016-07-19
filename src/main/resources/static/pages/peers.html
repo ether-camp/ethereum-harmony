@@ -3,7 +3,7 @@
     <link
             rel="stylesheet"
             type="text/css"
-            href="//cloud.github.com/downloads/lafeber/world-flags-sprite/flags32.css"
+            href="styles/flags32.css"
     />
 
     <div class="container-fluid">
@@ -80,7 +80,7 @@
                                 </thead>
                                 <tbody>
 
-                                    <tr ng-repeat="peer in peers | orderBy:'[]':true" ng-cloak>
+                                    <tr ng-repeat="peer in peers" ng-cloak>
                                         <td data-toggle="tooltip" title="{{peer.nodeId}}">
                                             0x{{peer.nodeId | limitTo : 8 : 0}}...
                                         </td>

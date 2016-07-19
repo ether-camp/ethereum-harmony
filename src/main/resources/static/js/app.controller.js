@@ -190,7 +190,6 @@
 
         function onPeersListResult(data) {
             var items = JSON.parse(data.body);
-            console.log("onPeersListResult");
 
             $scope.$broadcast('peersListEvent', items);
         }
@@ -206,8 +205,8 @@
                             topicStorage[topic].unsubscribe();
                             topicStorage[topic] = null;
                         }
+                        console.log("Changed subscription to topic:" + topic + " " + doSubscribe);
                     }
-                    console.log("Changed subscription to systemLog topic " + doSubscribe);
                 }
             };
         }
