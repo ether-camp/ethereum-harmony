@@ -155,63 +155,51 @@ public class MachineInfoService {
      */
     @Scheduled(fixedRate = 1500)
     private void doSendPeersInfo() {
+        final Set<PeerInfo> peersNotSafe = ethereum.getPeers();
+        final Set<PeerInfo> peers;
+
+        // create copy of all peers info for later use
+        synchronized (peersNotSafe) {
+            peers = new LinkedHashSet<PeerInfo>(peersNotSafe);
+        }
+
         // convert active peers to DTO
         final List<PeerDTO> list = ethereum.getChannelManager().getActivePeers()
                 .stream()
-                .map(p -> new PeerDTO(
-                        p.getPeerId(),
-                        p.getNode().getHost(),
-                        getCountryByIp(p.getNode().getHost()),
-                        0l,
-                        p.getPeerStats().getAvgLatency(),
-                        p.getNodeStatistics().getReputation()))
+                .map(p -> {
+                    final String ip = p.getNode().getHost();
+
+                    // code or ""
+                    final String country2Code = lookupService
+                            .map(service -> service.getCountry(ip).getCode())
+                            .orElse("");
+
+                    // code or ""
+                    final String country3Code = iso2CountryCodeToIso3CountryCode(country2Code);
+
+                    return new PeerDTO(
+                            p.getPeerId(),
+                            p.getNode().getHost(),
+                            country3Code,
+                            country2Code,
+                            findLastPing(peers, p.getPeerId()),
+                            p.getPeerStats().getAvgLatency(),
+                            p.getNodeStatistics().getReputation());
+                })
                 .collect(Collectors.toList());
 
-        final Set<PeerInfo> peers = ethereum.getPeers();
-
-        // retrieve peer's last check info values from all known peers
-        // and set to our active peers
-        synchronized (peers) {
-            list.stream()
-                    .forEach(p -> p.setLastPing(
-                            peers.stream()                                  // find peer with same peerId
-                                    .filter(pi -> pi.getPeerId().equals(p.getNodeId()))
-                                    .findFirst()
-                                    .map(pi -> pi.getLastCheckTime())       // using value from found peer
-                                    .orElse(-1l)                            // -1 means we don't know last check
-                                                                            // time for that peer
-            ));
-        }
-
         clientMessageService.sendToTopic("/topic/peers", list);
-
-//        final Set<PeerInfo> peers = ethereum.getPeers();
-//        synchronized (peers) {
-//             list = peers.stream()
-//                     //.filter(p -> p.isOnline())
-//                     .map(p -> new PeerDTO(
-//                            p.getPeerId(),
-//                            p.getAddress().getHostAddress(),
-//                            null,
-//                            p.getLastCheckTime(),
-//                            0,
-//                            0))
-//                     .collect(Collectors.toList());
-//        }
-
-//        // Translate IP to Country if service is available
-//        lookupService.ifPresent(service ->
-//            list.forEach(p -> {
-//                Country country = service.getCountry(p.getIp());
-//                p.setCountry(iso2CountryCodeToIso3CountryCode(country.getCode()));
-//            })
-//        );
     }
 
-    private String getCountryByIp(String ip) {
-        return lookupService
-                .map(service -> iso2CountryCodeToIso3CountryCode(service.getCountry(ip).getCode()))
-                .orElse("");
+    /**
+     * @return found last ping value or -1
+     */
+    private long findLastPing(Set<PeerInfo> peers, final String peerId) {
+        return peers.stream()
+                .filter(pi -> pi.getPeerId().equals(peerId))
+                .findFirst()
+                .map(pi -> pi.getLastCheckTime())
+                .orElse(-1l);
     }
 
     private long calculateHashRate() {

@@ -1,5 +1,11 @@
 <section class="content">
 
+    <link
+            rel="stylesheet"
+            type="text/css"
+            href="//cloud.github.com/downloads/lafeber/world-flags-sprite/flags32.css"
+    />
+
     <div class="container-fluid">
 
         <div class="row">
@@ -49,7 +55,7 @@
                     <div class="panel-body">
 
                         <div class="table-responsive" id="peers-scroll-container" style="overflow-y: scroll">
-                            <table class="table">
+                            <table class="table peers-table">
                                 <thead>
                                     <tr>
                                         <th>
@@ -58,16 +64,16 @@
                                         <th>
                                             IP
                                         </th>
-                                        <th>
+                                        <th style="text-align: left">
                                             Geo
                                         </th>
-                                        <th>
+                                        <th class="text-right">
                                             Last Ping
                                         </th>
-                                        <th>
+                                        <th class="text-right">
                                             Ping Latency
                                         </th>
-                                        <th>
+                                        <th class="text-right">
                                             Reputation
                                         </th>
                                     </tr>
@@ -79,10 +85,14 @@
                                             0x{{peer.nodeId | limitTo : 8 : 0}}...
                                         </td>
                                         <td>{{peer.ip}}</td>
-                                        <td>{{peer.country}}</td>
-                                        <td>{{peer.lastPing}}</td>
-                                        <td>{{peer.pingLatency}}</td>
-                                        <td>{{peer.reputation}}</td>
+                                        <td style="padding-top: 0;padding-bottom: 0" data-toggle="tooltip" title="{{peer.country3Code}}">
+                                            <ul class="f32 m-b-none">
+                                                <li class="flag {{peer.country2Code | lowercase}}"></li>
+                                            </ul>
+                                        </td>
+                                        <td class="text-right">{{peer.lastPing}}</td>
+                                        <td class="text-right">{{peer.pingLatency}} (ms)</td>
+                                        <td class="text-right">{{peer.reputation}}</td>
                                     </tr>
 
                                 </tbody>

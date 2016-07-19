@@ -2746,3 +2746,16 @@ fieldset[disabled] .form-control {
     color: #f7af3e;
     background: #24262d;
 }
+
+.text-right {
+    text-align: right;
+}
+
+.peers-table td {
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.peers-table ul {
+    padding: 0;
+}

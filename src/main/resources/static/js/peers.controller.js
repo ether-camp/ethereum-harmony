@@ -20,6 +20,42 @@
         $(scrollContainer).css('maxHeight', (newHeight - rect.top - 30) + 'px');
     }
 
+    // update items in array without recreating them
+    function synchronizeArrays(source, target, updateFun) {
+        var sourceMap = source.reduce(function(s, v) {
+            s[v.nodeId] = v;
+            return s;
+        }, {});
+        var indexesForRemove = [];
+        // update current items
+        angular.forEach(target, function(item, index) {
+            var updatedItem = sourceMap[item.nodeId];
+            if (updatedItem) {
+                updateFun(item, updatedItem);
+                delete sourceMap[item.nodeId];
+            } else {
+                indexesForRemove.push(index);
+            }
+        });
+
+        // remove not existing items
+        angular.forEach(
+            // sorted DESC indexes
+            indexesForRemove.sort(function(a,b) {
+                return a - b;
+            }),
+            // remove by index
+            function(index) {
+                target.splice(index, 1)
+            });
+
+        // add new items
+        angular.forEach(sourceMap, function(item) {
+            updateFun(item, item);
+            target.push(item);
+        });
+    }
+
     function PeersCtrl($scope, $timeout) {
 
         console.log('Peers controller activated.');
@@ -55,13 +91,12 @@
         $scope.$on('windowResizeEvent', onResize);
 
         $scope.$on('peersListEvent', function(event, items) {
-            angular.forEach(items, function(value, key) {
-                // round double value from Java
-                value.pingLatency = Math.round(value.pingLatency * 10) / 10;
-            });
-
             $timeout(function() {
-                $scope.peers = items;
+                synchronizeArrays(items, $scope.peers, function(oldValue, newValue) {
+                    // round double value from Java
+                    oldValue.pingLatency   = Math.round(newValue.pingLatency * 10) / 10;
+                    oldValue.lastPing      = !newValue.lastPing ? "No info" : moment(newValue.lastPing).fromNow();
+                });
                 $scope.peersCount = items.length;
             }, 10);
 
@@ -72,7 +107,7 @@
             });
 
             angular.forEach(items, function(value, key){
-                opts[value.country] = FILLED;
+                opts[value.country3Code] = FILLED;
             });
             wordmap.updateChoropleth(opts);
             console.log('Updated map');

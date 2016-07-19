@@ -1,12 +1,12 @@
 package com.ethercamp.harmony.domain;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Value;
 
 /**
  * Created by Stan Reshetnyk on 14.07.16.
  */
-@Data
+@Value
 @AllArgsConstructor
 public class PeerDTO {
 
@@ -14,15 +14,18 @@ public class PeerDTO {
 
     private String ip;
 
-    private String country;
+    // 3 letter code, used for map in UI
+    private String country3Code;
 
+    // 2 letter code, used for flags in UI
+    private String country2Code;
+
+    // seconds???
     private Long lastPing;
 
+    // ms
     private Double pingLatency;
 
     private Integer reputation;
 
-    public void setLastPing(Long lastPing) {
-        this.lastPing = lastPing;
-    }
 }
