@@ -175,6 +175,7 @@
                     stompClient.subscribe('/topic/initialInfo', onInitialInfoResult);
                     stompClient.subscribe('/topic/machineInfo', onMachineInfoResult);
                     stompClient.subscribe('/topic/blockchainInfo', onBlockchainInfoResult);
+                    stompClient.subscribe('/topic/newBlockFrom', onNewBlockFromResult);
                     updateLogSubscription(isLogPageActive);
                     updatePeersSubscription(isPeersPageActive);
 
@@ -213,7 +214,6 @@
 
         function onSystemLogResult(data) {
             var msg = data.body;
-            //console.log(msg);
 
             // send event to SystemLogCtrl
             $scope.$broadcast('systemLogEvent', msg);
@@ -264,6 +264,12 @@
                 vm.data.lastReforkTime          = info.lastReforkTime;
                 vm.data.networkHashRate         = filesize(info.networkHashRate, simpleSuffixes) + "H/s";
             }, 10);
+        }
+
+        function onNewBlockFromResult(data) {
+            var item = JSON.parse(data.body);
+
+            $scope.$broadcast('newBlockFromEvent', item);
         }
 
         function disconnect() {

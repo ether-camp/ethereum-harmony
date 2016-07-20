@@ -68,10 +68,12 @@
         $scope.peers = $scope.peers || [];
         $scope.opts = $scope.opts || {};
         $scope.peersCount = $scope.peersCount || 0;
+        $scope.activePeersCount = $scope.activePeersCount || 0;
         $scope.showActive = true;
         $scope.showInactive = false;
 
         $scope.$on('$destroy', function() {
+            $timeout.cancel($scope.promise);
             console.log('Peers controller exited.');
         });
 
@@ -80,18 +82,33 @@
             fills: {
                 defaultFill: "#3B3D46",
                 filled: "#CA8800",
-                blink: "#FFF108"
+                blink: "#FFF108",
+                block: "#FF0000"
             },
             responsive: true,
             geographyConfig: {
                 highlightOnHover: false,
                 borderWidth: 0
             },
-            arcConfig: {
-                strokeColor: '#DD1C77',
-                strokeWidth: 1,
-                arcSharpness: 1,
-                animationSpeed: 200 // Milliseconds
+            bubblesConfig: {
+                borderWidth: 1,
+                borderOpacity: 1,
+                borderColor: '#FFFFFF',
+                popupOnHover: true, // True to show the popup while hovering
+                radius: 5,
+                popupTemplate: function(geography, data) { // This function should just return a string
+                    return '<div class="hoverinfo"><strong>' + data.name + '</strong></div>';
+                },
+                fillOpacity: 0.75,
+                animate: true,
+                highlightOnHover: true,
+                highlightFillColor: '#FF585B',
+                highlightBorderColor: '#FFFFFF',
+                highlightBorderWidth: 1,
+                highlightBorderOpacity: 1,
+                highlightFillOpacity: 0.85,
+                exitDelay: 100, // Milliseconds
+                key: JSON.stringify
             },
             data: {
                 //USA: { fillKey: "active" }
@@ -118,6 +135,13 @@
                     oldValue.isActive       = newValue.isActive;
                 });
                 $scope.peersCount = items.length;
+                var activePeersCount = 0;
+                angular.forEach(items, function(item){
+                    if (item.isActive) {
+                        activePeersCount++;
+                    }
+                });
+                $scope.activePeersCount = activePeersCount;
 
                 // #2 Update Map
                 //var opts = $scope.opts;
@@ -148,6 +172,25 @@
                     wordmap.updateChoropleth(opts);
                 }, 700);
             }, 10);
+        });
+
+        $scope.$on('newBlockFromEvent', function(event, item) {
+            console.log("New block from " + item.country3Code);
+
+            $timeout.cancel($scope.promise);
+
+            wordmap.bubbles([
+                {
+                    name: 'New block from ' + item.country3Code,
+                    centered: item.country3Code,
+                    country: item.country3Code,
+                    fillKey: 'block'
+                }
+            ], {exitDelay: 1000});
+
+            $scope.promise = $timeout(function() {
+                wordmap.bubbles([], {exitDelay: 200});
+            }, 1000);
         });
 
         $scope.onShowActiveChange = function() {

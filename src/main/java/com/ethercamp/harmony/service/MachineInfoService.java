@@ -18,6 +18,8 @@ import org.ethereum.core.Block;
 import org.ethereum.core.TransactionReceipt;
 import org.ethereum.facade.Ethereum;
 import org.ethereum.listener.EthereumListenerAdapter;
+import org.ethereum.net.eth.message.EthMessageCodes;
+import org.ethereum.net.message.Message;
 import org.ethereum.net.peerdiscovery.PeerInfo;
 import org.ethereum.net.server.Channel;
 import org.slf4j.LoggerFactory;
@@ -88,6 +90,20 @@ public class MachineInfoService {
                 lastBlocksForHashRate.add(block);
                 if (lastBlocksForHashRate.size() > BLOCK_COUNT_FOR_HASH_RATE) {
                     lastBlocksForHashRate.poll();
+                }
+            }
+
+            @Override
+            public void onRecvMessage(Channel channel, Message message) {
+                if (message.getCommand() == EthMessageCodes.NEW_BLOCK) {
+//                    log.info("onRecvMessage " + message.getCommand());
+                    clientMessageService.sendToTopic("/topic/newBlockFrom", createPeerDTO(
+                            channel.getPeerId(),
+                            channel.getInetSocketAddress().getHostName(),
+                            0.0,
+                            0,
+                            true
+                    ));
                 }
             }
 
