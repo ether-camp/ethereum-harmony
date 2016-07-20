@@ -87,6 +87,12 @@
                 highlightOnHover: false,
                 borderWidth: 0
             },
+            arcConfig: {
+                strokeColor: '#DD1C77',
+                strokeWidth: 1,
+                arcSharpness: 1,
+                animationSpeed: 200 // Milliseconds
+            },
             data: {
                 //USA: { fillKey: "active" }
             }
@@ -123,9 +129,12 @@
                     opts[value.country3Code] = FILLED;
                 });
 
-                angular.forEach(newPeers, function(value, key){
-                    opts[value.country3Code] = BLINKED;
-                });
+                // blink only when not first update
+                if (newPeers.length != items.length) {
+                    angular.forEach(newPeers, function(value, key){
+                        opts[value.country3Code] = BLINKED;
+                    });
+                }
 
                 wordmap.updateChoropleth(opts);
 
@@ -136,8 +145,8 @@
                         }
                     });
 
-                    wordmap.updateChoropleth(null);
-                }, 500);
+                    wordmap.updateChoropleth(opts);
+                }, 700);
             }, 10);
         });
 
