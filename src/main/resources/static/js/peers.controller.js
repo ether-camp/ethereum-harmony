@@ -5,8 +5,9 @@
 (function() {
     'use strict';
 
-    var FILLED = { fillKey: "active" };
+    var FILLED = { fillKey: "filled" };
     var NOT_FILLED = { fillKey: "defaultFill" };
+    var BLINKED = { fillKey: "blink" };
 
     var wordmap;    // initialized when controller starts
 
@@ -20,8 +21,11 @@
         $(scrollContainer).css('maxHeight', (newHeight - rect.top - 30) + 'px');
     }
 
-    // update items in array without recreating them
+    /**
+     * Updates items in array without recreating them
+     */
     function synchronizeArrays(source, target, updateFun) {
+        var newPeers = [];
         var sourceMap = source.reduce(function(s, v) {
             s[v.nodeId] = v;
             return s;
@@ -53,7 +57,9 @@
         angular.forEach(sourceMap, function(item) {
             updateFun(item, item);
             target.push(item);
+            newPeers.push(item);
         });
+        return newPeers;
     }
 
     function PeersCtrl($scope, $timeout) {
@@ -73,7 +79,8 @@
             element: document.getElementById("serverMap"),
             fills: {
                 defaultFill: "#3B3D46",
-                active: "#F8A900"
+                filled: "#CA8800",
+                blink: "#FFF108"
             },
             responsive: true,
             geographyConfig: {
@@ -92,28 +99,46 @@
         $(window).ready(onResize);
         $scope.$on('windowResizeEvent', onResize);
 
+        /**
+         * Received peers list update from server
+         */
         $scope.$on('peersListEvent', function(event, items) {
             $timeout(function() {
-                synchronizeArrays(items, $scope.peers, function(oldValue, newValue) {
+                // #1 Update List
+                var newPeers = synchronizeArrays(items, $scope.peers, function(oldValue, newValue) {
                     // round double value from Java
                     oldValue.pingLatency    = Math.round(newValue.pingLatency * 10) / 10;
                     oldValue.lastPing       = !newValue.lastPing ? "No info" : Math.round(newValue.lastPing / 1000) + " seconds ago";
                     oldValue.isActive       = newValue.isActive;
                 });
                 $scope.peersCount = items.length;
+
+                // #2 Update Map
+                //var opts = $scope.opts;
+                var opts = $scope.opts;
+                angular.forEach(opts, function(value, key){
+                    opts[key] = NOT_FILLED;
+                });
+                angular.forEach(items, function(value, key){
+                    opts[value.country3Code] = FILLED;
+                });
+
+                angular.forEach(newPeers, function(value, key){
+                    opts[value.country3Code] = BLINKED;
+                });
+
+                wordmap.updateChoropleth(opts);
+
+                $timeout(function() {
+                    angular.forEach(opts, function(value, key){
+                        if (value == BLINKED) {
+                            opts[key] = FILLED;
+                        }
+                    });
+
+                    wordmap.updateChoropleth(null);
+                }, 500);
             }, 10);
-
-            var colors = d3.scale.category10();
-            var opts = $scope.opts;
-            angular.forEach(opts, function(value, key){
-                opts[key] = NOT_FILLED;
-            });
-
-            angular.forEach(items, function(value, key){
-                opts[value.country3Code] = FILLED;
-            });
-            wordmap.updateChoropleth(opts);
-            //console.log('Updated map');
         });
 
         $scope.onShowActiveChange = function() {
