@@ -62,6 +62,14 @@
         return newPeers;
     }
 
+    function getPingString(value) {
+        value =  Math.ceil((value) / 1000);
+        if (value > 59) {
+            return Math.ceil(value / 60) + ' min ago';
+        }
+        return value + ' sec ago';
+    }
+
     function PeersCtrl($scope, $timeout) {
 
         console.log('Peers controller activated.');
@@ -110,10 +118,12 @@
                 exitDelay: 100, // Milliseconds
                 key: JSON.stringify
             },
+            legend: true,
             data: {
                 //USA: { fillKey: "active" }
             }
         });
+        //wordmap.legend();
 
         /**
          * Resize peers table to fit all available space.
@@ -127,11 +137,12 @@
          */
         $scope.$on('peersListEvent', function(event, items) {
             $timeout(function() {
+                var timeNow = new Date().getTime();
                 // #1 Update List
                 var newPeers = synchronizeArrays(items, $scope.peers, function(oldValue, newValue) {
                     // round double value from Java
                     oldValue.pingLatency    = Math.round(newValue.pingLatency * 10) / 10;
-                    oldValue.lastPing       = !newValue.lastPing ? "No info" : Math.round(newValue.lastPing / 1000) + " seconds ago";
+                    oldValue.lastPing       = newValue.lastPing ? getPingString(timeNow - newValue.lastPing) : '';
                     oldValue.isActive       = newValue.isActive;
                 });
                 $scope.peersCount = items.length;

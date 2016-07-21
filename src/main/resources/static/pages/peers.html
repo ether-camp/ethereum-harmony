@@ -18,7 +18,7 @@
                         <div class="header-title">
                             <h3 class="m-b-xs">Ethereum Peers</h3>
                             <small>
-                                Displaying INFO logs for general, facade, net, blockchain, sync loggers.
+                                Displaying peers' info in ethereum network and their location.
                             </small>
                         </div>
                         <hr>
@@ -38,12 +38,24 @@
 
                         <h4 class="m-t-n-sm m-b-xs">Peers location</h4>
                         <span>Connected to <span class="c-white">{{activePeersCount}}</span> peers. Total detected <span class="c-white">{{peersCount}}</span></span>
+
                         <div style="position: relative; padding-bottom: 50%;" id="serverMap">
                             <div style="z-index: 10001; position: absolute;" class="datamaps-hoverover"></div>
                         </div>
 
-                        <div class="row">
+                        <div class="row" align="center">
+                            <div class="datamaps-legend">
+                                <dl>
+                                    <dt style="margin-left: 15px">Country with peers:</dt>
+                                    <dd style="background-color:#CA8800">&nbsp;</dd>
 
+                                    <dt style="margin-left: 15px">New peer detected: </dt>
+                                    <dd style="background-color:#FFF108">&nbsp;</dd>
+
+                                    <dt style="margin-left: 15px">Block received: </dt>
+                                    <dd style="margin-top: 3px;width:10px;height:10px;-webkit-border-radius: 5px;-moz-border-radius: 5px;border-radius: 5px;border:1px solid #FFFFFF;background-color:#FF0000;">&nbsp;</dd>
+                                </dl>
+                            </div>
                         </div>
 
                     </div>
@@ -119,7 +131,7 @@
                                             </ul>
                                         </td>
                                         <td class="text-right">{{peer.lastPing}}</td>
-                                        <td class="text-right">{{peer.pingLatency}} ms</td>
+                                        <td class="text-right">{{peer.pingLatency == 0 ? '' : peer.pingLatency + ' ms'}}</td>
                                         <td class="text-right">{{peer.reputation}}</td>
                                     </tr>
 

@@ -20,7 +20,9 @@ import org.ethereum.facade.Ethereum;
 import org.ethereum.listener.EthereumListenerAdapter;
 import org.ethereum.net.eth.message.EthMessageCodes;
 import org.ethereum.net.message.Message;
-import org.ethereum.net.peerdiscovery.PeerInfo;
+import org.ethereum.net.rlpx.Node;
+import org.ethereum.net.rlpx.discover.NodeManager;
+import org.ethereum.net.rlpx.discover.NodeStatistics;
 import org.ethereum.net.server.Channel;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,6 +63,9 @@ public class MachineInfoService {
 
     private final Map<String, Locale> localeMap = new HashMap<>();
 
+    @Autowired
+    private NodeManager nodeManager;
+
     /**
      * Concurrent queue of last blocks.
      * Ethereum adds items when available.
@@ -95,12 +100,13 @@ public class MachineInfoService {
 
             @Override
             public void onRecvMessage(Channel channel, Message message) {
+                // notify client about new block
+                // using PeerDTO as it already has both country fields
                 if (message.getCommand() == EthMessageCodes.NEW_BLOCK) {
-//                    log.info("onRecvMessage " + message.getCommand());
                     clientMessageService.sendToTopic("/topic/newBlockFrom", createPeerDTO(
                             channel.getPeerId(),
                             channel.getInetSocketAddress().getHostName(),
-                            0.0,
+                            0l, 0.0,
                             0,
                             true
                     ));
@@ -169,13 +175,10 @@ public class MachineInfoService {
      */
     @Scheduled(fixedRate = 1500)
     private void doSendPeersInfo() {
-        final Set<PeerInfo> peersNotSafe = ethereum.getPeers();
-        final Set<PeerInfo> peers;
-
-        // create copy of all peers info for later use
-        synchronized (peersNotSafe) {
-            peers = new HashSet<>(peersNotSafe);
-        }
+        final List<Node> nodes = nodeManager.getTable()
+                .getAllNodes().stream()
+                .map(n -> n.getNode())
+                .collect(Collectors.toList());
 
         // convert active peers to DTO
         final List<PeerDTO> resultPeers = ethereum.getChannelManager().getActivePeers()
@@ -183,20 +186,23 @@ public class MachineInfoService {
                 .map(p -> createPeerDTO(
                         p.getPeerId(),
                         p.getNode().getHost(),
+                        p.getNodeStatistics().lastPongReplyTime.get(),
                         p.getPeerStats().getAvgLatency(),
                         p.getNodeStatistics().getReputation(),
                         true))
                 .collect(Collectors.toList());
 
-        peers.forEach(peer -> {
+        nodes.forEach(node -> {
             boolean isPeerAdded = resultPeers.stream()
-                    .anyMatch(addedPeer -> addedPeer.getNodeId().equals(peer.getPeerId()));
+                    .anyMatch(addedPeer -> addedPeer.getNodeId().equals(node.getHexId()));
             if (!isPeerAdded) {
+                NodeStatistics nodeStatistics = nodeManager.getNodeStatistics(node);
                 resultPeers.add(createPeerDTO(
-                        peer.getPeerId(),
-                        peer.getAddress().getHostAddress(),
+                        node.getHexId(),
+                        node.getHost(),
+                        nodeStatistics.lastPongReplyTime.get(),
                         0.0,
-                        0,
+                        nodeStatistics.getReputation(),
                         false
                 ));
             }
@@ -205,7 +211,7 @@ public class MachineInfoService {
         clientMessageService.sendToTopic("/topic/peers", resultPeers);
     }
 
-    private PeerDTO createPeerDTO(String peerId, String ip, double avgLatency, int reputation, boolean isActive) {
+    private PeerDTO createPeerDTO(String peerId, String ip, long lastPing, double avgLatency, int reputation, boolean isActive) {
         // code or ""
         final String country2Code = lookupService
                 .map(service -> service.getCountry(ip).getCode())
@@ -219,7 +225,7 @@ public class MachineInfoService {
                 ip,
                 country3Code,
                 country2Code,
-                0l,     // not implemented yet
+                lastPing,
                 avgLatency,
                 reputation,
                 isActive);
