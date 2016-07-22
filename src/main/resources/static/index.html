@@ -155,6 +155,10 @@
                     <a href="/systemLog">System Logs</a>
                 </li>
 
+                <li ng-class="{active: vm.data.currentPage == '/rpcUsage'}">
+                    <a href="/rpcUsage">JSON-RPC Usage</a>
+                </li>
+
 
                 <!-- Instant stats -->
                 <li class="nav-info" style="position: absolute">
@@ -231,6 +235,7 @@
 <script src="js/app.controller.js"></script>
 <script src="js/systemLog.controller.js"></script>
 <script src="js/peers.controller.js"></script>
+<script src="js/rpcUsage.controller.js"></script>
 
 </body>
 

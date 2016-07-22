@@ -1,0 +1,53 @@
+<section class="content" style="height: 100%;">
+
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="view-header">
+
+                <div class="header-icon">
+                    <i class="pe page-header-icon pe-7s-monitor"></i>
+                </div>
+
+                <div class="header-title">
+                    <h3 class="m-b-xs">Json-Rpc API Usage</h3>
+                    <small>
+                        Displaying JSON-RPC protocol tracing.
+                    </small>
+                </div>
+
+            </div>
+            <hr>
+        </div>
+    </div>
+
+    <div class="panel panel-filled">
+        <div class="table-responsive" id="rpc-scroll-container" style="overflow-y: scroll">
+            <table class="table peers-table">
+                <thead>
+                <tr>
+                    <th>
+                        Call Name
+                    </th>
+                    <th>
+                        Invoked Counter
+                    </th>
+                    <th>
+                        Last Time
+                    </th>
+                </tr>
+                </thead>
+                <tbody>
+
+                    <tr ng-repeat="item in items"
+                        ng-cloak>
+                        <td class="c-white">{{item.methodName}}</td>
+                        <td>{{item.count}}</td>
+                        <td>{{item.lastTime}}</td>
+                    </tr>
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</section>

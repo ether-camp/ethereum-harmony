@@ -21,8 +21,8 @@ public class ApplicationConfig extends WebMvcConfigurerAdapter {
     @Autowired
     JsonRpcController jsonRpcController;
 
-    @Bean(name = "/jr")
-    public JsonServiceExporter jr() {
+    @Bean(name = "/rpc")
+    public JsonServiceExporter rpc() {
         JsonServiceExporter ret = new JsonServiceExporter();
         ret.setService(jsonRpcController);
         ret.setServiceInterface(JsonRpc.class);

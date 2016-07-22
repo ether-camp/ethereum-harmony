@@ -16,7 +16,7 @@ import java.util.List;
  * Created by Stan Reshetnyk on 21.07.16.
  */
 @Slf4j
-@WebFilter(urlPatterns = "/jr")
+@WebFilter(urlPatterns = "/rpc")
 public class AddContentTypeFilter implements Filter {
 
 
@@ -31,7 +31,7 @@ public class AddContentTypeFilter implements Filter {
             HttpServletRequest httpRequest = (HttpServletRequest) request;
             HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-            if ("/jr".equals(httpRequest.getRequestURI())) {
+            if ("/rpc".equals(httpRequest.getRequestURI())) {
                 log.info("Found " + httpRequest.getRequestURI());
                 AddParamsToHeader updatedRequest = new AddParamsToHeader((HttpServletRequest) request);
                 httpResponse.addHeader("content-type", "application/json");

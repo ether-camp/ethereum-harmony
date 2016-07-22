@@ -171,16 +171,17 @@ public class MachineInfoService {
     }
 
     /**
-     * UNDER CONSTRUCTION
+     * Reads discovered and active peers from ethereum and sends to client.
      */
     @Scheduled(fixedRate = 1500)
     private void doSendPeersInfo() {
+        // #1 Read discovered peers. Usually ~150 peers
         final List<Node> nodes = nodeManager.getTable()
                 .getAllNodes().stream()
                 .map(n -> n.getNode())
                 .collect(Collectors.toList());
 
-        // convert active peers to DTO
+        // #2 Convert active peers to DTO
         final List<PeerDTO> resultPeers = ethereum.getChannelManager().getActivePeers()
                 .stream()
                 .map(p -> createPeerDTO(
@@ -192,6 +193,7 @@ public class MachineInfoService {
                         true))
                 .collect(Collectors.toList());
 
+        // #3 Convert discovered peers to DTO and add to result
         nodes.forEach(node -> {
             boolean isPeerAdded = resultPeers.stream()
                     .anyMatch(addedPeer -> addedPeer.getNodeId().equals(node.getHexId()));

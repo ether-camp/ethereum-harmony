@@ -27,7 +27,7 @@ public class WebSocketController {
         return machineInfoService.getInitialInfo();
     }
 
-    @RequestMapping({"/", "/systemLog", "/peers"})
+    @RequestMapping({"/", "/systemLog", "/peers", "/rpcUsage"})
     public String index() {
         return "index.html";
     }

@@ -20,6 +20,11 @@
                 controller  : 'SystemLogCtrl'
             })
 
+            .when('/rpcUsage', {
+                templateUrl : 'pages/rpcUsage.html',
+                controller  : 'RpcUsageCtrl'
+            })
+
             .when('/peers', {
                 templateUrl : 'pages/peers.html',
                 controller  : 'PeersCtrl'
