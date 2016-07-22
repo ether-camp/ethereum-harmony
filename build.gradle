@@ -47,6 +47,7 @@ dependencies {
     compile "org.apache.commons:commons-io:1.3.2"
 
     testCompile "junit:junit"
+//    compile group: 'org.springframework', name: 'spring-test', version: '2.5'
 }
 
 task wrapper(type: Wrapper) {
