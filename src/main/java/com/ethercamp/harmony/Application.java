@@ -1,8 +1,8 @@
 package com.ethercamp.harmony;
 
+import com.ethercamp.harmony.jsonrpc.JsonRpcService;
 import com.ethercamp.harmony.web.controller.JsonRpcController;
 import org.ethereum.config.DefaultConfig;
-import org.ethereum.jsonrpc.JsonRpcImpl;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -17,6 +17,6 @@ public class Application {
 //                SpringApplication.run(Application.class, args);
 //
                 SpringApplication.run(new Object[]{DefaultConfig.class, Application.class}, args);
-        JsonRpcImpl rpc = context.getBean(JsonRpcController.class);
+        JsonRpcService rpc = context.getBean(JsonRpcController.class);
     }
 }

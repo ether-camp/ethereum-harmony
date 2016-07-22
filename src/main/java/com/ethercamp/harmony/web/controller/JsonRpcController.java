@@ -1,12 +1,12 @@
 package com.ethercamp.harmony.web.controller;
 
+import com.ethercamp.harmony.jsonrpc.JsonRpcService;
 import lombok.extern.slf4j.Slf4j;
-import org.ethereum.jsonrpc.JsonRpcImpl;
 import org.springframework.stereotype.Controller;
 
 @Slf4j
 @Controller
-public class JsonRpcController extends JsonRpcImpl {
+public class JsonRpcController extends JsonRpcService {
 
     @Override
     public String eth_protocolVersion() {
