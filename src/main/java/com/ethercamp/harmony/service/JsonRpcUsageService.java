@@ -1,10 +1,9 @@
 package com.ethercamp.harmony.service;
 
 import com.ethercamp.harmony.dto.MethodCallDTO;
-import com.ethercamp.harmony.jsonrpc.JsonRpcService;
+import com.ethercamp.harmony.jsonrpc.JsonRpcImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.SystemEnvironmentPropertySource;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -17,12 +16,19 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
 
-@Slf4j
+/**
+ * Services which is suites as endpoint for JSON-RPC requests. Does:
+ *  - serving requests calls, by extending {@link JsonRpcImpl};
+ *  -
+ */
+@Slf4j(topic = "jsonrpc")
 @Service
-public class JsonRpcUsageService extends JsonRpcService {
+public class JsonRpcUsageService extends JsonRpcImpl {
 
+    // storage for stats. Method name to count
     private final Map<String, LongAdder> callsCounter = new ConcurrentHashMap();
 
+    // storage for stats. Method name to time called last time in ms
     private final Map<String, AtomicLong> callsTime = new ConcurrentHashMap();
 
     @PostConstruct
@@ -37,6 +43,9 @@ public class JsonRpcUsageService extends JsonRpcService {
     @Autowired
     ClientMessageService clientMessageService;
 
+    /**
+     * Send stats to client side.
+     */
     @Scheduled(fixedRate = 1500)
     private void doSendRpcUsage() {
         List<MethodCallDTO> items = callsCounter.keySet()
@@ -50,19 +59,17 @@ public class JsonRpcUsageService extends JsonRpcService {
         clientMessageService.sendToTopic("/topic/rpcUsage", items);
     }
 
-    @Override
-    public String eth_protocolVersion() {
-        log.info("JsonRpcServiceImpl.eth_protocolVersion");
-        callsCounter.get("eth_protocolVersion").increment();
-        callsTime.get("eth_protocolVersion").set(System.currentTimeMillis());
-        return super.eth_protocolVersion();
+    public void updateStats(String methodName) {
+        long timeNow = System.currentTimeMillis();
+        callsCounter.computeIfAbsent(methodName, k -> new LongAdder()).increment();
+        callsTime.computeIfAbsent(methodName, k -> new AtomicLong()).set(timeNow);
     }
 
+    /**
+     * Sample of method which can be called.
+     */
     @Override
     public String net_version() {
-        log.info("JsonRpcServiceImpl.net_version");
-        callsCounter.get("net_version").increment();
-        callsTime.get("net_version").set(System.currentTimeMillis());
         return super.net_version();
     }
 }

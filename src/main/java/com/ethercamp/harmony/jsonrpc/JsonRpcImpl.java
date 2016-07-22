@@ -42,7 +42,7 @@ import static org.ethereum.util.ByteUtil.bigIntegerToBytes;
  * @author Anton Nashatyrev, Stan Reshetnyk
  */
 @Slf4j(topic = "jsonrpc")
-public class JsonRpcService implements JsonRpc {
+public class JsonRpcImpl implements JsonRpc {
 
     public class BinaryCallArguments {
         public long nonce;

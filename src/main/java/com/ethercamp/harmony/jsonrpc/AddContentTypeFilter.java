@@ -1,5 +1,6 @@
 package com.ethercamp.harmony.jsonrpc;
 
+import com.ethercamp.harmony.util.AppConst;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.servlet.*;
@@ -16,7 +17,7 @@ import java.util.List;
  * Created by Stan Reshetnyk on 21.07.16.
  */
 @Slf4j
-@WebFilter(urlPatterns = "/rpc")
+@WebFilter(urlPatterns = AppConst.JSON_RPC_PATH)
 public class AddContentTypeFilter implements Filter {
 
 
@@ -31,7 +32,7 @@ public class AddContentTypeFilter implements Filter {
             HttpServletRequest httpRequest = (HttpServletRequest) request;
             HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-            if ("/rpc".equals(httpRequest.getRequestURI())) {
+            if (AppConst.JSON_RPC_PATH.equals(httpRequest.getRequestURI())) {
                 log.info("Found " + httpRequest.getRequestURI());
                 AddParamsToHeader updatedRequest = new AddParamsToHeader((HttpServletRequest) request);
                 httpResponse.addHeader("content-type", "application/json");

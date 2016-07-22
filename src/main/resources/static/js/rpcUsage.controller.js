@@ -16,11 +16,7 @@
 
     function RpcUsageCtrl($scope, $timeout) {
         console.log('RpcUsage controller activated.');
-        var testData = [];
-        for(var i=0; i < 100; i++){
-            testData.push({methodName: '/net_version' + i, count: i, lastTime: '2 mins ago'});
-        }
-        $scope.rpcItems = $scope.rpcItems || testData;
+        $scope.rpcItems = $scope.rpcItems;
 
         $scope.$on('$destroy', function() {
             console.log('RpcUsage controller exited.');
