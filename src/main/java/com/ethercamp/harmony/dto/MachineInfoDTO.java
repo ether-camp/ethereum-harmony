@@ -1,4 +1,4 @@
-package com.ethercamp.harmony.domain;
+package com.ethercamp.harmony.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Value;

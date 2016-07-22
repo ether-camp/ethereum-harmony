@@ -2,7 +2,7 @@ package com.ethercamp.harmony.config;
 
 import com.ethercamp.harmony.jsonrpc.AddContentTypeFilter;
 import com.ethercamp.harmony.jsonrpc.JsonRpc;
-import com.ethercamp.harmony.web.controller.JsonRpcController;
+import com.ethercamp.harmony.service.JsonRpcUsageService;
 import com.googlecode.jsonrpc4j.spring.JsonServiceExporter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.embedded.FilterRegistrationBean;
@@ -19,12 +19,12 @@ import javax.servlet.Filter;
 public class ApplicationConfig extends WebMvcConfigurerAdapter {
 
     @Autowired
-    JsonRpcController jsonRpcController;
+    JsonRpcUsageService jsonRpcUsageService;
 
     @Bean(name = "/rpc")
     public JsonServiceExporter rpc() {
         JsonServiceExporter ret = new JsonServiceExporter();
-        ret.setService(jsonRpcController);
+        ret.setService(jsonRpcUsageService);
         ret.setServiceInterface(JsonRpc.class);
         return ret;
     }

@@ -14,15 +14,7 @@ public class RpcUsageService {
     @Autowired
     JsonRpcService jsonRpcService;
 
-    @Autowired
-    ClientMessageService clientMessageService;
 
-    @Scheduled(fixedRate = 1500)
-    private void doSendRpcUsage() {
-
-
-//        clientMessageService.sendToTopic("/topic/rpcUsage", null);
-    }
 
 
 }

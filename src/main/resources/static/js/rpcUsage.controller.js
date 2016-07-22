@@ -16,25 +16,33 @@
 
     function RpcUsageCtrl($scope, $timeout) {
         console.log('RpcUsage controller activated.');
-        $scope.items = $scope.items || [{methodName: '/net_version', count: 44, lastTime: '2 mins ago'}];
+        var testData = [];
+        for(var i=0; i < 100; i++){
+            testData.push({methodName: '/net_version' + i, count: i, lastTime: '2 mins ago'});
+        }
+        $scope.rpcItems = $scope.rpcItems || testData;
 
         $scope.$on('$destroy', function() {
             console.log('RpcUsage controller exited.');
         });
 
         /**
-         * Resize peers table to fit all available space.
+         * Resize table to fit all available space.
          * Otherwise many HTML changes are required to achieve same result
          */
         $(window).ready(onResize);
         $scope.$on('windowResizeEvent', onResize);
 
         /**
-         * Received peers list update from server
+         * Received stats update from server
          */
         $scope.$on('rpcUsageListEvent', function(event, items) {
-            $timeout(function(items) {
-                $scope.items = items;
+            angular.forEach(items, function(item) {
+                item.lastTime = item.lastTime > 0 ? moment(item.lastTime).fromNow() : '';
+            });
+
+            $timeout(function() {
+                $scope.rpcItems = items;
             }, 10);
         });
     }

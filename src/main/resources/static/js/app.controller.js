@@ -39,6 +39,7 @@
 
     var isLogPageActive = false;        // TODO move to related controller
     var isPeersPageActive = false;      // TODO move to related controller
+    var isRpcPageActive = false;        // TODO move to related controller
 
     var topicStorage = {};
 
@@ -119,8 +120,9 @@
             ethereumJVersion: "n/a"
         };
 
-        var updateLogSubscription = updateSubscriptionFun('/topic/systemLog', onSystemLogResult);
-        var updatePeersSubscription = updateSubscriptionFun('/topic/peers', onPeersListResult);
+        var updateLogSubscription       = updateSubscriptionFun('/topic/systemLog', onSystemLogResult);
+        var updatePeersSubscription     = updateSubscriptionFun('/topic/peers', onPeersListResult);
+        var updateRpcSubscription       = updateSubscriptionFun('/topic/rpcUsage', onRpcUsageResult);
 
         /**
          * Listen for page changes and subscribe to 'systemLog' topic only when we stay on that page.
@@ -134,9 +136,11 @@
             // #1 Change subscription
             isLogPageActive = path == '/systemLog';
             isPeersPageActive = path == '/peers';
+            isRpcPageActive = path == '/rpcUsage';
             var isMainPageActive = path == '/';
             updateLogSubscription(isLogPageActive);
             updatePeersSubscription(isPeersPageActive);
+            updateRpcSubscription(isRpcPageActive);
 
             // #2 Change body scroll behavior depending on selected page
             $('body').css('overflow', isMainPageActive ? 'auto' : 'hidden');
@@ -183,6 +187,7 @@
                     stompClient.subscribe('/topic/newBlockFrom', onNewBlockFromResult);
                     updateLogSubscription(isLogPageActive);
                     updatePeersSubscription(isPeersPageActive);
+                    updateRpcSubscription(isRpcPageActive);
 
                     // get immediate result
                     stompClient.send('/app/machineInfo');
@@ -198,6 +203,12 @@
             var items = JSON.parse(data.body);
 
             $scope.$broadcast('peersListEvent', items);
+        }
+
+        function onRpcUsageResult(data) {
+            var items = JSON.parse(data.body);
+
+            $scope.$broadcast('rpcUsageListEvent', items);
         }
 
         function updateSubscriptionFun(topic, handler) {

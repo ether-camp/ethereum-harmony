@@ -7,10 +7,10 @@ import ch.qos.logback.classic.PatternLayout;
 import ch.qos.logback.classic.filter.LevelFilter;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.UnsynchronizedAppenderBase;
-import com.ethercamp.harmony.domain.BlockchainInfoDTO;
-import com.ethercamp.harmony.domain.InitialInfoDTO;
-import com.ethercamp.harmony.domain.MachineInfoDTO;
-import com.ethercamp.harmony.domain.PeerDTO;
+import com.ethercamp.harmony.dto.BlockchainInfoDTO;
+import com.ethercamp.harmony.dto.InitialInfoDTO;
+import com.ethercamp.harmony.dto.MachineInfoDTO;
+import com.ethercamp.harmony.dto.PeerDTO;
 import com.maxmind.geoip.LookupService;
 import com.sun.management.OperatingSystemMXBean;
 import lombok.extern.slf4j.Slf4j;
@@ -115,12 +115,12 @@ public class MachineInfoService {
 
             @Override
             public void onPeerAddedToSyncPool(Channel peer) {
-                log.info("onPeerAddedToSyncPool peer: " + peer.getPeerId());
+//                log.info("onPeerAddedToSyncPool peer: " + peer.getPeerId());
             }
 
             @Override
             public void onPeerDisconnect(String host, long port) {
-                log.info("onPeerDisconnect host:" + host + ", port:" + port);
+//                log.info("onPeerDisconnect host:" + host + ", port:" + port);
             }
         });
 

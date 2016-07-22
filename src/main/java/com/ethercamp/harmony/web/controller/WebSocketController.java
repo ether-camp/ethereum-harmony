@@ -1,7 +1,7 @@
 package com.ethercamp.harmony.web.controller;
 
-import com.ethercamp.harmony.domain.InitialInfoDTO;
-import com.ethercamp.harmony.domain.MachineInfoDTO;
+import com.ethercamp.harmony.dto.InitialInfoDTO;
+import com.ethercamp.harmony.dto.MachineInfoDTO;
 import com.ethercamp.harmony.service.MachineInfoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;

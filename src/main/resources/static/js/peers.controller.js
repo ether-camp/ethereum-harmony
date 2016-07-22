@@ -126,7 +126,7 @@
         //wordmap.legend();
 
         /**
-         * Resize peers table to fit all available space.
+         * Resize table to fit all available space.
          * Otherwise many HTML changes are required to achieve same result
          */
         $(window).ready(onResize);

@@ -1,5 +1,6 @@
 package com.ethercamp.harmony.jsonrpc;
 
+import lombok.extern.slf4j.Slf4j;
 import org.ethereum.config.SystemProperties;
 import org.ethereum.core.*;
 import org.ethereum.crypto.ECKey;
@@ -23,8 +24,6 @@ import org.ethereum.util.ByteUtil;
 import org.ethereum.util.RLP;
 import org.ethereum.vm.DataWord;
 import org.ethereum.vm.LogInfo;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -40,13 +39,10 @@ import static org.ethereum.util.ByteUtil.EMPTY_BYTE_ARRAY;
 import static org.ethereum.util.ByteUtil.bigIntegerToBytes;
 
 /**
- * Created by Anton Nashatyrev on 25.11.2015.
+ * @author Anton Nashatyrev, Stan Reshetnyk
  */
-@Component
+@Slf4j(topic = "jsonrpc")
 public class JsonRpcService implements JsonRpc {
-    private static final Logger logger = LoggerFactory.getLogger("jsonrpc");
-
-
 
     public class BinaryCallArguments {
         public long nonce;
@@ -231,7 +227,7 @@ public class JsonRpcService implements JsonRpc {
 
         String s = "EthereumJ" + "/v" + config.projectVersion() + "/" +
                 System.getProperty("os.name") + "/Java1.7/" + config.projectVersionModifier() + "-" + BuildInfo.buildHash;
-        if (logger.isDebugEnabled()) logger.debug("web3_clientVersion(): " + s);
+        if (log.isDebugEnabled()) log.debug("web3_clientVersion(): " + s);
         return s;
     };
 
@@ -241,7 +237,7 @@ public class JsonRpcService implements JsonRpc {
             byte[] result = HashUtil.sha3(TypeConverter.StringHexToByteArray(data));
             return s = TypeConverter.toJsonHex(result);
         } finally {
-            if (logger.isDebugEnabled()) logger.debug("web3_sha3(" + data + "): " + s);
+            if (log.isDebugEnabled()) log.debug("web3_sha3(" + data + "): " + s);
         }
     }
 
@@ -250,7 +246,7 @@ public class JsonRpcService implements JsonRpc {
         try {
             return s = eth_protocolVersion();
         } finally {
-            if (logger.isDebugEnabled()) logger.debug("net_version(): " + s);
+            if (log.isDebugEnabled()) log.debug("net_version(): " + s);
         }
     }
 
@@ -260,7 +256,7 @@ public class JsonRpcService implements JsonRpc {
             int n = channelManager.getActivePeers().size();
             return s = TypeConverter.toJsonHex(n);
         } finally {
-            if (logger.isDebugEnabled()) logger.debug("net_peerCount(): " + s);
+            if (log.isDebugEnabled()) log.debug("net_peerCount(): " + s);
         }
     }
 
@@ -269,7 +265,7 @@ public class JsonRpcService implements JsonRpc {
         try {
             return s = peerServer.isListening();
         }finally {
-            if (logger.isDebugEnabled()) logger.debug("net_listening(): " + s);
+            if (log.isDebugEnabled()) log.debug("net_listening(): " + s);
         }
     }
 
@@ -284,7 +280,7 @@ public class JsonRpcService implements JsonRpc {
             }
             return s = Integer.toString(version);
         } finally {
-            if (logger.isDebugEnabled()) logger.debug("eth_protocolVersion(): " + s);
+            if (log.isDebugEnabled()) log.debug("eth_protocolVersion(): " + s);
         }
     }
 
@@ -297,7 +293,7 @@ public class JsonRpcService implements JsonRpc {
 
             return s;
         }finally {
-            if (logger.isDebugEnabled()) logger.debug("eth_syncing(): " + s);
+            if (log.isDebugEnabled()) log.debug("eth_syncing(): " + s);
         }
     };
 
@@ -306,7 +302,7 @@ public class JsonRpcService implements JsonRpc {
         try {
             return s = toJsonHex(blockchain.getMinerCoinbase());
         } finally {
-            if (logger.isDebugEnabled()) logger.debug("eth_coinbase(): " + s);
+            if (log.isDebugEnabled()) log.debug("eth_coinbase(): " + s);
         }
     }
 
@@ -315,7 +311,7 @@ public class JsonRpcService implements JsonRpc {
         try {
             return s = blockMiner.isMining();
         } finally {
-            if (logger.isDebugEnabled()) logger.debug("eth_mining(): " + s);
+            if (log.isDebugEnabled()) log.debug("eth_mining(): " + s);
         }
     }
 
@@ -325,7 +321,7 @@ public class JsonRpcService implements JsonRpc {
         try {
             return s = null;
         } finally {
-            if (logger.isDebugEnabled()) logger.debug("eth_hashrate(): " + s);
+            if (log.isDebugEnabled()) log.debug("eth_hashrate(): " + s);
         }
     }
 
@@ -334,7 +330,7 @@ public class JsonRpcService implements JsonRpc {
         try {
             return s = TypeConverter.toJsonHex(eth.getGasPrice());
         } finally {
-            if (logger.isDebugEnabled()) logger.debug("eth_gasPrice(): " + s);
+            if (log.isDebugEnabled()) log.debug("eth_gasPrice(): " + s);
         }
     }
 
@@ -343,7 +339,7 @@ public class JsonRpcService implements JsonRpc {
         try {
             return s = personal_listAccounts();
         } finally {
-            if (logger.isDebugEnabled()) logger.debug("eth_accounts(): " + Arrays.toString(s));
+            if (log.isDebugEnabled()) log.debug("eth_accounts(): " + Arrays.toString(s));
         }
     }
 
@@ -357,7 +353,7 @@ public class JsonRpcService implements JsonRpc {
             }
             return s = TypeConverter.toJsonHex(b);
         } finally {
-            if (logger.isDebugEnabled()) logger.debug("eth_blockNumber(): " + s);
+            if (log.isDebugEnabled()) log.debug("eth_blockNumber(): " + s);
         }
     }
 
@@ -369,7 +365,7 @@ public class JsonRpcService implements JsonRpc {
             BigInteger balance = getRepoByJsonBlockId(blockId).getBalance(addressAsByteArray);
             return s = TypeConverter.toJsonHex(balance);
         } finally {
-            if (logger.isDebugEnabled()) logger.debug("eth_getBalance(" + address + ", " + blockId + "): " + s);
+            if (log.isDebugEnabled()) log.debug("eth_getBalance(" + address + ", " + blockId + "): " + s);
         }
     }
 
@@ -378,7 +374,7 @@ public class JsonRpcService implements JsonRpc {
         try {
             return s = eth_getBalance(address, "latest");
         } finally {
-            if (logger.isDebugEnabled()) logger.debug("eth_getBalance(" + address + "): " + s);
+            if (log.isDebugEnabled()) log.debug("eth_getBalance(" + address + "): " + s);
         }
     }
 
@@ -391,7 +387,7 @@ public class JsonRpcService implements JsonRpc {
                     getStorageValue(addressAsByteArray, new DataWord(StringHexToByteArray(storageIdx)));
             return s = TypeConverter.toJsonHex(storageValue.getData());
         } finally {
-            if (logger.isDebugEnabled()) logger.debug("eth_getStorageAt(" + address + ", " + storageIdx + ", " + blockId + "): " + s);
+            if (log.isDebugEnabled()) log.debug("eth_getStorageAt(" + address + ", " + storageIdx + ", " + blockId + "): " + s);
         }
     }
 
@@ -403,7 +399,7 @@ public class JsonRpcService implements JsonRpc {
             BigInteger nonce = getRepoByJsonBlockId(blockId).getNonce(addressAsByteArray);
             return s = TypeConverter.toJsonHex(nonce);
         } finally {
-            if (logger.isDebugEnabled()) logger.debug("eth_getTransactionCount(" + address + ", " + blockId + "): " + s);
+            if (log.isDebugEnabled()) log.debug("eth_getTransactionCount(" + address + ", " + blockId + "): " + s);
         }
     }
 
@@ -415,7 +411,7 @@ public class JsonRpcService implements JsonRpc {
             long n = b.getTransactionsList().size();
             return s = TypeConverter.toJsonHex(n);
         } finally {
-            if (logger.isDebugEnabled()) logger.debug("eth_getBlockTransactionCountByHash(" + blockHash + "): " + s);
+            if (log.isDebugEnabled()) log.debug("eth_getBlockTransactionCountByHash(" + blockHash + "): " + s);
         }
     }
 
@@ -427,7 +423,7 @@ public class JsonRpcService implements JsonRpc {
             long n = list.size();
             return s = TypeConverter.toJsonHex(n);
         } finally {
-            if (logger.isDebugEnabled()) logger.debug("eth_getBlockTransactionCountByNumber(" + bnOrId + "): " + s);
+            if (log.isDebugEnabled()) log.debug("eth_getBlockTransactionCountByNumber(" + bnOrId + "): " + s);
         }
     }
 
@@ -439,7 +435,7 @@ public class JsonRpcService implements JsonRpc {
             long n = b.getUncleList().size();
             return s = TypeConverter.toJsonHex(n);
         } finally {
-            if (logger.isDebugEnabled()) logger.debug("eth_getUncleCountByBlockHash(" + blockHash + "): " + s);
+            if (log.isDebugEnabled()) log.debug("eth_getUncleCountByBlockHash(" + blockHash + "): " + s);
         }
     }
 
@@ -451,7 +447,7 @@ public class JsonRpcService implements JsonRpc {
             long n = b.getUncleList().size();
             return s = TypeConverter.toJsonHex(n);
         } finally {
-            if (logger.isDebugEnabled()) logger.debug("eth_getUncleCountByBlockNumber(" + bnOrId + "): " + s);
+            if (log.isDebugEnabled()) log.debug("eth_getUncleCountByBlockNumber(" + bnOrId + "): " + s);
         }
     }
 
@@ -462,7 +458,7 @@ public class JsonRpcService implements JsonRpc {
             byte[] code = getRepoByJsonBlockId(blockId).getCode(addressAsByteArray);
             return s = TypeConverter.toJsonHex(code);
         } finally {
-            if (logger.isDebugEnabled()) logger.debug("eth_getCode(" + address + ", " + blockId + "): " + s);
+            if (log.isDebugEnabled()) log.debug("eth_getCode(" + address + ", " + blockId + "): " + s);
         }
     }
 
@@ -482,7 +478,7 @@ public class JsonRpcService implements JsonRpc {
             byte[] rlpSig = RLP.encode(signature);
             return s = TypeConverter.toJsonHex(rlpSig);
         } finally {
-            if (logger.isDebugEnabled()) logger.debug("eth_sign(" + addr + ", " + data + "): " + s);
+            if (log.isDebugEnabled()) log.debug("eth_sign(" + addr + ", " + data + "): " + s);
         }
     }
 
@@ -511,7 +507,7 @@ public class JsonRpcService implements JsonRpc {
 
             return s = TypeConverter.toJsonHex(tx.getHash());
         } finally {
-            if (logger.isDebugEnabled()) logger.debug("eth_sendTransaction(" + args + "): " + s);
+            if (log.isDebugEnabled()) log.debug("eth_sendTransaction(" + args + "): " + s);
         }
     }
 
@@ -536,7 +532,7 @@ public class JsonRpcService implements JsonRpc {
 
             return s = TypeConverter.toJsonHex(tx.getHash());
         } finally {
-            if (logger.isDebugEnabled()) logger.debug("eth_sendTransaction(" +
+            if (log.isDebugEnabled()) log.debug("eth_sendTransaction(" +
                     "from = [" + from + "], to = [" + to + "], gas = [" + gas + "], gasPrice = [" + gasPrice +
                     "], value = [" + value + "], data = [" + data + "], nonce = [" + nonce + "]" + "): " + s);
         }
@@ -551,7 +547,7 @@ public class JsonRpcService implements JsonRpc {
 
             return s = TypeConverter.toJsonHex(tx.getHash());
         } finally {
-            if (logger.isDebugEnabled()) logger.debug("eth_sendRawTransaction(" + rawData + "): " + s);
+            if (log.isDebugEnabled()) log.debug("eth_sendRawTransaction(" + rawData + "): " + s);
         }
     }
 
@@ -575,7 +571,7 @@ public class JsonRpcService implements JsonRpc {
             TransactionReceipt res = createCallTxAndExecute(args, getByJsonBlockId(bnOrId));
             return s = TypeConverter.toJsonHex(res.getExecutionResult());
         } finally {
-            if (logger.isDebugEnabled()) logger.debug("eth_call(" + args + "): " + s);
+            if (log.isDebugEnabled()) log.debug("eth_call(" + args + "): " + s);
         }
     }
 
@@ -585,7 +581,7 @@ public class JsonRpcService implements JsonRpc {
             TransactionReceipt res = createCallTxAndExecute(args, blockchain.getBestBlock());
             return s = TypeConverter.toJsonHex(res.getGasUsed());
         } finally {
-            if (logger.isDebugEnabled()) logger.debug("eth_estimateGas(" + args + "): " + s);
+            if (log.isDebugEnabled()) log.debug("eth_estimateGas(" + args + "): " + s);
         }
     }
 
@@ -641,7 +637,7 @@ public class JsonRpcService implements JsonRpc {
             Block b = getBlockByJSonHash(blockHash);
             return getBlockResult(b, fullTransactionObjects);
         } finally {
-            if (logger.isDebugEnabled()) logger.debug("eth_getBlockByHash(" +  blockHash + ", " + fullTransactionObjects + "): " + s);
+            if (log.isDebugEnabled()) log.debug("eth_getBlockByHash(" +  blockHash + ", " + fullTransactionObjects + "): " + s);
         }
     }
 
@@ -656,7 +652,7 @@ public class JsonRpcService implements JsonRpc {
             }
             return s = (b == null ? null : getBlockResult(b, fullTransactionObjects));
         } finally {
-            if (logger.isDebugEnabled()) logger.debug("eth_getBlockByNumber(" +  bnOrId + ", " + fullTransactionObjects + "): " + s);
+            if (log.isDebugEnabled()) log.debug("eth_getBlockByNumber(" +  bnOrId + ", " + fullTransactionObjects + "): " + s);
         }
     }
 
@@ -676,7 +672,7 @@ public class JsonRpcService implements JsonRpc {
 
             return s = new TransactionResultDTO(block, txInfo.getIndex(), block.getTransactionsList().get(txInfo.getIndex()));
         } finally {
-            if (logger.isDebugEnabled()) logger.debug("eth_getTransactionByHash(" + transactionHash + "): " + s);
+            if (log.isDebugEnabled()) log.debug("eth_getTransactionByHash(" + transactionHash + "): " + s);
         }
     }
 
@@ -690,7 +686,7 @@ public class JsonRpcService implements JsonRpc {
             Transaction tx = b.getTransactionsList().get(idx);
             return s = new TransactionResultDTO(b, idx, tx);
         } finally {
-            if (logger.isDebugEnabled()) logger.debug("eth_getTransactionByBlockHashAndIndex(" + blockHash + ", " + index + "): " + s);
+            if (log.isDebugEnabled()) log.debug("eth_getTransactionByBlockHashAndIndex(" + blockHash + ", " + index + "): " + s);
         }
     }
 
@@ -705,7 +701,7 @@ public class JsonRpcService implements JsonRpc {
             Transaction tx = txs.get(idx);
             return s = new TransactionResultDTO(b, idx, tx);
         } finally {
-            if (logger.isDebugEnabled()) logger.debug("eth_getTransactionByBlockNumberAndIndex(" + bnOrId + ", " + index + "): " + s);
+            if (log.isDebugEnabled()) log.debug("eth_getTransactionByBlockNumberAndIndex(" + bnOrId + ", " + index + "): " + s);
         }
     }
 
@@ -728,7 +724,7 @@ public class JsonRpcService implements JsonRpc {
 
             return s = new TransactionReceiptDTO(block, txInfo);
         } finally {
-            if (logger.isDebugEnabled()) logger.debug("eth_getTransactionReceipt(" + transactionHash + "): " + s);
+            if (log.isDebugEnabled()) log.debug("eth_getTransactionReceipt(" + transactionHash + "): " + s);
         }
     }
 
@@ -747,7 +743,7 @@ public class JsonRpcService implements JsonRpc {
             }
             return s = getBlockResult(uncle, false);
         } finally {
-            if (logger.isDebugEnabled()) logger.debug("eth_getUncleByBlockHashAndIndex(" + blockHash + ", " + uncleIdx + "): " + s);
+            if (log.isDebugEnabled()) log.debug("eth_getUncleByBlockHashAndIndex(" + blockHash + ", " + uncleIdx + "): " + s);
         }
     }
 
@@ -759,7 +755,7 @@ public class JsonRpcService implements JsonRpc {
             return s = block == null ? null :
                     eth_getUncleByBlockHashAndIndex(toJsonHex(block.getHash()), uncleIdx);
         } finally {
-            if (logger.isDebugEnabled()) logger.debug("eth_getUncleByBlockNumberAndIndex(" + blockId + ", " + uncleIdx + "): " + s);
+            if (log.isDebugEnabled()) log.debug("eth_getUncleByBlockNumberAndIndex(" + blockId + ", " + uncleIdx + "): " + s);
         }
     }
 
@@ -769,7 +765,7 @@ public class JsonRpcService implements JsonRpc {
         try {
             return s = new String[] {"solidity"};
         } finally {
-            if (logger.isDebugEnabled()) logger.debug("eth_getCompilers(): " + Arrays.toString(s));
+            if (log.isDebugEnabled()) log.debug("eth_getCompilers(): " + Arrays.toString(s));
         }
     }
 
@@ -799,7 +795,7 @@ public class JsonRpcService implements JsonRpc {
             ret.info.abiDefinition = new CallTransaction.Contract(contractMetadata.abi).functions;
             return s = ret;
         } finally {
-            if (logger.isDebugEnabled()) logger.debug("eth_compileSolidity(" + contract + ")" + s);
+            if (log.isDebugEnabled()) log.debug("eth_compileSolidity(" + contract + ")" + s);
         }
     }
 
@@ -1001,7 +997,7 @@ public class JsonRpcService implements JsonRpc {
 
             return str = toJsonHex(id);
         } finally {
-            if (logger.isDebugEnabled()) logger.debug("eth_newFilter(" + fr + "): " + str);
+            if (log.isDebugEnabled()) log.debug("eth_newFilter(" + fr + "): " + str);
         }
     }
 
@@ -1013,7 +1009,7 @@ public class JsonRpcService implements JsonRpc {
             installedFilters.put(id, new NewBlockFilter());
             return s = toJsonHex(id);
         } finally {
-            if (logger.isDebugEnabled()) logger.debug("eth_newBlockFilter(): " + s);
+            if (log.isDebugEnabled()) log.debug("eth_newBlockFilter(): " + s);
         }
     }
 
@@ -1025,7 +1021,7 @@ public class JsonRpcService implements JsonRpc {
             installedFilters.put(id, new PendingTransactionFilter());
             return s = toJsonHex(id);
         } finally {
-            if (logger.isDebugEnabled()) logger.debug("eth_newPendingTransactionFilter(): " + s);
+            if (log.isDebugEnabled()) log.debug("eth_newPendingTransactionFilter(): " + s);
         }
     }
 
@@ -1036,7 +1032,7 @@ public class JsonRpcService implements JsonRpc {
             if (id == null) return false;
             return s = installedFilters.remove(StringHexToBigInteger(id).intValue()) != null;
         } finally {
-            if (logger.isDebugEnabled()) logger.debug("eth_uninstallFilter(" + id + "): " + s);
+            if (log.isDebugEnabled()) log.debug("eth_uninstallFilter(" + id + "): " + s);
         }
     }
 
@@ -1048,19 +1044,19 @@ public class JsonRpcService implements JsonRpc {
             if (filter == null) return null;
             return s = filter.poll();
         } finally {
-            if (logger.isDebugEnabled()) logger.debug("eth_getFilterChanges(" + id + "): " + Arrays.toString(s));
+            if (log.isDebugEnabled()) log.debug("eth_getFilterChanges(" + id + "): " + Arrays.toString(s));
         }
     }
 
     @Override
     public Object[] eth_getFilterLogs(String id) {
-        logger.debug("eth_getFilterLogs ...");
+        log.debug("eth_getFilterLogs ...");
         return eth_getFilterChanges(id);
     }
 
     @Override
     public Object[] eth_getLogs(FilterRequest fr) throws Exception {
-        logger.debug("eth_getLogs ...");
+        log.debug("eth_getLogs ...");
         String id = eth_newFilter(fr);
         Object[] ret = eth_getFilterChanges(id);
         eth_uninstallFilter(id);
@@ -1355,7 +1351,7 @@ public class JsonRpcService implements JsonRpc {
             Account account = addAccount(seed);
             return s = toJsonHex(account.getAddress());
         } finally {
-            if (logger.isDebugEnabled()) logger.debug("personal_newAccount(*****): " + s);
+            if (log.isDebugEnabled()) log.debug("personal_newAccount(*****): " + s);
         }
     }
 
@@ -1365,7 +1361,7 @@ public class JsonRpcService implements JsonRpc {
         try {
             return true;
         } finally {
-            if (logger.isDebugEnabled()) logger.debug("personal_unlockAccount(" + addr + ", ***, " + duration + "): " + s);
+            if (log.isDebugEnabled()) log.debug("personal_unlockAccount(" + addr + ", ***, " + duration + "): " + s);
         }
     }
 
@@ -1379,7 +1375,7 @@ public class JsonRpcService implements JsonRpc {
             }
             return ret;
         } finally {
-            if (logger.isDebugEnabled()) logger.debug("personal_listAccounts(): " + Arrays.toString(ret));
+            if (log.isDebugEnabled()) log.debug("personal_listAccounts(): " + Arrays.toString(ret));
         }
     }
 }
