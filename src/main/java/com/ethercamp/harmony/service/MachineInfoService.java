@@ -10,20 +10,12 @@ import ch.qos.logback.core.UnsynchronizedAppenderBase;
 import com.ethercamp.harmony.dto.BlockchainInfoDTO;
 import com.ethercamp.harmony.dto.InitialInfoDTO;
 import com.ethercamp.harmony.dto.MachineInfoDTO;
-import com.ethercamp.harmony.dto.PeerDTO;
-import com.maxmind.geoip.LookupService;
 import com.sun.management.OperatingSystemMXBean;
 import lombok.extern.slf4j.Slf4j;
 import org.ethereum.core.Block;
 import org.ethereum.core.TransactionReceipt;
 import org.ethereum.facade.Ethereum;
 import org.ethereum.listener.EthereumListenerAdapter;
-import org.ethereum.net.eth.message.EthMessageCodes;
-import org.ethereum.net.message.Message;
-import org.ethereum.net.rlpx.Node;
-import org.ethereum.net.rlpx.discover.NodeManager;
-import org.ethereum.net.rlpx.discover.NodeStatistics;
-import org.ethereum.net.server.Channel;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -39,7 +31,6 @@ import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 
 /**
  * Created by Stan Reshetnyk on 11.07.16.
@@ -92,6 +83,8 @@ public class MachineInfoService {
                 }
             }
         });
+
+
 
         initialInfo.set(new InitialInfoDTO(env.getProperty("ethereumJ.version"), env.getProperty("app.version")));
 

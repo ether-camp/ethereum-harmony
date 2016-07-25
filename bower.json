@@ -14,6 +14,6 @@
     "moment": "^2.14.1",
     "angular-route": "^1.5.7",
     "datamaps": "^0.5.7",
-    "jquery-console": "*"
+    "jquery.terminal": "^0.10.12"
   }
 }

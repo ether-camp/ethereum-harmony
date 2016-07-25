@@ -25,12 +25,12 @@ import org.ethereum.util.RLP;
 import org.ethereum.vm.DataWord;
 import org.ethereum.vm.LogInfo;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import static java.lang.Math.max;
 import static org.ethereum.crypto.HashUtil.sha3;
@@ -39,7 +39,7 @@ import static org.ethereum.util.ByteUtil.EMPTY_BYTE_ARRAY;
 import static org.ethereum.util.ByteUtil.bigIntegerToBytes;
 
 /**
- * @author Anton Nashatyrev, Stan Reshetnyk
+ * @author Anton Nashatyrev
  */
 @Slf4j(topic = "jsonrpc")
 public class JsonRpcImpl implements JsonRpc {
@@ -1377,5 +1377,17 @@ public class JsonRpcImpl implements JsonRpc {
         } finally {
             if (log.isDebugEnabled()) log.debug("personal_listAccounts(): " + Arrays.toString(ret));
         }
+    }
+
+    /**
+     * List method names for client side terminal competition.
+     */
+    @Override
+    public String[] listAvailableMethods() {
+        List<String> list = Arrays.asList(JsonRpc.class.getMethods())
+                .stream()
+                .map(method -> method.getName())
+                .collect(Collectors.toList());
+        return list.toArray(new String[list.size()]);
     }
 }

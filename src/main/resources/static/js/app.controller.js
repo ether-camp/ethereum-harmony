@@ -1,14 +1,17 @@
 (function() {
     'use strict';
 
-    var mainApp = angular.module('HarmonyApp', ['ngRoute']);
+    var mainApp = angular.module('HarmonyApp', ['ngRoute', 'angular-jsonrpc-client']);
 
     mainApp.controller('AppCtrl', AppCtrl);
+
+    var url = '/rpc';
+
 
     /**
      * Routing area
      */
-    mainApp.config(function($routeProvider, $locationProvider) {
+    mainApp.config(function($routeProvider, $locationProvider, jsonrpcConfigProvider) {
         $routeProvider
 
             .when('/', {
@@ -36,6 +39,12 @@
             });
 
         $locationProvider.html5Mode(true);
+
+        console.info(jsonrpcConfigProvider);
+        jsonrpcConfigProvider.set({
+            url: url,
+            returnHttpPromise: false
+        });
     });
 
     /**

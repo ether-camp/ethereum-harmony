@@ -21,8 +21,8 @@ import java.util.stream.Collectors;
  *  - serving requests calls, by extending {@link JsonRpcImpl};
  *  - gathering statistics info of how many times RPC methods were called
  */
-@Slf4j(topic = "jsonrpc")
 @Service
+@Slf4j(topic = "jsonrpc")
 public class JsonRpcUsageService extends JsonRpcImpl {
 
     // storage for stats. Method name to count

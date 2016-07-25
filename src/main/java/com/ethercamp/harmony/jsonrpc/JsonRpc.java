@@ -319,4 +319,5 @@ public interface JsonRpc {
     boolean personal_unlockAccount(String addr, String pass, String duration);
 
     String[] personal_listAccounts();
+    String[] listAvailableMethods();
 }

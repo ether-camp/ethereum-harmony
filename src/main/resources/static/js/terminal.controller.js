@@ -1,5 +1,5 @@
 /**
- * Rendering list of API usage stats.
+ * Allows use terminal component to call JSON-RPC methods.
  */
 
 (function() {
@@ -7,47 +7,73 @@
 
     var CONTAINER_ID = 'terminal-container';
 
+    var terminalCompletitionWords = null;
+    var terminal = null;
+
     function onResize() {
         console.log("TerminalCtrl page resize");
 
-        var scrollContainer = document.getElementById(CONTAINER_ID);
+        var scrollContainer = document.getElementById('terminal-parent');
         var rect = scrollContainer.getBoundingClientRect();
         var newHeight = $(window).height();
-        $(scrollContainer).css('maxHeight', (newHeight - rect.top - 30) + 'px');
+        //$(scrollContainer).css('maxHeight', (newHeight - rect.top - 30) + 'px');
+        if (terminal) {
+            terminal.resize(rect.width - 30, (newHeight - rect.top - 30));
+        }
+
     }
 
-    function TerminalCtrl($scope, $timeout) {
+    function createTerminal(methods, jsonrpc) {
+        terminal = $('#' + CONTAINER_ID).terminal(function(command, term) {
+            if (command !== '') {
+                jsonrpc.request(command, {})
+                    .then(function(result) {
+                        console.log('JSON-RPC result');
+                        console.log(result);
+                        //term.echo("Result:");
+                        term.echo(JSON.stringify(result));
+                    })
+                    .catch(function(error) {
+                        term.echo('[[;#FF0000;]'  +error + ']');
+                    });
+            }
+        }, {
+            greetings: 'Ethereum',
+            name: 'ethereum_terminal',
+            tabcompletion: true,
+            completion: function(terminal, command, callback) {
+                callback(methods);
+            },
+            prompt: 'node> '
+        });
+        $(window).ready(onResize);
+    }
+
+    function TerminalCtrl($scope, $timeout, jsonrpc) {
         console.log('TerminalCtrl controller activated.');
-        $scope.rpcItems = $scope.rpcItems;
 
         $scope.$on('$destroy', function() {
-            console.log('RpcUsage controller exited.');
+            console.log('TerminalCtrl controller exited.');
         });
 
-        var container = $('<div class="console">');
-        $('#' + CONTAINER_ID).append(container);
-        var consoleContainer = document.getElementById(CONTAINER_ID);
-        var controller = container.console({
-            promptLabel: 'Demo> ',
-            commandValidate:function(line){
-                if (line == "") return false;
-                else return true;
-            },
-            commandHandle:function(line){
-                return [{msg:"=> [12,42]",
-                    className:"jquery-console-message-value"},
-                    {msg:":: [a]",
-                        className:"jquery-console-message-type"}]
-            },
-            autofocus:true,
-            animateScroll:true,
-            promptHistory:true,
-            charInsertTrigger:function(keycode,line){
-                // Let you type until you press a-z
-                // Never allow zero.
-                return !line.match(/[a-z]+/) && keycode != '0'.charCodeAt(0);
-            }
-        });
+        // load words for code completion if not already
+        if (terminalCompletitionWords == null) {
+            jsonrpc.request('listAvailableMethods', {})
+                .then(function(result) {
+                    //console.log(result);
+                    console.log('Result methods count available:' + result.length);
+                    terminalCompletitionWords = result;
+                    createTerminal(terminalCompletitionWords, jsonrpc);
+                })
+                .catch(function(error) {
+                    console.log('Error loading available methods');
+                    console.log(error);
+                    createTerminal([], jsonrpc);
+                });
+        } else {
+            createTerminal(terminalCompletitionWords, jsonrpc);
+        }
+
 
         /**
          * Resize table to fit all available space.
@@ -55,21 +81,8 @@
          */
         $(window).ready(onResize);
         $scope.$on('windowResizeEvent', onResize);
-
-        /**
-         * Received stats update from server
-         */
-        $scope.$on('123', function(event, items) {
-            angular.forEach(items, function(item) {
-                item.lastTime = item.lastTime > 0 ? moment(item.lastTime).fromNow() : '';
-            });
-
-            $timeout(function() {
-                $scope.rpcItems = items;
-            }, 10);
-        });
     }
 
     angular.module('HarmonyApp')
-        .controller('TerminalCtrl', ['$scope', '$timeout', TerminalCtrl]);
+        .controller('TerminalCtrl', ['$scope', '$timeout', 'jsonrpc', TerminalCtrl]);
 })();
