@@ -2687,7 +2687,7 @@ fieldset[disabled] .form-control {
 
 
 /**
- * Top bar area
+ * TOP BAR
  */
 .tp-title {
     color: #666;
@@ -2714,7 +2714,7 @@ fieldset[disabled] .form-control {
 }
 
 /**
- * Server log page
+ * SYSTEM LOGS PAGE
  */
 .log {
     white-space: pre-wrap;
@@ -2751,6 +2751,10 @@ fieldset[disabled] .form-control {
     text-align: right;
 }
 
+
+/*
+ * PEERS
+ */
 .peers-table td {
     padding-top: 0;
     padding-bottom: 0;
@@ -2767,3 +2771,26 @@ fieldset[disabled] .form-control {
 .peer-not-active {
 
 }
+
+
+/*
+ * TERMINAL PAGE
+ */
+div.console { font-size: 14px }
+div.console div.jquery-console-inner
+{ width:900px; height:200px; background:#333; padding:0.5em;
+    overflow:auto }
+div.console div.jquery-console-prompt-box
+{ color:#fff; font-family:monospace; }
+div.console div.jquery-console-focus span.jquery-console-cursor
+{ background:#fefefe; color:#333; font-weight:bold }
+div.console div.jquery-console-message-error
+{ color:#ef0505; font-family:sans-serif; font-weight:bold;
+    padding:0.1em; }
+div.console div.jquery-console-message-value
+{ color:#1ad027; font-family:monospace;
+    padding:0.1em; }
+div.console div.jquery-console-message-type
+{ color:#52666f; font-family:monospace;
+    padding:0.1em; }
+div.console span.jquery-console-prompt-label { font-weight:bold }

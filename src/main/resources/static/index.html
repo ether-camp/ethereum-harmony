@@ -38,9 +38,6 @@
     <script src="bower_components/PACE/pace.min.js"></script>
     <script src="bower_components/toastr/toastr.min.js"></script>
     <script src="bower_components/moment/moment.js"></script>
-    <script src="bower_components/d3/d3.min.js"></script>
-    <script src="bower_components/topojson/topojson.min.js"></script>
-    <script src="bower_components/datamaps/dist/datamaps.world.min.js"></script>
 
     <!-- Vendor styles -->
     <link rel="stylesheet" href="bower_components/font-awesome/css/font-awesome.css"/>
@@ -138,7 +135,7 @@
     </nav>
     <!-- End header-->
 
-    <!-- Navigation-->
+    <!-- NAVIGATION-->
     <aside class="navigation">
         <nav style="height: 100%">
             <ul class="nav luna-nav">
@@ -159,8 +156,12 @@
                     <a href="/rpcUsage">JSON-RPC Usage</a>
                 </li>
 
+                <li ng-class="{active: vm.data.currentPage == '/terminal'}">
+                    <a href="/terminal">Terminal</a>
+                </li>
 
-                <!-- Instant stats -->
+
+                <!-- INSTANT STATS -->
                 <li class="nav-info" style="position: absolute">
 
                     <h5 class="m-t-md m-b-xs v-c">
@@ -212,7 +213,7 @@
             </ul>
         </nav>
     </aside>
-    <!-- End navigation-->
+    <!-- End NAVIGATION-->
 
     <!-- MAIN CONTENT AND INJECTED VIEWS -->
     <div id="main">
@@ -236,6 +237,7 @@
 <script src="js/systemLog.controller.js"></script>
 <script src="js/peers.controller.js"></script>
 <script src="js/rpcUsage.controller.js"></script>
+<script src="js/terminal.controller.js"></script>
 
 </body>
 

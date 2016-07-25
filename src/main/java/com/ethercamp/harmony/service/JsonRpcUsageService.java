@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 /**
  * Services which is suites as endpoint for JSON-RPC requests. Does:
  *  - serving requests calls, by extending {@link JsonRpcImpl};
- *  -
+ *  - gathering statistics info of how many times RPC methods were called
  */
 @Slf4j(topic = "jsonrpc")
 @Service

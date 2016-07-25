@@ -25,6 +25,11 @@
                 controller  : 'RpcUsageCtrl'
             })
 
+            .when('/terminal', {
+                templateUrl : 'pages/terminal.html',
+                controller  : 'TerminalCtrl'
+            })
+
             .when('/peers', {
                 templateUrl : 'pages/peers.html',
                 controller  : 'PeersCtrl'
