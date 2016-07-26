@@ -316,6 +316,8 @@ public interface JsonRpc {
 
     String personal_newAccount(String seed);
 
+    String personal_importRawKey(String keydata, String passphrase);
+
     boolean personal_unlockAccount(String addr, String pass, String duration);
 
     String[] personal_listAccounts();

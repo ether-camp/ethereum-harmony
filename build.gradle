@@ -75,6 +75,12 @@ springBoot {
     mainClass = "com.ethercamp.harmony.Application"
 }
 
+sourceCompatibility=1.8
+
+// to keep method arguments names in bytecode
+// used for terminal code completion
+[compileJava, compileTestJava]*.options*.compilerArgs = ['-parameters']
+
 
 //configurations.all {
 //    // check for updates every build

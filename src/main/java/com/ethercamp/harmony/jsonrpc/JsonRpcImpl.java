@@ -1,5 +1,6 @@
 package com.ethercamp.harmony.jsonrpc;
 
+import com.ethercamp.harmony.keystore.KeystoreManager;
 import lombok.extern.slf4j.Slf4j;
 import org.ethereum.config.SystemProperties;
 import org.ethereum.core.*;
@@ -27,6 +28,7 @@ import org.ethereum.vm.LogInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.annotation.PostConstruct;
+import java.lang.reflect.Modifier;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -43,6 +45,9 @@ import static org.ethereum.util.ByteUtil.bigIntegerToBytes;
  */
 @Slf4j(topic = "jsonrpc")
 public class JsonRpcImpl implements JsonRpc {
+
+    @Autowired
+    KeystoreManager keystoreManager;
 
     public class BinaryCallArguments {
         public long nonce;
@@ -123,7 +128,7 @@ public class JsonRpcImpl implements JsonRpc {
 
     long initialBlockNumber;
 
-    Map<ByteArrayWrapper, Account> accounts = new HashMap<>();
+//    Map<ByteArrayWrapper, Account> accounts = new HashMap<>();
     AtomicInteger filterCounter = new AtomicInteger(1);
     Map<Integer, Filter> installedFilters = new Hashtable<>();
 
@@ -151,28 +156,28 @@ public class JsonRpcImpl implements JsonRpc {
 
     }
 
-    public long JSonHexToLong(String x) throws Exception {
+    private long JSonHexToLong(String x) throws Exception {
         if (!x.startsWith("0x"))
             throw new Exception("Incorrect hex syntax");
         x = x.substring(2);
         return Long.parseLong(x, 16);
     }
 
-    public int JSonHexToInt(String x) throws Exception {
+    private int JSonHexToInt(String x) throws Exception {
         if (!x.startsWith("0x"))
             throw new Exception("Incorrect hex syntax");
         x = x.substring(2);
         return Integer.parseInt(x, 16);
     }
 
-    public String JSonHexToHex(String x) throws Exception {
+    private String JSonHexToHex(String x) throws Exception {
         if (!x.startsWith("0x"))
             throw new Exception("Incorrect hex syntax");
         x = x.substring(2);
         return x;
     }
 
-    public Block getBlockByJSonHash(String blockHash) throws Exception {
+    private Block getBlockByJSonHash(String blockHash) throws Exception {
         byte[] bhash = TypeConverter.StringHexToByteArray(blockHash);
         return worldManager.getBlockchain().getBlockByHash(bhash);
     }
@@ -209,17 +214,24 @@ public class JsonRpcImpl implements JsonRpc {
     }
 
     protected Account getAccount(String address) throws Exception {
-        return accounts.get(new ByteArrayWrapper(StringHexToByteArray(address)));
+        return keystoreManager.loadStoredKey(address, "123")
+                .map(key -> {
+                    Account account = new Account();
+                    account.init(key);
+                    return account;
+                }).orElse(null);
+//        return accounts.get(new ByteArrayWrapper(StringHexToByteArray(address)));
     }
 
-    protected Account addAccount(String seed) {
-        return addAccount(ECKey.fromPrivate(sha3(seed.getBytes())));
+    protected Account addAccount(String password) {
+        return addAccount(ECKey.fromPrivate(sha3(password.getBytes())));
     }
 
     protected Account addAccount(ECKey key) {
         Account account = new Account();
         account.init(key);
-        accounts.put(new ByteArrayWrapper(account.getAddress()), account);
+        keystoreManager.storeKey(key);
+//        accounts.put(new ByteArrayWrapper(account.getAddress()), account);
         return account;
     }
 
@@ -1355,6 +1367,15 @@ public class JsonRpcImpl implements JsonRpc {
         }
     }
 
+    public String personal_importRawKey(String keydata, String passphrase) {
+        String s = null;
+        try {
+
+        } finally {
+        }
+        return s;
+    }
+
     @Override
     public boolean personal_unlockAccount(String addr, String pass, String duration) {
         String s = null;
@@ -1367,32 +1388,41 @@ public class JsonRpcImpl implements JsonRpc {
 
     @Override
     public String[] personal_listAccounts() {
-        String[] ret = new String[accounts.size()];
-        try {
-            int i = 0;
-            for (ByteArrayWrapper addr : accounts.keySet()) {
-                ret[i++] = toJsonHex(addr.getData());
-            }
-            return ret;
-        } finally {
-            if (log.isDebugEnabled()) log.debug("personal_listAccounts(): " + Arrays.toString(ret));
-        }
+        return keystoreManager.listStoredKeys();
+//        String[] ret = new String[accounts.size()];
+//        try {
+//            int i = 0;
+//            for (ByteArrayWrapper addr : accounts.keySet()) {
+//                ret[i++] = toJsonHex(addr.getData());
+//            }
+//            return ret;
+//        } finally {
+//            if (log.isDebugEnabled()) log.debug("personal_listAccounts(): " + Arrays.toString(ret));
+//        }
     }
 
     /**
      * List method names for client side terminal competition.
+     * Forms strings list in format: `List("methodName arg1 arg2", "methodName2")`
      */
     @Override
     public String[] listAvailableMethods() {
-        List<String> list = Arrays.asList(JsonRpc.class.getMethods())
+        Set<String> ignore = Arrays.asList(Object.class.getMethods())
                 .stream()
+                .map(method -> method.getName())
+                .collect(Collectors.toSet());
+
+        return Arrays.asList(JsonRpcImpl.class.getMethods())
+                .stream()
+                .filter(method -> Modifier.isPublic(method.getModifiers()))
+                .filter(method -> !ignore.contains(method.getName()))
                 .map(method ->
-                    method.getName() + " " + Arrays.asList(method.getParameterTypes())
+                    method.getName() + " " + Arrays.asList(method.getParameters())
                             .stream()
-                            .map(type -> type.getSimpleName())
+                            .map(parameter ->
+                                    parameter.isNamePresent() ? parameter.getName() : parameter.getType().getSimpleName())
                             .collect(Collectors.joining(" "))
                 )
-                .collect(Collectors.toList());
-        return list.toArray(new String[list.size()]);
+                .toArray(size -> new String[size]);
     }
 }
