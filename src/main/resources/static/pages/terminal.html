@@ -25,9 +25,20 @@
         </div>
     </div>
 
-    <div id="terminal-parent">
-        <div id="terminal-container">
+    <div class="row">
+        <div class="col-sm-9">
+            <div id="terminal-parent">
+                <div id="terminal-container">
 
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-3">
+            <div id="suggestion-scroll-container" style="overflow-y: scroll">
+                <ul>
+                    <li ng-repeat="item in filteredSuggestions">{{item}}</li>
+                </ul>
+            </div>
         </div>
     </div>
 

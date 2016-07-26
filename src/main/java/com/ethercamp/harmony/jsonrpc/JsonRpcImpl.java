@@ -1386,7 +1386,12 @@ public class JsonRpcImpl implements JsonRpc {
     public String[] listAvailableMethods() {
         List<String> list = Arrays.asList(JsonRpc.class.getMethods())
                 .stream()
-                .map(method -> method.getName())
+                .map(method ->
+                    method.getName() + " " + Arrays.asList(method.getParameterTypes())
+                            .stream()
+                            .map(type -> type.getSimpleName())
+                            .collect(Collectors.joining(" "))
+                )
                 .collect(Collectors.toList());
         return list.toArray(new String[list.size()]);
     }

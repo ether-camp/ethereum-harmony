@@ -7,71 +7,61 @@
 
     var CONTAINER_ID = 'terminal-container';
 
-    var terminalCompletitionWords = null;
+    var terminalCompletionWords = null;
     var terminal = null;
 
     function onResize() {
         console.log("TerminalCtrl page resize");
 
+        var newHeight = $(window).height();
         var scrollContainer = document.getElementById('terminal-parent');
         var rect = scrollContainer.getBoundingClientRect();
-        var newHeight = $(window).height();
-        //$(scrollContainer).css('maxHeight', (newHeight - rect.top - 30) + 'px');
+        var suggestionScrollContainer = document.getElementById('suggestion-scroll-container');
+        $(suggestionScrollContainer).css('maxHeight', (newHeight - rect.top - 30) + 'px');
+
         if (terminal) {
             terminal.resize(rect.width - 30, (newHeight - rect.top - 30));
         }
 
     }
 
-    function createTerminal(methods, jsonrpc) {
-        terminal = $('#' + CONTAINER_ID).terminal(function(command, term) {
-            if (command !== '') {
-                jsonrpc.request(command, {})
-                    .then(function(result) {
-                        console.log('JSON-RPC result');
-                        console.log(result);
-                        //term.echo("Result:");
-                        term.echo(JSON.stringify(result));
-                    })
-                    .catch(function(error) {
-                        term.echo('[[;#FF0000;]'  +error + ']');
-                    });
-            }
-        }, {
-            greetings: 'Ethereum',
-            name: 'ethereum_terminal',
-            tabcompletion: true,
-            completion: function(terminal, command, callback) {
-                callback(methods);
-            },
-            prompt: 'node> '
+    /**
+     * @return ['method'] if ['method String String'] was passed
+     */
+    function extractMethods(list) {
+        return list.map(function(item) {
+            return item.split(" ")[0];
         });
-        $(window).ready(onResize);
     }
 
     function TerminalCtrl($scope, $timeout, jsonrpc) {
         console.log('TerminalCtrl controller activated.');
 
+        $scope.suggestions = terminalCompletionWords;
+        $scope.filteredSuggestions = terminalCompletionWords;
+
         $scope.$on('$destroy', function() {
             console.log('TerminalCtrl controller exited.');
         });
 
-        // load words for code completion if not already
-        if (terminalCompletitionWords == null) {
+        // load method names for code completion if not already
+        if (terminalCompletionWords == null) {
             jsonrpc.request('listAvailableMethods', {})
                 .then(function(result) {
                     //console.log(result);
                     console.log('Result methods count available:' + result.length);
-                    terminalCompletitionWords = result;
-                    createTerminal(terminalCompletitionWords, jsonrpc);
+                    terminalCompletionWords = result;
+                    $scope.filteredSuggestions = $scope.suggestions = terminalCompletionWords;
+                    createTerminal(terminalCompletionWords);
                 })
                 .catch(function(error) {
                     console.log('Error loading available methods');
                     console.log(error);
-                    createTerminal([], jsonrpc);
+                    createTerminal([], jsonrpc, $timeout);
                 });
         } else {
-            createTerminal(terminalCompletitionWords, jsonrpc);
+            $scope.filteredSuggestions = $scope.suggestions = terminalCompletionWords;
+            createTerminal(terminalCompletionWords);
         }
 
 
@@ -81,6 +71,64 @@
          */
         $(window).ready(onResize);
         $scope.$on('windowResizeEvent', onResize);
+
+
+
+        function createTerminal(list) {
+            var methods = extractMethods(list);
+
+            terminal = $('#' + CONTAINER_ID).terminal(function(line, term) {
+                if (line !== '') {
+                    var arr = line.match(/\S+/g);
+                    if (arr && arr.length > 0) {
+                        var command = arr.shift();
+                        var args = arr;
+
+                        jsonrpc.request(command, args)
+                            .then(function(result) {
+                                console.log('JSON-RPC result');
+                                console.log(result);
+                                //term.echo("Result:");
+                                term.echo(JSON.stringify(result));
+                            })
+                            .catch(function(error) {
+                                console.log(error);
+                                term.echo('[[;#FF0000;]'  +error + ']');
+                            });
+                    }
+                }
+            }, {
+                greetings: 'Ethereum',
+                name: 'ethereum_terminal',
+                tabcompletion: true,
+                completion: function(terminal, command, callback) {
+                    callback(methods);
+                },
+                //keypress: function(event, terminal) {
+                //    console.log(event);
+                //    console.log(terminal);
+                //},
+                onCommandChange: onCommandChange,
+                prompt: 'node> '
+            });
+
+            function onCommandChange(line, terminal) {
+                $timeout(function() {
+                    var arr = line.match(/\S+/g);
+                    if (arr && arr.length > 0) {
+                        var command = arr.shift();
+                        $scope.filteredSuggestions = $scope.suggestions
+                            .filter(function(item) {
+                                return item.split(" ")[0].startsWith(command);
+                            });
+                    } else {
+                        $scope.filteredSuggestions = $scope.suggestions;
+                    }
+                }, 10);
+            }
+
+            $(window).ready(onResize);
+        }
     }
 
     angular.module('HarmonyApp')
