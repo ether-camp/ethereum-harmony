@@ -24,7 +24,7 @@
 
         $scope.scrollConfig = {
             autoHideScrollbar: true,
-            theme: 'default',
+            theme: 'dark',
             advanced: {
                 updateOnContentResize: true
             },
@@ -76,18 +76,20 @@
             var newHeight = $(window).height();
             var scrollContainer = document.getElementById('terminal-parent');
             var rect = scrollContainer.getBoundingClientRect();
-            //var suggestionScrollContainer = document.getElementById('suggestion-scroll-container');
+            var suggestionScrollContainer = document.getElementById('suggestion-scroll-container');
             var newHeight = (newHeight - rect.top - 30);
 
             //$(suggestionScrollContainer).css('maxHeight', height + 'px');
 
             if (terminal) {
-                terminal.resize(rect.width - 30, newHeight);
+                terminal.resize(rect.width - 20, newHeight);
             }
             $timeout(function() {
                 $scope.scrollConfig.setHeight = newHeight;
                 $('#suggestion-scroll-container').mCustomScrollbar($scope.scrollConfig);
-                $('#terminal-container').mCustomScrollbar($scope.scrollConfig);
+                if (terminal) {
+                    $('#terminal-container').mCustomScrollbar($scope.scrollConfig);
+                }
             }, 10);
 
         }
@@ -123,6 +125,7 @@
                 greetings: 'Ethereum',
                 name: 'ethereum_terminal',
                 tabcompletion: true,
+                history: false,
                 completion: function(terminal, command, callback) {
                     callback(methods);
                 },
@@ -135,23 +138,25 @@
                 prompt: 'node> '
             });
 
-            function onCommandChange(line, terminal) {
-                $('#terminal-container').mCustomScrollbar('scrollTo', 'bottom');
-                $timeout(function() {
-                    var arr = line.match(/\S+/g);
-                    if (arr && arr.length > 0) {
-                        var command = arr.shift();
-                        $scope.filteredSuggestions = $scope.suggestions
-                            .filter(function(item) {
-                                return item.split(" ")[0].startsWith(command);
-                            });
-                    } else {
-                        $scope.filteredSuggestions = $scope.suggestions;
-                    }
-                }, 10);
-            }
+            terminal.history = false;
 
             $(window).ready(onResize);
+        }
+
+        function onCommandChange(line, terminal) {
+            $('#terminal-container').mCustomScrollbar('scrollTo', 'bottom');
+            $timeout(function() {
+                var arr = line.match(/\S+/g);
+                if (arr && arr.length > 0) {
+                    var command = arr.shift();
+                    $scope.filteredSuggestions = $scope.suggestions
+                        .filter(function(item) {
+                            return item.split(" ")[0].startsWith(command);
+                        });
+                } else {
+                    $scope.filteredSuggestions = $scope.suggestions;
+                }
+            }, 10);
         }
     }
 
