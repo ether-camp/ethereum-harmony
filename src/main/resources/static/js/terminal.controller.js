@@ -126,11 +126,12 @@
                 completion: function(terminal, command, callback) {
                     callback(methods);
                 },
-                //keypress: function(event, terminal) {
-                //    console.log(event);
-                //    console.log(terminal);
-                //},
-                onCommandChange: onCommandChange,
+                keydown: function(event, terminal) {
+                    $timeout(function() {
+                        onCommandChange(terminal.get_command(), terminal);
+                    }, 10);
+                },
+                //onCommandChange: onCommandChange,
                 prompt: 'node> '
             });
 
