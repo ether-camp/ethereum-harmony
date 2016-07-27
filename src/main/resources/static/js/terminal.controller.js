@@ -10,21 +10,6 @@
     var terminalCompletionWords = null;
     var terminal = null;
 
-    function onResize() {
-        console.log("TerminalCtrl page resize");
-
-        var newHeight = $(window).height();
-        var scrollContainer = document.getElementById('terminal-parent');
-        var rect = scrollContainer.getBoundingClientRect();
-        var suggestionScrollContainer = document.getElementById('suggestion-scroll-container');
-        $(suggestionScrollContainer).css('maxHeight', (newHeight - rect.top - 30) + 'px');
-
-        if (terminal) {
-            terminal.resize(rect.width - 30, (newHeight - rect.top - 30));
-        }
-
-    }
-
     /**
      * @return ['method'] if ['method String String'] was passed
      */
@@ -36,6 +21,19 @@
 
     function TerminalCtrl($scope, $timeout, jsonrpc) {
         console.log('TerminalCtrl controller activated.');
+
+        $scope.scrollConfig = {
+            autoHideScrollbar: true,
+            theme: 'default',
+            advanced: {
+                updateOnContentResize: true
+            },
+            axis: 'y',
+            setHeight: 200,
+            scrollInertia: 0,
+            keyboard: { enable: false },
+            scrollButtons: { enable: false }
+        };
 
         $scope.suggestions = terminalCompletionWords;
         $scope.filteredSuggestions = terminalCompletionWords;
@@ -72,6 +70,28 @@
         $(window).ready(onResize);
         $scope.$on('windowResizeEvent', onResize);
 
+        function onResize() {
+            console.log("TerminalCtrl page resize");
+
+            var newHeight = $(window).height();
+            var scrollContainer = document.getElementById('terminal-parent');
+            var rect = scrollContainer.getBoundingClientRect();
+            //var suggestionScrollContainer = document.getElementById('suggestion-scroll-container');
+            var newHeight = (newHeight - rect.top - 30);
+
+            //$(suggestionScrollContainer).css('maxHeight', height + 'px');
+
+            if (terminal) {
+                terminal.resize(rect.width - 30, newHeight);
+            }
+            $timeout(function() {
+                $scope.scrollConfig.setHeight = newHeight;
+                $('#suggestion-scroll-container').mCustomScrollbar($scope.scrollConfig);
+                $('#terminal-container').mCustomScrollbar($scope.scrollConfig);
+            }, 10);
+
+        }
+
 
 
         function createTerminal(list) {
@@ -90,10 +110,12 @@
                                 console.log(result);
                                 //term.echo("Result:");
                                 term.echo(JSON.stringify(result));
+                                $('#terminal-container').mCustomScrollbar('scrollTo', 'bottom');
                             })
                             .catch(function(error) {
                                 console.log(error);
                                 term.echo('[[;#FF0000;]'  +error + ']');
+                                $('#terminal-container').mCustomScrollbar('scrollTo', 'bottom');
                             });
                     }
                 }
@@ -113,6 +135,7 @@
             });
 
             function onCommandChange(line, terminal) {
+                $('#terminal-container').mCustomScrollbar('scrollTo', 'bottom');
                 $timeout(function() {
                     var arr = line.match(/\S+/g);
                     if (arr && arr.length > 0) {

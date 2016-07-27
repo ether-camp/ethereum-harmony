@@ -1,7 +1,7 @@
 (function() {
     'use strict';
 
-    var mainApp = angular.module('HarmonyApp', ['ngRoute', 'angular-jsonrpc-client']);
+    var mainApp = angular.module('HarmonyApp', ['ngRoute', 'angular-jsonrpc-client', 'ngScrollbars']);
 
     mainApp.controller('AppCtrl', AppCtrl);
 

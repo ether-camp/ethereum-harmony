@@ -14,6 +14,8 @@
     "moment": "^2.14.1",
     "angular-route": "^1.5.7",
     "datamaps": "^0.5.7",
-    "jquery.terminal": "^0.10.12"
+    "jquery.terminal": "^0.10.12",
+    "malihu-custom-scrollbar-plugin": "^3.1.5",
+    "ng-scrollbars": "^0.0.10"
   }
 }
