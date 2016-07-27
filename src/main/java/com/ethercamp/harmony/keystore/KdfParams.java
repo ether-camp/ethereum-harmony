@@ -1,9 +1,10 @@
 package com.ethercamp.harmony.keystore;
 
+import org.codehaus.jackson.annotate.JsonIgnore;
+
 public class KdfParams {
     private Integer c;
     private Integer dklen;
-    private String prf;
     private String salt;
     private Integer n;
     private Integer p;
@@ -34,6 +35,7 @@ public class KdfParams {
         this.p = p;
     }
 
+    @JsonIgnore
     public Integer getC() {
         return c;
     }
@@ -48,14 +50,6 @@ public class KdfParams {
 
     public void setDklen(Integer dklen) {
         this.dklen = dklen;
-    }
-
-    public String getPrf() {
-        return prf;
-    }
-
-    public void setPrf(String prf) {
-        this.prf = prf;
     }
 
     public String getSalt() {

@@ -24,7 +24,13 @@ public class KeystoreTest {
         keystoreManager.storeKey(key, password);
 
         keystoreManager.loadStoredKey(Hex.toHexString(key.getAddress()), password);
+    }
 
+    @Test
+    public void readCorrectKey() throws Exception {
+        final String password = "123";
+        final String address = "dc212a894a3575c61eadfb012c8db93923d806f5";
 
+        keystoreManager.loadStoredKey(address, password);
     }
 }

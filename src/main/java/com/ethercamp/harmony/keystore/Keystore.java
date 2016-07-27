@@ -62,7 +62,6 @@ public class Keystore {
             keystore.crypto.getCipherparams().setIv(Hex.toHexString(iv));
             keystore.crypto.setKdfparams(new KdfParams());
             keystore.crypto.getKdfparams().setN(ScryptN);
-            keystore.crypto.getKdfparams().setC(0);
             keystore.crypto.getKdfparams().setR(ScryptR);
             keystore.crypto.getKdfparams().setP(ScryptP);
             keystore.crypto.getKdfparams().setDklen(ScryptDklen);
