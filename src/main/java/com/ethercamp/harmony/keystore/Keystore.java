@@ -1,8 +1,10 @@
 package com.ethercamp.harmony.keystore;
 
+import lombok.extern.slf4j.Slf4j;
 import org.codehaus.jackson.annotate.JsonSetter;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.ethereum.crypto.ECKey;
+import org.ethereum.crypto.HashUtil;
 import org.spongycastle.crypto.generators.SCrypt;
 import org.spongycastle.jcajce.provider.digest.Keccak;
 import org.spongycastle.util.encoders.Hex;
@@ -14,7 +16,10 @@ import javax.crypto.spec.SecretKeySpec;
 import java.io.File;
 import java.security.*;
 import java.util.Arrays;
+import java.util.Random;
+import java.util.UUID;
 
+@Slf4j(topic = "keystore")
 public class Keystore {
 
     private KeystoreCrypto crypto;
@@ -22,60 +27,116 @@ public class Keystore {
     private Integer version;
     private String address;
 
-    public static void toKeystore(final ECKey key, final String password) {
-        ObjectMapper mapper = new ObjectMapper();
+    public static void toKeystore(File file, final ECKey key, String password) {
+        try {
+            // n,r,p = 2^18, 8, 1 uses 256MB memory and approx 1s CPU time on a modern CPU.
+//            final int ScryptN = ((Double) Math.pow(10.0, 18.0)).intValue();
+            final int ScryptN = 262144;
+            final int ScryptR = 8;
+            final int ScryptP = 1;
+            final int ScryptDklen = 32;
+            // salt
+            final byte[] salt = generateRandomBytes(32);
 
-//        try {
-////            Keystore ksObj = mapper.wr(keystore, Keystore.class);
-//            final Keystore keystore = new Keystore();
-//            final byte[] cipherKey = checkMacScrypt(ksObj, password);
+
+            final byte[] derivedKey = scrypt(password.getBytes(), salt, ScryptN, ScryptR, ScryptP, ScryptDklen);
+
+            // 128-bit initialisation vector for the cipher (16 bytes)
+            final byte[] iv = generateRandomBytes(16);
+            final byte[] privateKey = key.getPrivKeyBytes();
+            final byte[] encryptKey = Arrays.copyOfRange(derivedKey, 0, 16);
+            final byte[] cipherText = encryptAes(iv, encryptKey, privateKey);
+            final byte[] mac = HashUtil.sha3(concat(Arrays.copyOfRange(derivedKey, 16, 32), cipherText));
+
+
+            final Keystore keystore = new Keystore();
+            keystore.address = Hex.toHexString(key.getAddress());
+            keystore.id = UUID.randomUUID().toString();
+            keystore.version = 3;
+            keystore.crypto = new KeystoreCrypto();
+            keystore.crypto.setKdf("scrypt");
+            keystore.crypto.setMac(Hex.toHexString(mac));
+            keystore.crypto.setCipher("aes-128-ctr");
+            keystore.crypto.setCiphertext(Hex.toHexString(cipherText));
+            keystore.crypto.setCipherparams(new CipherParams());
+            keystore.crypto.getCipherparams().setIv(Hex.toHexString(iv));
+            keystore.crypto.setKdfparams(new KdfParams());
+            keystore.crypto.getKdfparams().setN(ScryptN);
+            keystore.crypto.getKdfparams().setC(0);
+            keystore.crypto.getKdfparams().setR(ScryptR);
+            keystore.crypto.getKdfparams().setP(ScryptP);
+            keystore.crypto.getKdfparams().setDklen(ScryptDklen);
+            keystore.crypto.getKdfparams().setSalt(Hex.toHexString(salt));
+
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.writeValue(file, keystore);
+        } catch (Exception e) {
+            log.error("Problem storing key", e);
+            throw new RuntimeException("Problem storing key. Message: " + e.getMessage(), e);
+        }
+    }
+
+//    public static byte[] encodeSHA256(byte[] key, byte[] data) throws Exception {
+//        Mac sha256_HMAC = Mac.getInstance("HmacSHA256");
+//        SecretKeySpec secret_key = new SecretKeySpec(key, "HmacSHA256");
+//        sha256_HMAC.init(secret_key);
 //
-//            final byte[] secret = decryptAes(Hex.decode(ksObj.getCrypto().getCipherparams().getIv()), cipherKey, Hex.decode(ksObj.getCrypto().getCiphertext()));
-//
-//            final String fileName = "UTC--" + "--" + key.getAddress();
-//            mapper.writeValue(new File(fileName), keystore);
-////            return ECKey.fromPrivate(secret);
-//        } catch (Exception e) {
-//            throw new RuntimeException("Problem storing key. Message: " + e.getMessage(), e);
-//        }
+//        return sha256_HMAC.doFinal(data);
+//    }
+
+    private static byte[] generateRandomBytes(int size) {
+        final byte[] bytes = new byte[size];
+        new Random().nextBytes(bytes);
+        return bytes;
     }
 
 
-    public static ECKey fromKeystore(final File keystore, final String password) {
+    public static ECKey fromKeystore(final File file, final String password) {
         ObjectMapper mapper = new ObjectMapper();
 
         try {
-            Keystore ksObj = mapper.readValue(keystore, Keystore.class);
-            byte[] cipherKey;
-            switch (ksObj.getCrypto().getKdf()) {
+            final Keystore keystore = mapper.readValue(file, Keystore.class);
+            final byte[] cipherKey;
+
+            switch (keystore.getCrypto().getKdf()) {
                 case "pbkdf2":
-                    cipherKey = checkMacSha3(ksObj, password);
+                    cipherKey = checkMacSha3(keystore, password);
                     break;
                 case "scrypt":
-                    cipherKey = checkMacScrypt(ksObj, password);
-
+                    cipherKey = checkMacScrypt(keystore, password);
                     break;
                 default:
-                    throw new RuntimeException("non valid algorithm " + ksObj.getCrypto().getCipher());
+                    throw new RuntimeException("non valid algorithm " + keystore.getCrypto().getCipher());
             }
 
-            byte[] secret = decryptAes(Hex.decode(ksObj.getCrypto().getCipherparams().getIv()), cipherKey, Hex.decode(ksObj.getCrypto().getCiphertext()));
+            byte[] privateKey = decryptAes(
+                    Hex.decode(keystore.getCrypto().getCipherparams().getIv()),
+                    cipherKey,
+                    Hex.decode(keystore.getCrypto().getCiphertext())
+            );
 
-            return ECKey.fromPrivate(secret);
+            return ECKey.fromPrivate(privateKey);
         } catch (Exception e) {
             throw new RuntimeException("Problem loading key. Message: " + e.getMessage(), e);
         }
     }
 
     private static byte[] decryptAes(byte[] iv, byte[] keyBytes, byte[] cipherText) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
-        //Initialisation
+        return processAes(iv, keyBytes, cipherText, Cipher.DECRYPT_MODE);
+    }
+
+    private static byte[] encryptAes(byte[] iv, byte[] keyBytes, byte[] cipherText) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
+        return processAes(iv, keyBytes, cipherText, Cipher.ENCRYPT_MODE);
+    }
+
+    private static byte[] processAes(byte[] iv, byte[] keyBytes, byte[] cipherText, int encryptMode) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
         SecretKeySpec key = new SecretKeySpec(keyBytes, "AES");
         IvParameterSpec ivSpec = new IvParameterSpec(iv);
 
-        //Mode
+        // Mode
         Cipher cipher = Cipher.getInstance("AES/CTR/NoPadding");
 
-        cipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
+        cipher.init(encryptMode, key, ivSpec);
         return cipher.doFinal(cipherText);
     }
 

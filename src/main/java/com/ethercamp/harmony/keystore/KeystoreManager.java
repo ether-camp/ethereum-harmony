@@ -2,12 +2,19 @@ package com.ethercamp.harmony.keystore;
 
 import lombok.extern.slf4j.Slf4j;
 import org.ethereum.crypto.ECKey;
+import org.ethereum.net.swarm.Util;
+import org.ethereum.util.Utils;
+import org.spongycastle.util.encoders.Hex;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.nio.file.*;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.Optional;
+import java.util.TimeZone;
 
 /**
  * Key store manager. Can store and load keys.
@@ -20,18 +27,20 @@ import java.util.Optional;
 @Slf4j(topic = "keystore")
 public class KeystoreManager {
 
-    public void storeKey(ECKey key) {
-        File keysFolder = getKeyStoreLocation().toFile();
+    public void storeKey(ECKey key, String password) {
+        final File keysFolder = getKeyStoreLocation().toFile();
         keysFolder.mkdirs();
 
-        throw new RuntimeException("Not implemented");
+        final String fileName = "UTC--" + getISODate(Util.curTime()) + "--" + Hex.toHexString(key.getAddress());
+        final File file = new File(keysFolder.getAbsolutePath() + "/" + fileName);
+        Keystore.toKeystore(file, key, password);
     }
 
     /**
      * @return array of addresses in format "0x123abc..."
      */
     public String[] listStoredKeys() {
-        File dir = getKeyStoreLocation().toFile();
+        final File dir = getKeyStoreLocation().toFile();
         return Arrays.stream(dir.listFiles())
                 .filter(f -> !f.isDirectory())
                 .map(f -> f.getName().split("--"))
@@ -41,14 +50,21 @@ public class KeystoreManager {
     }
 
     /**
-     * @return loaded key or null
+     * @return some loaded key or None
      */
     public Optional<ECKey> loadStoredKey(String address, String password) {
-        File dir = getKeyStoreLocation().toFile();
+        final File dir = getKeyStoreLocation().toFile();
         return Arrays.stream(dir.listFiles())
                 .filter(f -> !f.isDirectory() && f.getName().indexOf(address) > -1)
                 .map(f -> Keystore.fromKeystore(f, password))
                 .findFirst();
+    }
+
+    private String getISODate(long milliseconds) {
+        TimeZone tz = TimeZone.getTimeZone("UTC");
+        DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
+        df.setTimeZone(tz);
+        return df.format(new Date(milliseconds));
     }
 
     /**
@@ -62,8 +78,7 @@ public class KeystoreManager {
             return Paths.get(System.getenv("APPDATA") + "/Ethereum/" + keystoreDir);
         } else if (osName.indexOf("mac") >= 0) {
             return Paths.get(System.getProperty("user.home") + "/Library/Ethereum/" + keystoreDir);
-        } else {
-            // must be linux/unix
+        } else {    // must be linux/unix
             return Paths.get(System.getProperty("user.home") + "/.ethereum/" + keystoreDir);
         }
     }

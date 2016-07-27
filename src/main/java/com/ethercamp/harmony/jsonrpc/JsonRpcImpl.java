@@ -230,7 +230,7 @@ public class JsonRpcImpl implements JsonRpc {
     protected Account addAccount(ECKey key) {
         Account account = new Account();
         account.init(key);
-        keystoreManager.storeKey(key);
+        keystoreManager.storeKey(key, "");
 //        accounts.put(new ByteArrayWrapper(account.getAddress()), account);
         return account;
     }
@@ -474,10 +474,10 @@ public class JsonRpcImpl implements JsonRpc {
         }
     }
 
-    public String eth_sign(String addr, String data) throws Exception {
+    public String eth_sign(String address, String data) throws Exception {
         String s = null;
         try {
-            String ha = JSonHexToHex(addr);
+            String ha = JSonHexToHex(address);
             Account account = getAccount(ha);
 
             if (account==null)
@@ -490,7 +490,7 @@ public class JsonRpcImpl implements JsonRpc {
             byte[] rlpSig = RLP.encode(signature);
             return s = TypeConverter.toJsonHex(rlpSig);
         } finally {
-            if (log.isDebugEnabled()) log.debug("eth_sign(" + addr + ", " + data + "): " + s);
+            if (log.isDebugEnabled()) log.debug("eth_sign(" + address + ", " + data + "): " + s);
         }
     }
 
@@ -598,44 +598,44 @@ public class JsonRpcImpl implements JsonRpc {
     }
 
 
-    public BlockResult getBlockResult(Block b, boolean fullTx) {
-        if (b==null)
+    protected BlockResult getBlockResult(Block block, boolean fullTx) {
+        if (block==null)
             return null;
-        boolean isPending = ByteUtil.byteArrayToLong(b.getNonce()) == 0;
+        boolean isPending = ByteUtil.byteArrayToLong(block.getNonce()) == 0;
         BlockResult br = new BlockResult();
-        br.number = isPending ? null : TypeConverter.toJsonHex(b.getNumber());
-        br.hash = isPending ? null : TypeConverter.toJsonHex(b.getHash());
-        br.parentHash = TypeConverter.toJsonHex(b.getParentHash());
-        br.nonce = isPending ? null : TypeConverter.toJsonHex(b.getNonce());
-        br.sha3Uncles= TypeConverter.toJsonHex(b.getUnclesHash());
-        br.logsBloom = isPending ? null : TypeConverter.toJsonHex(b.getLogBloom());
-        br.transactionsRoot = TypeConverter.toJsonHex(b.getTxTrieRoot());
-        br.stateRoot = TypeConverter.toJsonHex(b.getStateRoot());
-        br.receiptsRoot = TypeConverter.toJsonHex(b.getReceiptsRoot());
-        br.miner = isPending ? null : TypeConverter.toJsonHex(b.getCoinbase());
-        br.difficulty = TypeConverter.toJsonHex(b.getDifficulty());
+        br.number = isPending ? null : TypeConverter.toJsonHex(block.getNumber());
+        br.hash = isPending ? null : TypeConverter.toJsonHex(block.getHash());
+        br.parentHash = TypeConverter.toJsonHex(block.getParentHash());
+        br.nonce = isPending ? null : TypeConverter.toJsonHex(block.getNonce());
+        br.sha3Uncles= TypeConverter.toJsonHex(block.getUnclesHash());
+        br.logsBloom = isPending ? null : TypeConverter.toJsonHex(block.getLogBloom());
+        br.transactionsRoot = TypeConverter.toJsonHex(block.getTxTrieRoot());
+        br.stateRoot = TypeConverter.toJsonHex(block.getStateRoot());
+        br.receiptsRoot = TypeConverter.toJsonHex(block.getReceiptsRoot());
+        br.miner = isPending ? null : TypeConverter.toJsonHex(block.getCoinbase());
+        br.difficulty = TypeConverter.toJsonHex(block.getDifficulty());
         br.totalDifficulty = TypeConverter.toJsonHex(blockchain.getTotalDifficulty());
-        if (b.getExtraData() != null)
-            br.extraData = TypeConverter.toJsonHex(b.getExtraData());
-        br.size = TypeConverter.toJsonHex(b.getEncoded().length);
-        br.gasLimit = TypeConverter.toJsonHex(b.getGasLimit());
-        br.gasUsed = TypeConverter.toJsonHex(b.getGasUsed());
-        br.timestamp = TypeConverter.toJsonHex(b.getTimestamp());
+        if (block.getExtraData() != null)
+            br.extraData = TypeConverter.toJsonHex(block.getExtraData());
+        br.size = TypeConverter.toJsonHex(block.getEncoded().length);
+        br.gasLimit = TypeConverter.toJsonHex(block.getGasLimit());
+        br.gasUsed = TypeConverter.toJsonHex(block.getGasUsed());
+        br.timestamp = TypeConverter.toJsonHex(block.getTimestamp());
 
         List<Object> txes = new ArrayList<>();
         if (fullTx) {
-            for (int i = 0; i < b.getTransactionsList().size(); i++) {
-                txes.add(new TransactionResultDTO(b, i, b.getTransactionsList().get(i)));
+            for (int i = 0; i < block.getTransactionsList().size(); i++) {
+                txes.add(new TransactionResultDTO(block, i, block.getTransactionsList().get(i)));
             }
         } else {
-            for (Transaction tx : b.getTransactionsList()) {
+            for (Transaction tx : block.getTransactionsList()) {
                 txes.add(toJsonHex(tx.getHash()));
             }
         }
         br.transactions = txes.toArray();
 
         List<String> ul = new ArrayList<>();
-        for (BlockHeader header : b.getUncleList()) {
+        for (BlockHeader header : block.getUncleList()) {
             ul.add(toJsonHex(header.getHash()));
         }
         br.uncles = ul.toArray(new String[ul.size()]);
@@ -1038,38 +1038,38 @@ public class JsonRpcImpl implements JsonRpc {
     }
 
     @Override
-    public boolean eth_uninstallFilter(String id) {
+    public boolean eth_uninstallFilter(String filterId) {
         Boolean s = null;
         try {
-            if (id == null) return false;
-            return s = installedFilters.remove(StringHexToBigInteger(id).intValue()) != null;
+            if (filterId == null) return false;
+            return s = installedFilters.remove(StringHexToBigInteger(filterId).intValue()) != null;
         } finally {
-            if (log.isDebugEnabled()) log.debug("eth_uninstallFilter(" + id + "): " + s);
+            if (log.isDebugEnabled()) log.debug("eth_uninstallFilter(" + filterId + "): " + s);
         }
     }
 
     @Override
-    public Object[] eth_getFilterChanges(String id) {
+    public Object[] eth_getFilterChanges(String filterId) {
         Object[] s = null;
         try {
-            Filter filter = installedFilters.get(StringHexToBigInteger(id).intValue());
+            Filter filter = installedFilters.get(StringHexToBigInteger(filterId).intValue());
             if (filter == null) return null;
             return s = filter.poll();
         } finally {
-            if (log.isDebugEnabled()) log.debug("eth_getFilterChanges(" + id + "): " + Arrays.toString(s));
+            if (log.isDebugEnabled()) log.debug("eth_getFilterChanges(" + filterId + "): " + Arrays.toString(s));
         }
     }
 
     @Override
-    public Object[] eth_getFilterLogs(String id) {
+    public Object[] eth_getFilterLogs(String filterId) {
         log.debug("eth_getFilterLogs ...");
-        return eth_getFilterChanges(id);
+        return eth_getFilterChanges(filterId);
     }
 
     @Override
-    public Object[] eth_getLogs(FilterRequest fr) throws Exception {
+    public Object[] eth_getLogs(FilterRequest filterRequest) throws Exception {
         log.debug("eth_getLogs ...");
-        String id = eth_newFilter(fr);
+        String id = eth_newFilter(filterRequest);
         Object[] ret = eth_getFilterChanges(id);
         eth_uninstallFilter(id);
         return ret;
@@ -1161,8 +1161,8 @@ public class JsonRpcImpl implements JsonRpc {
     }
 
     @Override
-    public boolean admin_addPeer(String s) {
-        eth.connect(new Node(s));
+    public boolean admin_addPeer(String enodeUrl) {
+        eth.connect(new Node(enodeUrl));
         return true;
     }
 
@@ -1357,10 +1357,10 @@ public class JsonRpcImpl implements JsonRpc {
     }
 
     @Override
-    public String personal_newAccount(String seed) {
+    public String personal_newAccount(String password) {
         String s = null;
         try {
-            Account account = addAccount(seed);
+            Account account = addAccount(password);
             return s = toJsonHex(account.getAddress());
         } finally {
             if (log.isDebugEnabled()) log.debug("personal_newAccount(*****): " + s);

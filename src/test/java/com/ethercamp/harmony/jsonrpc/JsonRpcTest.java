@@ -1,4 +1,4 @@
-package com.ethercamp.harmony;
+package com.ethercamp.harmony.jsonrpc;
 
 import com.ethercamp.harmony.jsonrpc.*;
 import com.typesafe.config.ConfigFactory;
