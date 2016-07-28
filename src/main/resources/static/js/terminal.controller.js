@@ -151,8 +151,6 @@
                             return w.startsWith($scope.commandInfoName)
                         })[0].split(' ');
                         params.shift();
-                        console.log(params);
-                        params = params.map(function(o) {return o}); // JS bug, length is wrong after filter and shift
                         $scope.commandInfoParams = (params.length > 0 ? ('(' + params.join(', ') + ')') : '');
                         $scope.hideCommandInfo = false;
                         $scope.hideSuggestionsList = true;

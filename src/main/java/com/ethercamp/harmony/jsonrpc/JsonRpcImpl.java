@@ -1422,7 +1422,7 @@ public class JsonRpcImpl implements JsonRpc {
                                     parameter.isNamePresent() ? parameter.getName() : parameter.getType().getSimpleName())
                             .collect(Collectors.toList());
                     params.add(0, method.getName());
-                    return params.stream().collect(Collectors.joining(", "));
+                    return params.stream().collect(Collectors.joining(" "));
                 })
                 .toArray(size -> new String[size]);
     }
