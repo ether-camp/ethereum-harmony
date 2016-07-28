@@ -39,6 +39,7 @@ import java.util.concurrent.atomic.AtomicReference;
 @Service
 public class MachineInfoService {
 
+    public static final int KEEP_LOG_ENTRIES = 1000;
     private final int BLOCK_COUNT_FOR_HASH_RATE = 100;
 
     @Autowired
@@ -65,6 +66,7 @@ public class MachineInfoService {
 
     private final AtomicReference<InitialInfoDTO> initialInfo = new AtomicReference<>(new InitialInfoDTO("", ""));
 
+    private final Queue<String> lastLogs = new ConcurrentLinkedQueue();
 
     public InitialInfoDTO getInitialInfo() {
         return initialInfo.get();
@@ -93,6 +95,10 @@ public class MachineInfoService {
 
     public MachineInfoDTO getMachineInfo() {
         return machineInfo.get();
+    }
+
+    public Queue<String> getSystemLogs() {
+        return lastLogs;
     }
 
     @Scheduled(fixedRate = 5000)
@@ -195,6 +201,10 @@ public class MachineInfoService {
             protected void append(Object eventObject) {
                 LoggingEvent event = (LoggingEvent) eventObject;
                 String message = patternLayout.doLayout(event);
+                lastLogs.add(message);
+                if (lastLogs.size() > KEEP_LOG_ENTRIES) {
+                    lastLogs.poll();
+                }
                 clientMessageService.sendToTopic("/topic/systemLog", message);
             }
         };
@@ -207,7 +217,7 @@ public class MachineInfoService {
 
         messagingAppender.start();
 
-        // Attach appender to logger
+        // Attach appender to specific loggers
         Arrays.asList("blockchain", "sync", "facade", "net", "general")
                 .stream()
                 .forEach(l -> {

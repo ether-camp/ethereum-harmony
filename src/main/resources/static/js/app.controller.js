@@ -147,7 +147,9 @@
             ethereumJVersion: "n/a"
         };
 
-        var updateLogSubscription       = updateSubscriptionFun('/topic/systemLog', onSystemLogResult);
+        var updateLogSubscription       = updateSubscriptionFun('/topic/systemLog', onSystemLogResult, function() {
+            stompClient.send('/app/currentSystemLogs');
+        });
         var updatePeersSubscription     = updateSubscriptionFun('/topic/peers', onPeersListResult);
         var updateRpcSubscription       = updateSubscriptionFun('/topic/rpcUsage', onRpcUsageResult);
 
@@ -212,6 +214,7 @@
                     stompClient.subscribe('/topic/machineInfo', onMachineInfoResult);
                     stompClient.subscribe('/topic/blockchainInfo', onBlockchainInfoResult);
                     stompClient.subscribe('/topic/newBlockFrom', onNewBlockFromResult);
+                    stompClient.subscribe('/topic/currentSystemLogs', onCurrentSystemLogsResult);
                     updateLogSubscription(isLogPageActive);
                     updatePeersSubscription(isPeersPageActive);
                     updateRpcSubscription(isRpcPageActive);
@@ -238,12 +241,23 @@
             $scope.$broadcast('rpcUsageListEvent', items);
         }
 
-        function updateSubscriptionFun(topic, handler) {
+        /**
+         * Generate function to manage subscription state.
+         *
+         * @param topic - topic to subscribe to
+         * @param handler - handler for subscribed topic
+         * @param initFun - optional parameter of function to be called before subscription
+         * @returns {Function} - which accepts {doSubscribe} argument and manage subscription
+         *                       depending on connection established or not.
+         *                       {topicStorage} variable is used to keep connection state per topic
+         */
+        function updateSubscriptionFun(topic, handler, initFun) {
             return function(doSubscribe) {
                 if (vm.isConnected) {
                     var subscribed = topicStorage[topic] != null;
                     if (doSubscribe != subscribed ) {
                         if (doSubscribe) {
+                            initFun && initFun();
                             topicStorage[topic] = stompClient.subscribe(topic, handler);
                         } else {
                             topicStorage[topic].unsubscribe();
@@ -260,6 +274,13 @@
 
             // send event to SystemLogCtrl
             $scope.$broadcast('systemLogEvent', msg);
+        }
+
+        function onCurrentSystemLogsResult(data) {
+            var items = JSON.parse(data.body);
+
+            // send event to SystemLogCtrl
+            $scope.$broadcast('currentSystemLogs', items);
         }
 
         function onMachineInfoResult(data) {

@@ -72,8 +72,15 @@
 
         // handling event from main controller
         $scope.$on('systemLogEvent', function(event, data) {
-            //console.log("systemLogEvent " + data);
             log(data);
+        });
+        $scope.$on('currentSystemLogs', function(event, items) {
+            items.forEach(function(msg) {
+                log(msg);
+            });
+            if ($scope.isAutoScroll) {
+                scrollToBottom();
+            }
         });
 
         init({

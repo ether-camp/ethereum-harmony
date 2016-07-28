@@ -8,6 +8,8 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import java.util.Queue;
+
 @Controller
 public class WebSocketController {
 
@@ -25,6 +27,11 @@ public class WebSocketController {
     @MessageMapping("/initialInfo")
     public InitialInfoDTO getInitialInfo() {
         return machineInfoService.getInitialInfo();
+    }
+
+    @MessageMapping("/currentSystemLogs")
+    public Queue<String> getSystemLogs() {
+        return machineInfoService.getSystemLogs();
     }
 
     @RequestMapping({"/", "/systemLog", "/peers", "/rpcUsage", "/terminal"})
