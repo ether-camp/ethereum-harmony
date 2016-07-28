@@ -89,7 +89,7 @@
 
 
         function createTerminal(list) {
-            var methods = list;
+            var methods = extractMethods(list);
 
             terminal = $('#' + CONTAINER_ID).terminal(function(line, term) {
                 if (line !== '') {
@@ -159,6 +159,8 @@
                         $scope.hideSuggestionsList = false;
                     }
                 } else {
+                    $scope.hideCommandInfo = true;
+                    $scope.hideSuggestionsList = false;
                     $scope.filteredSuggestions = $scope.suggestions;
                 }
             }, 10);
