@@ -151,7 +151,7 @@
                             return w.startsWith($scope.commandInfoName)
                         })[0].split(' ');
                         params.shift();
-                        $scope.commandInfoParams = (params.length > 0 ? ('(' + params.join(', ') + ')') : '');
+                        $scope.commandInfoParams = (params.length > 0 ? params.join(' ') : '');
                         $scope.hideCommandInfo = false;
                         $scope.hideSuggestionsList = true;
                     } else {
