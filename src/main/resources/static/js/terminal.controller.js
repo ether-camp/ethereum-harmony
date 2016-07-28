@@ -7,7 +7,7 @@
 
     var CONTAINER_ID = 'terminal-container';
 
-    var terminalCompletionWords = null;
+    var terminalCompletionWords = [];
     var terminal = null;
 
     /**
@@ -15,7 +15,7 @@
      */
     function extractMethods(list) {
         return list.map(function(item) {
-            return item.split(" ")[0];
+            return item.split(' ')[0];
         });
     }
 
@@ -23,21 +23,25 @@
         console.log('TerminalCtrl controller activated.');
 
         $scope.scrollConfig = jQuery.extend(true, {}, scrollConfig);
-        $scope.suggestions = terminalCompletionWords;
-        $scope.filteredSuggestions = terminalCompletionWords;
+        $scope.suggestions = extractMethods(terminalCompletionWords);
+        $scope.filteredSuggestions = extractMethods(terminalCompletionWords);
+        $scope.hideSuggestionsList = false;
+        $scope.hideCommandInfo = true;
+        $scope.commandInfoName = null;
+        $scope.commandInfoParams = null;
 
         $scope.$on('$destroy', function() {
             console.log('TerminalCtrl controller exited.');
         });
 
         // load method names for code completion if not already
-        if (terminalCompletionWords == null) {
+        if (terminalCompletionWords.length == 0) {
             jsonrpc.request('listAvailableMethods', {})
                 .then(function(result) {
                     //console.log(result);
                     console.log('Result methods count available:' + result.length);
                     terminalCompletionWords = result;
-                    $scope.filteredSuggestions = $scope.suggestions = terminalCompletionWords;
+                    $scope.filteredSuggestions = $scope.suggestions = extractMethods(terminalCompletionWords);
                     createTerminal(terminalCompletionWords);
                 })
                 .catch(function(error) {
@@ -46,7 +50,7 @@
                     createTerminal([], jsonrpc, $timeout);
                 });
         } else {
-            $scope.filteredSuggestions = $scope.suggestions = terminalCompletionWords;
+            $scope.filteredSuggestions = $scope.suggestions = extractMethods(terminalCompletionWords);
             createTerminal(terminalCompletionWords);
         }
 
@@ -85,7 +89,7 @@
 
 
         function createTerminal(list) {
-            var methods = extractMethods(list);
+            var methods = list;
 
             terminal = $('#' + CONTAINER_ID).terminal(function(line, term) {
                 if (line !== '') {
@@ -139,8 +143,23 @@
                     var command = arr.shift();
                     $scope.filteredSuggestions = $scope.suggestions
                         .filter(function(item) {
-                            return item.split(" ")[0].startsWith(command);
+                            return item.startsWith(command);
                         });
+                    if ($scope.filteredSuggestions.length == 1) {
+                        $scope.commandInfoName = $scope.filteredSuggestions[0];
+                        var params = terminalCompletionWords.filter(function(w) {
+                            return w.startsWith($scope.commandInfoName)
+                        })[0].split(' ');
+                        params.shift();
+                        console.log(params);
+                        params = params.map(function(o) {return o}); // JS bug, length is wrong after filter and shift
+                        $scope.commandInfoParams = (params.length > 0 ? ('(' + params.join(', ') + ')') : '');
+                        $scope.hideCommandInfo = false;
+                        $scope.hideSuggestionsList = true;
+                    } else {
+                        $scope.hideCommandInfo = true;
+                        $scope.hideSuggestionsList = false;
+                    }
                 } else {
                     $scope.filteredSuggestions = $scope.suggestions;
                 }

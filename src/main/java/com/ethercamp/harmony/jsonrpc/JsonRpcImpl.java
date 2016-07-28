@@ -377,12 +377,12 @@ public class JsonRpcImpl implements JsonRpc {
         }
     }
 
-    public String eth_getBalance(String address) throws Exception {
+    public String eth_getLastBalance(String address) throws Exception {
         String s = null;
         try {
             return s = eth_getBalance(address, "latest");
         } finally {
-            if (log.isDebugEnabled()) log.debug("eth_getBalance(" + address + "): " + s);
+            if (log.isDebugEnabled()) log.debug("eth_getLastBalance(" + address + "): " + s);
         }
     }
 
@@ -519,7 +519,7 @@ public class JsonRpcImpl implements JsonRpc {
         }
     }
 
-    public String eth_sendTransaction(String from, String to, String gas,
+    public String eth_sendTransactionArgs(String from, String to, String gas,
                                       String gasPrice, String value, String data, String nonce) throws Exception {
         String s = null;
         try {
@@ -1415,13 +1415,15 @@ public class JsonRpcImpl implements JsonRpc {
                 .stream()
                 .filter(method -> Modifier.isPublic(method.getModifiers()))
                 .filter(method -> !ignore.contains(method.getName()))
-                .map(method ->
-                    method.getName() + " " + Arrays.asList(method.getParameters())
+                .map(method -> {
+                     List<String> params = Arrays.asList(method.getParameters())
                             .stream()
                             .map(parameter ->
                                     parameter.isNamePresent() ? parameter.getName() : parameter.getType().getSimpleName())
-                            .collect(Collectors.joining(" "))
-                )
+                            .collect(Collectors.toList());
+                    params.add(0, method.getName());
+                    return params.stream().collect(Collectors.joining(", "));
+                })
                 .toArray(size -> new String[size]);
     }
 }

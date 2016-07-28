@@ -205,7 +205,7 @@ public interface JsonRpc {
     String[] eth_accounts();
     String eth_blockNumber();
     String eth_getBalance(String address, String block) throws Exception;
-    String eth_getBalance(String address) throws Exception;
+    String eth_getLastBalance(String address) throws Exception;
 
     String eth_getStorageAt(String address, String storageIdx, String blockId) throws Exception;
 
@@ -219,7 +219,7 @@ public interface JsonRpc {
     String eth_sign(String addr, String data) throws Exception;
     String eth_sendTransaction(CallArguments transactionArgs) throws Exception;
     // TODO: Remove, obsolete with this params
-    String eth_sendTransaction(String from, String to, String gas,
+    String eth_sendTransactionArgs(String from, String to, String gas,
                                String gasPrice, String value, String data, String nonce) throws Exception;
     String eth_sendRawTransaction(String rawData) throws Exception;
     String eth_call(CallArguments args, String bnOrId) throws Exception;

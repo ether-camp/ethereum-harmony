@@ -17,8 +17,9 @@ public class WebSocketController {
     MachineInfoService machineInfoService;
 
     /**
-     * Get current machine info.
+     * Websocket handlers for immediate result.
      */
+
     @MessageMapping("/machineInfo")
     public MachineInfoDTO getMachineInfo() {
         return machineInfoService.getMachineInfo();
@@ -34,6 +35,10 @@ public class WebSocketController {
         return machineInfoService.getSystemLogs();
     }
 
+    /**
+     * Defines request mapping for all site pages.
+     * As we have angular routing - we return index.html here.
+     */
     @RequestMapping({"/", "/systemLog", "/peers", "/rpcUsage", "/terminal"})
     public String index() {
         return "index.html";
