@@ -18,7 +18,8 @@
 
     function scrollToBottom() {
         var logScrollContainer = document.getElementById("log-scroll-container");
-        logScrollContainer.scrollTop = logScrollContainer.scrollHeight;
+        //logScrollContainer.scrollTop = logScrollContainer.scrollHeight;
+        $(logScrollContainer).mCustomScrollbar('scrollTo', 'bottom');
     }
 
     function highlightWord(line) {
@@ -54,17 +55,10 @@
         return container;
     }
 
-    function resizeLogContainer() {
-        console.log("System Log page resize");
-        var logScrollContainer = document.getElementById("log-scroll-container");
-        var rect = logScrollContainer.getBoundingClientRect();
-        var newHeight = $(window).height();
-        $(logScrollContainer).css('maxHeight', (newHeight - rect.top - 30) + 'px');
-    }
-
-    function SystemLogCtrl($scope, $timeout) {
+    function SystemLogCtrl($scope, $timeout, scrollConfig) {
         // checkbox value
         $scope.isAutoScroll = true;
+        $scope.scrollConfig = jQuery.extend(true, {}, scrollConfig);
 
         // checkbox change handler
         $scope.onAutoScrollChange = function() {
@@ -87,6 +81,18 @@
             filterInput: document.getElementsByClassName('query')[0]
         });
 
+        function resizeLogContainer() {
+            console.log('System Log page resize');
+            var scrollContainer = document.getElementById('log-scroll-container');
+            var rect = scrollContainer.getBoundingClientRect();
+            var newHeight = $(window).height() - rect.top - 20;
+            //$(scrollContainer).css('maxHeight', newHeight + 'px');
+
+            $timeout(function() {
+                $scope.scrollConfig.setHeight = newHeight;
+                $(scrollContainer).mCustomScrollbar($scope.scrollConfig);
+            }, 10);
+        }
 
         /**
          * Resize logs element to fit all available space.
@@ -184,5 +190,5 @@
     }
 
     angular.module('HarmonyApp')
-        .controller('SystemLogCtrl', ['$scope', '$timeout', SystemLogCtrl]);
+        .controller('SystemLogCtrl', ['$scope', '$timeout', 'scrollConfig', SystemLogCtrl]);
 })();

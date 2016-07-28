@@ -5,18 +5,10 @@
 (function() {
     'use strict';
 
-    function onResize() {
-        console.log("RpcUsage page resize");
-
-        var scrollContainer = document.getElementById("rpc-scroll-container");
-        var rect = scrollContainer.getBoundingClientRect();
-        var newHeight = $(window).height();
-        $(scrollContainer).css('maxHeight', (newHeight - rect.top - 30) + 'px');
-    }
-
-    function RpcUsageCtrl($scope, $timeout) {
+    function RpcUsageCtrl($scope, $timeout, scrollConfig) {
         console.log('RpcUsage controller activated.');
         $scope.rpcItems = $scope.rpcItems;
+        $scope.scrollConfig = jQuery.extend(true, {}, scrollConfig);
 
         $scope.$on('$destroy', function() {
             console.log('RpcUsage controller exited.');
@@ -41,8 +33,21 @@
                 $scope.rpcItems = items;
             }, 10);
         });
+
+        function onResize() {
+            console.log("RpcUsage page resize");
+
+            var scrollContainer = document.getElementById("rpc-scroll-container");
+            var rect = scrollContainer.getBoundingClientRect();
+            var newHeight = $(window).height() - rect.top - 20;
+            //$(scrollContainer).css('maxHeight', newHeight + 'px');
+            $scope.scrollConfig.setHeight = newHeight;
+            $timeout(function() {
+                $(scrollContainer).mCustomScrollbar($scope.scrollConfig);
+            }, 10);
+        }
     }
 
     angular.module('HarmonyApp')
-        .controller('RpcUsageCtrl', ['$scope', '$timeout', RpcUsageCtrl]);
+        .controller('RpcUsageCtrl', ['$scope', '$timeout', 'scrollConfig', RpcUsageCtrl]);
 })();

@@ -5,6 +5,19 @@
 
     mainApp.controller('AppCtrl', AppCtrl);
 
+    mainApp.constant('scrollConfig', {
+        autoHideScrollbar: true,
+        theme: 'dark',
+        advanced: {
+            updateOnContentResize: true
+        },
+        axis: 'y',
+        setHeight: 200,
+        scrollInertia: 0,
+        keyboard: { enable: false },
+        scrollButtons: { enable: false }
+    });
+
     var url = '/rpc';
 
 

@@ -1,17 +1,20 @@
 package com.ethercamp.harmony.jsonrpc;
 
 import com.ethercamp.harmony.jsonrpc.*;
+import com.ethercamp.harmony.keystore.KeystoreManager;
 import com.typesafe.config.ConfigFactory;
 import org.ethereum.config.SystemProperties;
 import org.ethereum.config.blockchain.FrontierConfig;
 import org.ethereum.core.CallTransaction;
 import org.ethereum.core.Transaction;
+import org.ethereum.crypto.ECKey;
 import org.ethereum.datasource.HashMapDB;
 import org.ethereum.datasource.KeyValueDataSource;
 import org.ethereum.facade.Ethereum;
 import org.ethereum.facade.EthereumFactory;
 import org.ethereum.facade.EthereumImpl;
 import org.junit.Test;
+import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Scope;
@@ -69,6 +72,11 @@ public class JsonRpcTest {
         }
 
         @Bean
+        public KeystoreManager keystoreManager() {
+            return new KeystoreManager();
+        }
+
+        @Bean
         public JsonRpc jsonRpc() {
             return new JsonRpcImpl();
         }
@@ -87,6 +95,8 @@ public class JsonRpcTest {
     }
 
     static class TestRunner {
+        // ensure to publish it in other place in this class
+        // see @Bean
         @Autowired
         JsonRpc jsonRpc;
 
@@ -95,7 +105,11 @@ public class JsonRpcTest {
 
 //        @PostConstruct
         public void runTests() throws Exception {
-            String cowAcct = jsonRpc.personal_newAccount("cow");
+            String passphrase = "123";
+            ECKey newKey = ECKey.fromPrivate(sha3("cow".getBytes()));
+            String keydata = Hex.toHexString(newKey.getPrivKeyBytes());
+            String cowAcct = jsonRpc.personal_importRawKey(keydata, passphrase);
+
             String bal0 = jsonRpc.eth_getBalance(cowAcct);
             System.out.println("Balance: " + bal0);
             assertTrue(TypeConverter.StringHexToBigInteger(bal0).compareTo(BigInteger.ZERO) > 0);

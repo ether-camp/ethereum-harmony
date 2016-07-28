@@ -6,7 +6,6 @@ import org.ethereum.config.SystemProperties;
 import org.ethereum.core.*;
 import org.ethereum.crypto.ECKey;
 import org.ethereum.crypto.HashUtil;
-import org.ethereum.db.ByteArrayWrapper;
 import org.ethereum.db.TransactionStore;
 import org.ethereum.facade.Ethereum;
 import org.ethereum.listener.CompositeEthereumListener;
@@ -25,6 +24,7 @@ import org.ethereum.util.ByteUtil;
 import org.ethereum.util.RLP;
 import org.ethereum.vm.DataWord;
 import org.ethereum.vm.LogInfo;
+import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.annotation.PostConstruct;
@@ -223,14 +223,10 @@ public class JsonRpcImpl implements JsonRpc {
 //        return accounts.get(new ByteArrayWrapper(StringHexToByteArray(address)));
     }
 
-    protected Account addAccount(String password) {
-        return addAccount(ECKey.fromPrivate(sha3(password.getBytes())));
-    }
-
-    protected Account addAccount(ECKey key) {
+    protected Account addAccount(ECKey key, String password) {
         Account account = new Account();
         account.init(key);
-        keystoreManager.storeKey(key, "");
+        keystoreManager.storeKey(key, password);
 //        accounts.put(new ByteArrayWrapper(account.getAddress()), account);
         return account;
     }
@@ -1360,7 +1356,9 @@ public class JsonRpcImpl implements JsonRpc {
     public String personal_newAccount(String password) {
         String s = null;
         try {
-            Account account = addAccount(password);
+            // generate new private key
+            ECKey key = new ECKey();
+            Account account = addAccount(key, password);
             return s = toJsonHex(account.getAddress());
         } finally {
             if (log.isDebugEnabled()) log.debug("personal_newAccount(*****): " + s);
@@ -1370,10 +1368,11 @@ public class JsonRpcImpl implements JsonRpc {
     public String personal_importRawKey(String keydata, String passphrase) {
         String s = null;
         try {
-
+            Account account = addAccount(ECKey.fromPrivate(Hex.decode(keydata)), passphrase);
+            return s = toJsonHex(account.getAddress());
         } finally {
+            if (log.isDebugEnabled()) log.debug("personal_importRawKey(*****): " + s);
         }
-        return s;
     }
 
     @Override

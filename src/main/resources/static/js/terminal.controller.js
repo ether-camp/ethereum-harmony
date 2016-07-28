@@ -19,22 +19,10 @@
         });
     }
 
-    function TerminalCtrl($scope, $timeout, jsonrpc) {
+    function TerminalCtrl($scope, $timeout, jsonrpc, scrollConfig) {
         console.log('TerminalCtrl controller activated.');
 
-        $scope.scrollConfig = {
-            autoHideScrollbar: true,
-            theme: 'dark',
-            advanced: {
-                updateOnContentResize: true
-            },
-            axis: 'y',
-            setHeight: 200,
-            scrollInertia: 0,
-            keyboard: { enable: false },
-            scrollButtons: { enable: false }
-        };
-
+        $scope.scrollConfig = jQuery.extend(true, {}, scrollConfig);
         $scope.suggestions = terminalCompletionWords;
         $scope.filteredSuggestions = terminalCompletionWords;
 
@@ -161,5 +149,5 @@
     }
 
     angular.module('HarmonyApp')
-        .controller('TerminalCtrl', ['$scope', '$timeout', 'jsonrpc', TerminalCtrl]);
+        .controller('TerminalCtrl', ['$scope', '$timeout', 'jsonrpc', 'scrollConfig', TerminalCtrl]);
 })();

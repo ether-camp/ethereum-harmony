@@ -75,14 +75,6 @@ public class Keystore {
         }
     }
 
-//    public static byte[] encodeSHA256(byte[] key, byte[] data) throws Exception {
-//        Mac sha256_HMAC = Mac.getInstance("HmacSHA256");
-//        SecretKeySpec secret_key = new SecretKeySpec(key, "HmacSHA256");
-//        sha256_HMAC.init(secret_key);
-//
-//        return sha256_HMAC.doFinal(data);
-//    }
-
     private static byte[] generateRandomBytes(int size) {
         final byte[] bytes = new byte[size];
         new Random().nextBytes(bytes);

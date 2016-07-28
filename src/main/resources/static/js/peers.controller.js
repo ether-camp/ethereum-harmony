@@ -11,15 +11,6 @@
 
     var wordmap;    // initialized when controller starts
 
-    function onResize() {
-        console.log("Peers page resize");
-        wordmap.resize();
-
-        var scrollContainer = document.getElementById("peers-scroll-container");
-        var rect = scrollContainer.getBoundingClientRect();
-        var newHeight = $(window).height();
-        $(scrollContainer).css('maxHeight', (newHeight - rect.top - 30) + 'px');
-    }
 
     /**
      * Updates items in array without recreating them
@@ -70,7 +61,7 @@
         return value + ' sec ago';
     }
 
-    function PeersCtrl($scope, $timeout) {
+    function PeersCtrl($scope, $timeout, scrollConfig) {
 
         console.log('Peers controller activated.');
         $scope.peers = $scope.peers || [];
@@ -79,6 +70,7 @@
         $scope.activePeersCount = $scope.activePeersCount || 0;
         $scope.showActive = true;
         $scope.showInactive = false;
+        $scope.scrollConfig = jQuery.extend(true, {}, scrollConfig);
 
         $scope.$on('$destroy', function() {
             $timeout.cancel($scope.promise);
@@ -210,8 +202,22 @@
         $scope.onShowInactiveChange = function() {
 
         };
+
+        function onResize() {
+            console.log("Peers page resize");
+            wordmap.resize();
+
+            var scrollContainer = document.getElementById("peers-scroll-container");
+            var rect = scrollContainer.getBoundingClientRect();
+            var newHeight = $(window).height() - rect.top - 30;
+            //$(scrollContainer).css('maxHeight', newHeight + 'px');
+            $timeout(function() {
+                $scope.scrollConfig.setHeight = newHeight;
+                $(scrollContainer).mCustomScrollbar($scope.scrollConfig);
+            }, 10);
+        }
     }
 
     angular.module('HarmonyApp')
-        .controller('PeersCtrl', ['$scope', '$timeout', PeersCtrl]);
+        .controller('PeersCtrl', ['$scope', '$timeout', 'scrollConfig', PeersCtrl]);
 })();
