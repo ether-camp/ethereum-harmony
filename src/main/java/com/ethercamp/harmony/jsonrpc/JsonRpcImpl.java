@@ -6,6 +6,7 @@ import org.ethereum.config.SystemProperties;
 import org.ethereum.core.*;
 import org.ethereum.crypto.ECKey;
 import org.ethereum.crypto.HashUtil;
+import org.ethereum.db.ByteArrayWrapper;
 import org.ethereum.db.TransactionStore;
 import org.ethereum.facade.Ethereum;
 import org.ethereum.listener.CompositeEthereumListener;
@@ -31,6 +32,7 @@ import javax.annotation.PostConstruct;
 import java.lang.reflect.Modifier;
 import java.math.BigInteger;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -46,6 +48,8 @@ import static org.ethereum.util.ByteUtil.bigIntegerToBytes;
 @Slf4j(topic = "jsonrpc")
 public class JsonRpcImpl implements JsonRpc {
 
+    public static final String BLOCK_LATEST = "latest";
+    public static final String REPLY__NEED_TO_UNLOCK_ACCOUNT = "reply:NeedToUnlockAccount";
     @Autowired
     KeystoreManager keystoreManager;
 
@@ -129,6 +133,8 @@ public class JsonRpcImpl implements JsonRpc {
     long initialBlockNumber;
 
 //    Map<ByteArrayWrapper, Account> accounts = new HashMap<>();
+    Map<ByteArrayWrapper, Account> unlockedAccounts = new ConcurrentHashMap<>();
+
     AtomicInteger filterCounter = new AtomicInteger(1);
     Map<Integer, Filter> installedFilters = new Hashtable<>();
 
@@ -170,9 +176,9 @@ public class JsonRpcImpl implements JsonRpc {
         return Integer.parseInt(x, 16);
     }
 
-    private String JSonHexToHex(String x) throws Exception {
+    private String JSonHexToHex(String x) {
         if (!x.startsWith("0x"))
-            throw new Exception("Incorrect hex syntax");
+            throw new RuntimeException("Incorrect hex syntax");
         x = x.substring(2);
         return x;
     }
@@ -214,16 +220,21 @@ public class JsonRpcImpl implements JsonRpc {
     }
 
     protected Account getAccount(String address) throws Exception {
-        return keystoreManager.loadStoredKey(address, "123")
-                .map(key -> {
-                    Account account = new Account();
-                    account.init(key);
-                    return account;
-                }).orElse(null);
+        if (address.indexOf("0x") == 0) {
+            address = address.substring(2);
+        }
+        return unlockedAccounts.get(new ByteArrayWrapper(StringHexToByteArray(address)));
+
+//        return keystoreManager.loadStoredKey(address, "123")
+//                .map(key -> {
+//                    Account account = new Account();
+//                    account.init(key);
+//                    return account;
+//                }).orElse(null);
 //        return accounts.get(new ByteArrayWrapper(StringHexToByteArray(address)));
     }
 
-    protected Account addAccount(ECKey key, String password) {
+    protected Account importAccount(ECKey key, String password) {
         Account account = new Account();
         account.init(key);
         keystoreManager.storeKey(key, password);
@@ -365,10 +376,12 @@ public class JsonRpcImpl implements JsonRpc {
         }
     }
 
-
     public String eth_getBalance(String address, String blockId) throws Exception {
         String s = null;
         try {
+            Objects.requireNonNull(address, "address is required");
+            blockId = blockId == null ? BLOCK_LATEST : blockId;
+
             byte[] addressAsByteArray = TypeConverter.StringHexToByteArray(address);
             BigInteger balance = getRepoByJsonBlockId(blockId).getBalance(addressAsByteArray);
             return s = TypeConverter.toJsonHex(balance);
@@ -380,7 +393,7 @@ public class JsonRpcImpl implements JsonRpc {
     public String eth_getLastBalance(String address) throws Exception {
         String s = null;
         try {
-            return s = eth_getBalance(address, "latest");
+            return s = eth_getBalance(address, BLOCK_LATEST);
         } finally {
             if (log.isDebugEnabled()) log.debug("eth_getLastBalance(" + address + "): " + s);
         }
@@ -523,6 +536,7 @@ public class JsonRpcImpl implements JsonRpc {
                                       String gasPrice, String value, String data, String nonce) throws Exception {
         String s = null;
         try {
+
             Transaction tx = new Transaction(
                     TypeConverter.StringHexToByteArray(nonce),
                     TypeConverter.StringHexToByteArray(gasPrice),
@@ -532,9 +546,11 @@ public class JsonRpcImpl implements JsonRpc {
                     TypeConverter.StringHexToByteArray(data));
 
             Account account = getAccount(from);
-            if (account == null) throw new RuntimeException("No account " + from);
+            if (account == null) {
+                return REPLY__NEED_TO_UNLOCK_ACCOUNT;
+            }
 
-            tx.sign(account.getEcKey().getPrivKeyBytes());
+            tx.sign(account.getEcKey());
 
             eth.submitTransaction(tx);
 
@@ -1358,7 +1374,7 @@ public class JsonRpcImpl implements JsonRpc {
         try {
             // generate new private key
             ECKey key = new ECKey();
-            Account account = addAccount(key, password);
+            Account account = importAccount(key, password);
             return s = toJsonHex(account.getAddress());
         } finally {
             if (log.isDebugEnabled()) log.debug("personal_newAccount(*****): " + s);
@@ -1368,7 +1384,7 @@ public class JsonRpcImpl implements JsonRpc {
     public String personal_importRawKey(String keydata, String passphrase) {
         String s = null;
         try {
-            Account account = addAccount(ECKey.fromPrivate(Hex.decode(keydata)), passphrase);
+            Account account = importAccount(ECKey.fromPrivate(Hex.decode(keydata)), passphrase);
             return s = toJsonHex(account.getAddress());
         } finally {
             if (log.isDebugEnabled()) log.debug("personal_importRawKey(*****): " + s);
@@ -1376,12 +1392,32 @@ public class JsonRpcImpl implements JsonRpc {
     }
 
     @Override
-    public boolean personal_unlockAccount(String addr, String pass, String duration) {
+    public boolean personal_unlockAccount(String address, String password, String duration) {
         String s = null;
         try {
+            return keystoreManager.loadStoredKey(JSonHexToHex(address), password)
+                    .map(key -> {
+                        Account account = new Account();
+                        account.init(key);
+                        unlockedAccounts.put(new ByteArrayWrapper(account.getAddress()), account);
+                        return true;
+                    })
+                    // we can return false or send description message with exception
+                    // prefer exception for now
+                    .orElseThrow(() -> new RuntimeException("No key was found in keystore for account:" + address));
+        } finally {
+            if (log.isDebugEnabled()) log.debug("personal_unlockAccount(" + address + ", ***, " + duration + "): " + s);
+        }
+    }
+
+    @Override
+    public boolean personal_lockAccount(String address) {
+        boolean s = true;
+        try {
+            unlockedAccounts.remove(new ByteArrayWrapper(StringHexToByteArray(address)));
             return true;
         } finally {
-            if (log.isDebugEnabled()) log.debug("personal_unlockAccount(" + addr + ", ***, " + duration + "): " + s);
+            if (log.isDebugEnabled()) log.debug("personal_lockAccount(" + address + "): " + s);
         }
     }
 

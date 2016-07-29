@@ -3,7 +3,6 @@ package com.ethercamp.harmony.keystore;
 import lombok.extern.slf4j.Slf4j;
 import org.ethereum.crypto.ECKey;
 import org.ethereum.net.swarm.Util;
-import org.ethereum.util.Utils;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.stereotype.Component;
 

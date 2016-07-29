@@ -30,7 +30,7 @@ public class TypeConverter {
         return new BigInteger(input);
     }
 
-    public static byte[] StringHexToByteArray(String x) throws Exception {
+    public static byte[] StringHexToByteArray(String x) {
         if (x.startsWith("0x")) {
             x = x.substring(2);
         }

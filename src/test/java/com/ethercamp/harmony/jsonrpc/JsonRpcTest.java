@@ -127,7 +127,7 @@ public class JsonRpcTest {
             ca.data = "0x";
             long sGas = TypeConverter.StringHexToBigInteger(jsonRpc.eth_estimateGas(ca)).longValue();
 
-            String txHash1 = jsonRpc.eth_sendTransaction(cowAcct, "0x0000000000000000000000000000000000001234", "0x300000",
+            String txHash1 = jsonRpc.eth_sendTransactionArgs(cowAcct, "0x0000000000000000000000000000000000001234", "0x300000",
                     "0x10000000000", "0x7777", "0x", "0x00");
             System.out.println("Tx hash: " + txHash1);
             assertTrue(TypeConverter.StringHexToBigInteger(txHash1).compareTo(BigInteger.ZERO) > 0);

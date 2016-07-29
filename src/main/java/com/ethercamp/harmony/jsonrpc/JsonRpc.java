@@ -319,6 +319,7 @@ public interface JsonRpc {
     String personal_importRawKey(String keydata, String passphrase);
 
     boolean personal_unlockAccount(String addr, String pass, String duration);
+    boolean personal_lockAccount(String address);
 
     String[] personal_listAccounts();
     String[] listAvailableMethods();
