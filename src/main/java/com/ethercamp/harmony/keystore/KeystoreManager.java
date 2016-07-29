@@ -54,9 +54,21 @@ public class KeystoreManager {
     public Optional<ECKey> loadStoredKey(String address, String password) {
         final File dir = getKeyStoreLocation().toFile();
         return Arrays.stream(dir.listFiles())
-                .filter(f -> !f.isDirectory() && f.getName().indexOf(address) > -1)
+                .filter(f -> !f.isDirectory() && hasAddressInName(address, f.getName()))
                 .map(f -> Keystore.fromKeystore(f, password))
                 .findFirst();
+    }
+
+    private boolean hasAddressInName(String address, String fileName) {
+        return fileName.indexOf("--" + address) == fileName.length() - address.length() - 2;
+    }
+
+    public boolean hasStoredKey(String address) {
+        final File dir = getKeyStoreLocation().toFile();
+        return Arrays.stream(dir.listFiles())
+                .filter(f -> !f.isDirectory() && hasAddressInName(address, f.getName()))
+                .findFirst()
+                .isPresent();
     }
 
     private String getISODate(long milliseconds) {

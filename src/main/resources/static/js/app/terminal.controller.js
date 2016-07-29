@@ -30,8 +30,7 @@
         $scope.commandInfoName = null;
         $scope.commandInfoParams = null;
 
-        var promptForPassword = false;
-        var unlockAccount = null;
+        var promptForKey = false;
         var commandLinePendingUnlock = null;
 
         $scope.$on('$destroy', function() {
@@ -112,9 +111,6 @@
                                 onCommandChange(terminal.get_command(), terminal);
                             }, 10);
                         },
-                        historyFilter: function(command) {
-                            return !promptForPassword;
-                        },
                         //onCommandChange: onCommandChange,
                         prompt: 'node> '
                     });
@@ -128,17 +124,11 @@
          * Handle entered command.
          */
         function onCommandEnter(line, term) {
-            if (line !== '' || promptForPassword) {
+            if (line !== '') {
 
                 var arr = line.match(/\S+/g) || [''];
                 var command = arr.shift();
                 var args = arr;
-
-                if (promptForPassword) {
-                    args = [unlockAccount, command];
-                    command = 'personal_unlockAccount';
-                    terminal.set_prompt('node>');
-                }
 
                 // validate if command exists in list
                 var originCommandRow = getOriginalCommandRow(command);
@@ -161,42 +151,29 @@
                         console.log(result);
                         var stringResult = JSON.stringify(result);
 
-                        /**
-                         * If we received success response after unlock account.
-                         */
-                        if (promptForPassword) {
-                            promptForPassword = false;
-                            terminal.set_prompt('node>');
-
-                            if (stringResult.indexOf('reply:') != 0) {
-                                terminal.exec(commandLinePendingUnlock, true);
-                            }
-                            return;
-                        }
+                        //term.echo("Result:");
+                        term.echo(stringResult);
+                        $('#terminal-container').mCustomScrollbar('scrollTo', 'bottom');
+                    })
+                    .catch(function(error) {
+                        console.log(error);
 
                         /**
                          * Server requires password to access account.
                          * Ask user for password.
                          */
-                        if (result == 'reply:NeedToUnlockAccount') {
-                            promptForPassword = true;
-                            terminal.set_prompt("Passphrase:");
-                            commandLinePendingUnlock = line;
-                            unlockAccount = args[0];    // first argument in command
-
+                        if (error.data && error.data.exceptionTypeName == 'com.ethercamp.harmony.util.HarmonyException') {
+                            if (error.data.message == 'Unlocked account is required') {
+                                term.echo('[[;#f6a821;]' + 'Unlocked account is required. Please unlock with personal_unlockAccount'  + ']');
+                            } else if (error.data.message == 'Key not found in keystore') {
+                                // show modal popup
+                                $('#signWithKeyModal').modal({});
+                                commandLinePendingUnlock = line;
+                            }
                         } else {
-                            //term.echo("Result:");
-                            term.echo(stringResult);
-                            $('#terminal-container').mCustomScrollbar('scrollTo', 'bottom');
+                            term.echo('[[;#FF0000;]'  +error + ']');
                         }
-                    })
-                    .catch(function(error) {
-                        console.log(error);
-                        term.echo('[[;#FF0000;]'  +error + ']');
-                        if (promptForPassword) {
-                            promptForPassword = false;
-                            terminal.set_prompt('node>');
-                        }
+
                         $('#terminal-container').mCustomScrollbar('scrollTo', 'bottom');
                     });
             }

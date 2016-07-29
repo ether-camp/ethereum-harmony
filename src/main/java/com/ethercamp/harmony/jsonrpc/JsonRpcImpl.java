@@ -1,6 +1,8 @@
 package com.ethercamp.harmony.jsonrpc;
 
 import com.ethercamp.harmony.keystore.KeystoreManager;
+import com.ethercamp.harmony.util.ErrorCodes;
+import com.ethercamp.harmony.util.HarmonyException;
 import lombok.extern.slf4j.Slf4j;
 import org.ethereum.config.SystemProperties;
 import org.ethereum.core.*;
@@ -48,8 +50,8 @@ import static org.ethereum.util.ByteUtil.bigIntegerToBytes;
 @Slf4j(topic = "jsonrpc")
 public class JsonRpcImpl implements JsonRpc {
 
-    public static final String BLOCK_LATEST = "latest";
-    public static final String REPLY__NEED_TO_UNLOCK_ACCOUNT = "reply:NeedToUnlockAccount";
+    private static final String BLOCK_LATEST = "latest";
+
     @Autowired
     KeystoreManager keystoreManager;
 
@@ -219,19 +221,20 @@ public class JsonRpcImpl implements JsonRpc {
         }
     }
 
-    protected Account getAccount(String address) throws Exception {
+    protected Account getAccountFromKeystore(String address) throws Exception {
         if (address.indexOf("0x") == 0) {
             address = address.substring(2);
         }
-        return unlockedAccounts.get(new ByteArrayWrapper(StringHexToByteArray(address)));
+        Account account = unlockedAccounts.get(new ByteArrayWrapper(StringHexToByteArray(address)));
+        if (account != null) {
+            return account;
+        }
 
-//        return keystoreManager.loadStoredKey(address, "123")
-//                .map(key -> {
-//                    Account account = new Account();
-//                    account.init(key);
-//                    return account;
-//                }).orElse(null);
-//        return accounts.get(new ByteArrayWrapper(StringHexToByteArray(address)));
+        if (keystoreManager.hasStoredKey(address)) {
+            throw new HarmonyException("Unlocked account is required", ErrorCodes.ERROR__101_UNLOCK_ACCOUNT);
+        } else {
+            throw new HarmonyException("Key not found in keystore", ErrorCodes.ERROR__102_KEY_NOT_FOUND);
+        }
     }
 
     protected Account importAccount(ECKey key, String password) {
@@ -487,7 +490,7 @@ public class JsonRpcImpl implements JsonRpc {
         String s = null;
         try {
             String ha = JSonHexToHex(address);
-            Account account = getAccount(ha);
+            Account account = getAccountFromKeystore(ha);
 
             if (account==null)
                 throw new Exception("Inexistent account");
@@ -507,10 +510,7 @@ public class JsonRpcImpl implements JsonRpc {
 
         String s = null;
         try {
-            Account account = getAccount(JSonHexToHex(args.from));
-
-            if (account == null)
-                throw new Exception("From address private key could not be found in this node");
+            Account account = getAccountFromKeystore(JSonHexToHex(args.from));
 
             if (args.data != null && args.data.startsWith("0x"))
                 args.data = args.data.substring(2);
@@ -545,10 +545,7 @@ public class JsonRpcImpl implements JsonRpc {
                     TypeConverter.StringHexToByteArray(value),
                     TypeConverter.StringHexToByteArray(data));
 
-            Account account = getAccount(from);
-            if (account == null) {
-                return REPLY__NEED_TO_UNLOCK_ACCOUNT;
-            }
+            Account account = getAccountFromKeystore(from);
 
             tx.sign(account.getEcKey());
 
@@ -1395,7 +1392,11 @@ public class JsonRpcImpl implements JsonRpc {
     public boolean personal_unlockAccount(String address, String password, String duration) {
         String s = null;
         try {
-            return keystoreManager.loadStoredKey(JSonHexToHex(address), password)
+            Objects.requireNonNull(address, "address is required");
+            Objects.requireNonNull(password, "password is required");
+
+            return keystoreManager
+                    .loadStoredKey(JSonHexToHex(address), password)
                     .map(key -> {
                         Account account = new Account();
                         account.init(key);
