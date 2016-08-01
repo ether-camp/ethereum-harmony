@@ -4,19 +4,19 @@ import lombok.extern.slf4j.Slf4j;
 import org.ethereum.crypto.ECKey;
 import org.ethereum.net.swarm.Util;
 import org.spongycastle.util.encoders.Hex;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.Optional;
-import java.util.TimeZone;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
- * Key store manager. Can store and load keys.
+ * Key store manager working in user file system. Can store and load keys.
  * Comply to go-ethereum key store format.
  * https://github.com/ethereum/wiki/wiki/Web3-Secret-Storage-Definition
  *
@@ -24,15 +24,36 @@ import java.util.TimeZone;
  */
 @Component
 @Slf4j(topic = "keystore")
-public class KeystoreManager {
+public class FileSystemKeystore {
+
+    @Autowired
+    Keystore keystore;
+
+    public void removeKey(String address) {
+        final File dir = getKeyStoreLocation().toFile();
+        Arrays.stream(dir.listFiles())
+                .filter(f -> hasAddressInName(address, f))
+                .findFirst()
+                .ifPresent(f -> f.delete());
+    }
 
     public void storeKey(ECKey key, String password) {
         final File keysFolder = getKeyStoreLocation().toFile();
         keysFolder.mkdirs();
 
-        final String fileName = "UTC--" + getISODate(Util.curTime()) + "--" + Hex.toHexString(key.getAddress());
-        final File file = new File(keysFolder.getAbsolutePath() + "/" + fileName);
-        Keystore.toKeystore(file, key, password);
+        String address = Hex.toHexString(key.getAddress());
+
+        String content = keystore.toKeystore(key, password);
+        storeRawKeystore(content, address);
+    }
+
+    public void storeRawKeystore(String content, String address) {
+        String fileName = "UTC--" + getISODate(Util.curTime()) + "--" + address;
+        try {
+            Files.write(getKeyStoreLocation().resolve(fileName), Arrays.asList(content));
+        } catch (IOException e) {
+            throw new RuntimeException("Problem storing key for address");
+        }
     }
 
     /**
@@ -54,19 +75,28 @@ public class KeystoreManager {
     public Optional<ECKey> loadStoredKey(String address, String password) {
         final File dir = getKeyStoreLocation().toFile();
         return Arrays.stream(dir.listFiles())
-                .filter(f -> !f.isDirectory() && hasAddressInName(address, f.getName()))
-                .map(f -> Keystore.fromKeystore(f, password))
+                .filter(f -> hasAddressInName(address, f))
+                .map(f -> {
+                    try {
+                        return Files.readAllLines(f.toPath())
+                                .stream()
+                                .collect(Collectors.joining(""));
+                    } catch (IOException e) {
+                        throw new RuntimeException("Problem reading keystore file for address:" + address);
+                    }
+                })
+                .map(content -> keystore.fromKeystore(content, password))
                 .findFirst();
     }
 
-    private boolean hasAddressInName(String address, String fileName) {
-        return fileName.indexOf("--" + address) == fileName.length() - address.length() - 2;
+    private boolean hasAddressInName(String address, File file) {
+        return !file.isDirectory() && file.getName().endsWith("--" + address);
     }
 
     public boolean hasStoredKey(String address) {
         final File dir = getKeyStoreLocation().toFile();
         return Arrays.stream(dir.listFiles())
-                .filter(f -> !f.isDirectory() && hasAddressInName(address, f.getName()))
+                .filter(f -> hasAddressInName(address, f))
                 .findFirst()
                 .isPresent();
     }
@@ -81,7 +111,7 @@ public class KeystoreManager {
     /**
      * @return platform dependent path to Ethereum folder
      */
-    private Path getKeyStoreLocation() {
+    protected Path getKeyStoreLocation() {
         final String keystoreDir = "keystore";
         final String osName = System.getProperty("os.name").toLowerCase();
 

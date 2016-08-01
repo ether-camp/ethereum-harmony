@@ -1,27 +1,60 @@
 package com.ethercamp.harmony.keystore;
 
 import org.ethereum.crypto.ECKey;
-import org.ethereum.crypto.HashUtil;
+import org.junit.Before;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Optional;
+import static org.junit.Assert.*;
 
 /**
  * Created by Stan Reshetnyk on 27.07.16.
  */
 public class KeystoreTest {
 
-    KeystoreManager keystoreManager = new KeystoreManager();
+    /**
+     * Keystore which uses temp dir, instead of real user dir
+     */
+    FileSystemKeystore fileSystemKeystore = new FileSystemKeystore() {
+
+        Path keystorePath = null;
+
+        {
+            try {
+                keystorePath = Files.createTempDirectory("keystore");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        protected Path getKeyStoreLocation() {
+            return keystorePath;
+        }
+    };
+
+    @Before
+    public void before() {
+        fileSystemKeystore.keystore = new Keystore();
+    }
 
     @Test
     public void encodeDecode() throws Exception {
         final String password = "123";
 
-        // generate new private key
+        // generate new random private key
         ECKey key = new ECKey();
+        String address = Hex.toHexString(key.getAddress());
 
-        keystoreManager.storeKey(key, password);
+        fileSystemKeystore.storeKey(key, password);
 
-        keystoreManager.loadStoredKey(Hex.toHexString(key.getAddress()), password);
+        fileSystemKeystore.loadStoredKey(address, password);
+
+        fileSystemKeystore.removeKey(address);
     }
 
     @Test
@@ -29,9 +62,12 @@ public class KeystoreTest {
         final String password = "123";
         final String address = "dc212a894a3575c61eadfb012c8db93923d806f5";
 
-        keystoreManager.loadStoredKey(address, password);
+        fileSystemKeystore.storeRawKeystore(CORRECT_KEY, address);
 
-//        String key = Hex.toHexString(ECKey.fromPrivate(HashUtil.sha3("cow".getBytes())).getPrivKeyBytes());
-//        String tt = key + "";
+        Optional<ECKey> key = fileSystemKeystore.loadStoredKey(address, password);
+
+        assertTrue(key.isPresent());
     }
+
+    private static String CORRECT_KEY = "{\"address\":\"dc212a894a3575c61eadfb012c8db93923d806f5\",\"crypto\":{\"cipher\":\"aes-128-ctr\",\"ciphertext\":\"4baa65c9e3438e28c657a3585c5b444746578a5b0f35e1816e43146a09dc9f94\",\"cipherparams\":{\"iv\":\"bca4d9a043c68a9b9d995492d29653f5\"},\"kdf\":\"scrypt\",\"kdfparams\":{\"dklen\":32,\"n\":262144,\"p\":1,\"r\":8,\"salt\":\"eadb4203d8618141268903a9c8c0ace4f45954e5c4679257b89b874f24b56ea3\"},\"mac\":\"b1b34957940158569ed129f9bb4373979c78748bdf6e33354bcc922d2a207efa\"},\"id\":\"c985b75c-01ef-49b7-b7f0-0c2db4c299bc\",\"version\":3}";
 }

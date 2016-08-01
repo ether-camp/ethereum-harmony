@@ -8,17 +8,18 @@ import org.ethereum.crypto.HashUtil;
 import org.spongycastle.crypto.generators.SCrypt;
 import org.spongycastle.jcajce.provider.digest.Keccak;
 import org.spongycastle.util.encoders.Hex;
+import org.springframework.stereotype.Component;
 
 import javax.crypto.*;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
-import java.io.File;
 import java.security.*;
 import java.util.Arrays;
 import java.util.Random;
 import java.util.UUID;
 
+@Component
 @Slf4j(topic = "keystore")
 public class Keystore {
 
@@ -27,7 +28,7 @@ public class Keystore {
     private Integer version;
     private String address;
 
-    public static void toKeystore(File file, final ECKey key, String password) {
+    public String toKeystore(final ECKey key, String password) {
         try {
             // n,r,p = 2^18, 8, 1 uses 256MB memory and approx 1s CPU time on a modern CPU.
 //            final int ScryptN = ((Double) Math.pow(10.0, 18.0)).intValue();
@@ -68,25 +69,25 @@ public class Keystore {
             keystore.crypto.getKdfparams().setSalt(Hex.toHexString(salt));
 
             ObjectMapper mapper = new ObjectMapper();
-            mapper.writeValue(file, keystore);
+            return mapper.writeValueAsString(keystore);
         } catch (Exception e) {
             log.error("Problem storing key", e);
             throw new RuntimeException("Problem storing key. Message: " + e.getMessage(), e);
         }
     }
 
-    private static byte[] generateRandomBytes(int size) {
+    private byte[] generateRandomBytes(int size) {
         final byte[] bytes = new byte[size];
         new Random().nextBytes(bytes);
         return bytes;
     }
 
 
-    public static ECKey fromKeystore(final File file, final String password) {
+    public ECKey fromKeystore(final String content, final String password) {
         ObjectMapper mapper = new ObjectMapper();
 
         try {
-            final Keystore keystore = mapper.readValue(file, Keystore.class);
+            final Keystore keystore = mapper.readValue(content, Keystore.class);
             final byte[] cipherKey;
 
             switch (keystore.getCrypto().getKdf()) {
@@ -112,15 +113,15 @@ public class Keystore {
         }
     }
 
-    private static byte[] decryptAes(byte[] iv, byte[] keyBytes, byte[] cipherText) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
+    private byte[] decryptAes(byte[] iv, byte[] keyBytes, byte[] cipherText) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
         return processAes(iv, keyBytes, cipherText, Cipher.DECRYPT_MODE);
     }
 
-    private static byte[] encryptAes(byte[] iv, byte[] keyBytes, byte[] cipherText) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
+    private byte[] encryptAes(byte[] iv, byte[] keyBytes, byte[] cipherText) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
         return processAes(iv, keyBytes, cipherText, Cipher.ENCRYPT_MODE);
     }
 
-    private static byte[] processAes(byte[] iv, byte[] keyBytes, byte[] cipherText, int encryptMode) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
+    private byte[] processAes(byte[] iv, byte[] keyBytes, byte[] cipherText, int encryptMode) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
         SecretKeySpec key = new SecretKeySpec(keyBytes, "AES");
         IvParameterSpec ivSpec = new IvParameterSpec(iv);
 
@@ -131,7 +132,7 @@ public class Keystore {
         return cipher.doFinal(cipherText);
     }
 
-    private static byte[] checkMacSha3(Keystore keystore, String password) throws Exception {
+    private byte[] checkMacSha3(Keystore keystore, String password) throws Exception {
         byte[] salt = Hex.decode(keystore.getCrypto().getKdfparams().getSalt());
         int iterations = keystore.getCrypto().getKdfparams().getC();
         byte[] part = new byte[16];
@@ -149,7 +150,7 @@ public class Keystore {
         throw new RuntimeException("error while loading the private key from the keystore. Most probably a wrong passphrase");
     }
 
-    private static byte[] checkMacScrypt(Keystore keystore, String password) throws Exception {
+    private byte[] checkMacScrypt(Keystore keystore, String password) throws Exception {
         byte[] part = new byte[16];
         KdfParams params = keystore.getCrypto().getKdfparams();
         byte[] h = scrypt(password.getBytes(), Hex.decode(params.getSalt()), params.getN(), params.getR(), params.getP(), params.getDklen());
@@ -166,7 +167,7 @@ public class Keystore {
         throw new RuntimeException("error while loading the private key from the keystore. Most probably a wrong passphrase");
     }
 
-    private static byte[] concat(byte[] a, byte[] b) {
+    private byte[] concat(byte[] a, byte[] b) {
         int aLen = a.length;
         int bLen = b.length;
         byte[] c = new byte[aLen + bLen];
@@ -175,18 +176,18 @@ public class Keystore {
         return c;
     }
 
-    private static byte[] scrypt(byte[] pass, byte[] salt, int n, int r, int p, int dkLen) throws GeneralSecurityException {
+    private byte[] scrypt(byte[] pass, byte[] salt, int n, int r, int p, int dkLen) throws GeneralSecurityException {
         return SCrypt.generate(pass, salt, n, r, p, dkLen);
     }
 
-    private static byte[] hash(String encryptedData, byte[] salt, int iterations) throws Exception {
+    private byte[] hash(String encryptedData, byte[] salt, int iterations) throws Exception {
         char[] chars = encryptedData.toCharArray();
         PBEKeySpec spec = new PBEKeySpec(chars, salt, iterations, 256);
         SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
         return skf.generateSecret(spec).getEncoded();
     }
 
-    private static byte[] sha3(byte[] h) throws NoSuchAlgorithmException {
+    private byte[] sha3(byte[] h) throws NoSuchAlgorithmException {
         MessageDigest KECCAK = new Keccak.Digest256();
         KECCAK.reset();
         KECCAK.update(h);

@@ -1,6 +1,6 @@
 package com.ethercamp.harmony.jsonrpc;
 
-import com.ethercamp.harmony.keystore.KeystoreManager;
+import com.ethercamp.harmony.keystore.FileSystemKeystore;
 import com.ethercamp.harmony.util.ErrorCodes;
 import com.ethercamp.harmony.util.HarmonyException;
 import lombok.extern.slf4j.Slf4j;
@@ -53,7 +53,7 @@ public class JsonRpcImpl implements JsonRpc {
     private static final String BLOCK_LATEST = "latest";
 
     @Autowired
-    KeystoreManager keystoreManager;
+    FileSystemKeystore fileSystemKeystore;
 
     public class BinaryCallArguments {
         public long nonce;
@@ -230,7 +230,7 @@ public class JsonRpcImpl implements JsonRpc {
             return account;
         }
 
-        if (keystoreManager.hasStoredKey(address)) {
+        if (fileSystemKeystore.hasStoredKey(address)) {
             throw new HarmonyException("Unlocked account is required", ErrorCodes.ERROR__101_UNLOCK_ACCOUNT);
         } else {
             throw new HarmonyException("Key not found in keystore", ErrorCodes.ERROR__102_KEY_NOT_FOUND);
@@ -240,7 +240,7 @@ public class JsonRpcImpl implements JsonRpc {
     protected Account importAccount(ECKey key, String password) {
         Account account = new Account();
         account.init(key);
-        keystoreManager.storeKey(key, password);
+        fileSystemKeystore.storeKey(key, password);
 //        accounts.put(new ByteArrayWrapper(account.getAddress()), account);
         return account;
     }
@@ -1395,7 +1395,7 @@ public class JsonRpcImpl implements JsonRpc {
             Objects.requireNonNull(address, "address is required");
             Objects.requireNonNull(password, "password is required");
 
-            return keystoreManager
+            return fileSystemKeystore
                     .loadStoredKey(JSonHexToHex(address), password)
                     .map(key -> {
                         Account account = new Account();
@@ -1424,7 +1424,7 @@ public class JsonRpcImpl implements JsonRpc {
 
     @Override
     public String[] personal_listAccounts() {
-        return keystoreManager.listStoredKeys();
+        return fileSystemKeystore.listStoredKeys();
 //        String[] ret = new String[accounts.size()];
 //        try {
 //            int i = 0;

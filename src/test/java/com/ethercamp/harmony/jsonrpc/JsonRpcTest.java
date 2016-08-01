@@ -1,7 +1,6 @@
 package com.ethercamp.harmony.jsonrpc;
 
-import com.ethercamp.harmony.jsonrpc.*;
-import com.ethercamp.harmony.keystore.KeystoreManager;
+import com.ethercamp.harmony.keystore.FileSystemKeystore;
 import com.typesafe.config.ConfigFactory;
 import org.ethereum.config.SystemProperties;
 import org.ethereum.config.blockchain.FrontierConfig;
@@ -72,8 +71,8 @@ public class JsonRpcTest {
         }
 
         @Bean
-        public KeystoreManager keystoreManager() {
-            return new KeystoreManager();
+        public FileSystemKeystore keystoreManager() {
+            return new FileSystemKeystore();
         }
 
         @Bean
@@ -110,7 +109,7 @@ public class JsonRpcTest {
             String keydata = Hex.toHexString(newKey.getPrivKeyBytes());
             String cowAcct = jsonRpc.personal_importRawKey(keydata, passphrase);
 
-            String bal0 = jsonRpc.eth_getBalance(cowAcct);
+            String bal0 = jsonRpc.eth_getBalance(cowAcct, "latest");
             System.out.println("Balance: " + bal0);
             assertTrue(TypeConverter.StringHexToBigInteger(bal0).compareTo(BigInteger.ZERO) > 0);
 
@@ -154,7 +153,7 @@ public class JsonRpcTest {
             assertTrue(receipt1.gasUsed > 0);
             assertEquals(sGas, receipt1.gasUsed);
 
-            String bal1 = jsonRpc.eth_getBalance(cowAcct);
+            String bal1 = jsonRpc.eth_getBalance(cowAcct, "latest");
             System.out.println("Balance: " + bal0);
             assertTrue(TypeConverter.StringHexToBigInteger(bal0).compareTo(TypeConverter.StringHexToBigInteger(bal1)) > 0);
 
