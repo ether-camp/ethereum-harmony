@@ -30,7 +30,94 @@
         $scope.commandInfoName = null;
         $scope.commandInfoParams = null;
 
-        var promptForKey = false;
+        var privateKey = "0xc85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4";
+        //var privateKey = "cow";
+        var currency = 'wei';   // otherwise need to convert
+
+        //require("./js/eth/eth-utils.js");
+        $scope.onSignTransaction = function(fromAddress, toAddress, gasLimit,
+                                            gasPrice, value, data, nonce) {
+            RlpBuilder.balanceTransfer(toAddress)
+                .from(fromAddress)
+                .secretKey(privateKey)
+                .gasLimit(gasLimit)
+                .gasPrice(gasPrice)
+                .value(value, currency)
+                .nonce(nonce)
+                //.invokeData(data)
+                .format()
+                .done(function (rlp) {
+                    console.log('Signed transaction');
+                    console.log(rlp);
+
+                    jsonrpc.request('eth_sendRawTransaction', [rlp])
+                        .then(function(result) {
+                            //console.log(result);
+                            console.log('eth_sendRawTransaction result:' + result);
+                        })
+                        .catch(function(error) {
+                            console.log('Error sending raw transaction');
+                            console.log(error);
+                        });
+
+                    return;
+                    var rlpEnc = new Buffer.Buffer(rlp, 'hex');
+                    var hash = new SHA3.SHA3Hash();
+                    hash.update(rlpEnc);
+                    var rlpHash = hash.digest().toString('hex');
+
+                    console.log("Finished signing rlp" + rlp);
+                    console.log("Finished signing rlpHash" + rlpHash);
+
+                    // Init RLP dialog data
+                    $rlpDlg.find('.rlp-hash').text(rlpHash);
+                    $rlpDlg.find('.raw-data').text(rlp);
+
+                    $rlpDlg.find('.back-button').click(function () {
+                        $('.line-numbers').empty();
+                        $('.formatted-data').empty();
+                        $('.rlp-hash').empty();
+
+                        dialogUtils.slideBack($rlpDlg, $balanceDlg);
+                    });
+
+                    $rlpDlg.find('.formatted-data')
+                        .empty()
+                        .append(txDialog.renderRLP(rlp));
+
+                    dialogUtils.slideForward($balanceDlg, $rlpDlg);
+                })
+                .fail(function(error) {
+                    console.log('Error signing tx ' + error);
+                    //Message.showError(error);
+                    //$balanceDlg.find('input[name="key"]').addClass('error').focus();
+                })
+                .always(function () {
+                    // Hide progress indicator
+                    //$progressIndicator.fadeOut(function () {
+                    //    $(this).remove();
+                    //});
+                });
+        };
+
+        //$scope.onSignTransaction(
+        //    'cd2a3d9f938e13cd947ec05abc7fe734df8dd826',
+        //    '79b08ad8787060333663d19704909ee7b1903e58',
+        //    '0x300000',
+        //    '0x10000000000',
+        //    '0x7777',
+        //    '0x1',
+        //    '0x101F15');
+
+        $scope.onSignTransaction(
+            'cd2a3d9f938e13cd947ec05abc7fe734df8dd826',
+            '79b08ad8787060333663d19704909ee7b1903e58',
+            3145728,
+            1099511627776,
+            40001,
+            '0x1',
+            1056546);
+
         var commandLinePendingUnlock = null;
 
         $scope.$on('$destroy', function() {

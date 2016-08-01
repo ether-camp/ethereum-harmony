@@ -24,11 +24,12 @@ import java.util.stream.Collectors;
  */
 @Component
 @Slf4j(topic = "keystore")
-public class FileSystemKeystore {
+public class FileSystemKeystore implements Keystore {
 
     @Autowired
-    Keystore keystore;
+    KeystoreFormat keystoreFormat;
 
+    @Override
     public void removeKey(String address) {
         final File dir = getKeyStoreLocation().toFile();
         Arrays.stream(dir.listFiles())
@@ -37,16 +38,18 @@ public class FileSystemKeystore {
                 .ifPresent(f -> f.delete());
     }
 
+    @Override
     public void storeKey(ECKey key, String password) {
         final File keysFolder = getKeyStoreLocation().toFile();
         keysFolder.mkdirs();
 
         String address = Hex.toHexString(key.getAddress());
 
-        String content = keystore.toKeystore(key, password);
+        String content = keystoreFormat.toKeystore(key, password);
         storeRawKeystore(content, address);
     }
 
+    @Override
     public void storeRawKeystore(String content, String address) {
         String fileName = "UTC--" + getISODate(Util.curTime()) + "--" + address;
         try {
@@ -59,6 +62,7 @@ public class FileSystemKeystore {
     /**
      * @return array of addresses in format "0x123abc..."
      */
+    @Override
     public String[] listStoredKeys() {
         final File dir = getKeyStoreLocation().toFile();
         return Arrays.stream(dir.listFiles())
@@ -72,6 +76,7 @@ public class FileSystemKeystore {
     /**
      * @return some loaded key or None
      */
+    @Override
     public Optional<ECKey> loadStoredKey(String address, String password) {
         final File dir = getKeyStoreLocation().toFile();
         return Arrays.stream(dir.listFiles())
@@ -85,7 +90,7 @@ public class FileSystemKeystore {
                         throw new RuntimeException("Problem reading keystore file for address:" + address);
                     }
                 })
-                .map(content -> keystore.fromKeystore(content, password))
+                .map(content -> keystoreFormat.fromKeystore(content, password))
                 .findFirst();
     }
 
@@ -93,6 +98,7 @@ public class FileSystemKeystore {
         return !file.isDirectory() && file.getName().endsWith("--" + address);
     }
 
+    @Override
     public boolean hasStoredKey(String address) {
         final File dir = getKeyStoreLocation().toFile();
         return Arrays.stream(dir.listFiles())

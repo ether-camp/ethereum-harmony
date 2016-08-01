@@ -1,6 +1,6 @@
 package com.ethercamp.harmony.jsonrpc;
 
-import com.ethercamp.harmony.keystore.FileSystemKeystore;
+import com.ethercamp.harmony.keystore.Keystore;
 import com.ethercamp.harmony.util.ErrorCodes;
 import com.ethercamp.harmony.util.HarmonyException;
 import lombok.extern.slf4j.Slf4j;
@@ -53,7 +53,7 @@ public class JsonRpcImpl implements JsonRpc {
     private static final String BLOCK_LATEST = "latest";
 
     @Autowired
-    FileSystemKeystore fileSystemKeystore;
+    Keystore keystore;
 
     public class BinaryCallArguments {
         public long nonce;
@@ -230,7 +230,7 @@ public class JsonRpcImpl implements JsonRpc {
             return account;
         }
 
-        if (fileSystemKeystore.hasStoredKey(address)) {
+        if (keystore.hasStoredKey(address)) {
             throw new HarmonyException("Unlocked account is required", ErrorCodes.ERROR__101_UNLOCK_ACCOUNT);
         } else {
             throw new HarmonyException("Key not found in keystore", ErrorCodes.ERROR__102_KEY_NOT_FOUND);
@@ -240,7 +240,7 @@ public class JsonRpcImpl implements JsonRpc {
     protected Account importAccount(ECKey key, String password) {
         Account account = new Account();
         account.init(key);
-        fileSystemKeystore.storeKey(key, password);
+        keystore.storeKey(key, password);
 //        accounts.put(new ByteArrayWrapper(account.getAddress()), account);
         return account;
     }
@@ -564,6 +564,7 @@ public class JsonRpcImpl implements JsonRpc {
         try {
             Transaction tx = new Transaction(StringHexToByteArray(rawData));
 
+            tx.rlpParse();
             eth.submitTransaction(tx);
 
             return s = TypeConverter.toJsonHex(tx.getHash());
@@ -1395,7 +1396,7 @@ public class JsonRpcImpl implements JsonRpc {
             Objects.requireNonNull(address, "address is required");
             Objects.requireNonNull(password, "password is required");
 
-            return fileSystemKeystore
+            return keystore
                     .loadStoredKey(JSonHexToHex(address), password)
                     .map(key -> {
                         Account account = new Account();
@@ -1424,7 +1425,7 @@ public class JsonRpcImpl implements JsonRpc {
 
     @Override
     public String[] personal_listAccounts() {
-        return fileSystemKeystore.listStoredKeys();
+        return keystore.listStoredKeys();
 //        String[] ret = new String[accounts.size()];
 //        try {
 //            int i = 0;
