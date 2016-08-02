@@ -1246,7 +1246,8 @@ sup {
 .navbar-default .navbar-brand,
 .navbar-default .navbar-brand:focus {
     width: 200px;
-    background-color: #f6a821;
+    background-color: #000000;
+    //background-color: #f6a821;
     height: 60px;
     padding: 20px 25px;
     font-weight: 400;
@@ -1260,7 +1261,8 @@ sup {
 
 .navbar-default .navbar-brand:hover {
     color: #FFFFFF;
-    background-color: #f5a212;
+    background-color: #111111;
+    /*background-color: #f5a212;*/
 }
 
 .navbar-brand span {

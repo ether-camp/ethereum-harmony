@@ -162,6 +162,8 @@
         function createTerminal(list) {
             var methods = extractMethods(list);
 
+
+
             terminal = $('#' + CONTAINER_ID)
                 .terminal(
                     onCommandEnter,

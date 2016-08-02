@@ -60,12 +60,6 @@ public class KeystoreTest {
         final String password = "123";
         final String address = "dc212a894a3575c61eadfb012c8db93923d806f5";
 
-        byte[] result = HashUtil.sha3("cow".getBytes());
-        String pkey = TypeConverter.toJsonHex(result);
-        ECKey key1 = ECKey.fromPrivate(result);
-        String publc = TypeConverter.toJsonHex(key1.getAddress());
-
-
         fileSystemKeystore.storeRawKeystore(CORRECT_KEY, address);
 
         final Optional<ECKey> key = fileSystemKeystore.loadStoredKey(address, password);

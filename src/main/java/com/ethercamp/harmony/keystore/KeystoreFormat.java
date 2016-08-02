@@ -1,7 +1,6 @@
 package com.ethercamp.harmony.keystore;
 
 import lombok.extern.slf4j.Slf4j;
-import org.codehaus.jackson.annotate.JsonSetter;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.ethereum.crypto.ECKey;
 import org.ethereum.crypto.HashUtil;
@@ -19,14 +18,12 @@ import java.util.Arrays;
 import java.util.Random;
 import java.util.UUID;
 
+/**
+ * Converts private key and password to json content and back.
+ */
 @Component
 @Slf4j(topic = "keystore")
 public class KeystoreFormat {
-
-    private KeystoreCrypto crypto;
-    private String id;
-    private Integer version;
-    private String address;
 
     public String toKeystore(final ECKey key, String password) {
         try {
@@ -50,7 +47,7 @@ public class KeystoreFormat {
             final byte[] mac = HashUtil.sha3(concat(Arrays.copyOfRange(derivedKey, 16, 32), cipherText));
 
 
-            final KeystoreFormat keystore = new KeystoreFormat();
+            final KeystoreItem keystore = new KeystoreItem();
             keystore.address = Hex.toHexString(key.getAddress());
             keystore.id = UUID.randomUUID().toString();
             keystore.version = 3;
@@ -87,8 +84,12 @@ public class KeystoreFormat {
         ObjectMapper mapper = new ObjectMapper();
 
         try {
-            final KeystoreFormat keystore = mapper.readValue(content, KeystoreFormat.class);
+            final KeystoreItem keystore = mapper.readValue(content, KeystoreItem.class);
             final byte[] cipherKey;
+
+            if (keystore.version != 3) {
+                throw new RuntimeException("Keystore version 3 only supported.");
+            }
 
             switch (keystore.getCrypto().getKdf()) {
                 case "pbkdf2":
@@ -132,7 +133,7 @@ public class KeystoreFormat {
         return cipher.doFinal(cipherText);
     }
 
-    private byte[] checkMacSha3(KeystoreFormat keystore, String password) throws Exception {
+    private byte[] checkMacSha3(KeystoreItem keystore, String password) throws Exception {
         byte[] salt = Hex.decode(keystore.getCrypto().getKdfparams().getSalt());
         int iterations = keystore.getCrypto().getKdfparams().getC();
         byte[] part = new byte[16];
@@ -150,7 +151,7 @@ public class KeystoreFormat {
         throw new RuntimeException("error while loading the private key from the keystore. Most probably a wrong passphrase");
     }
 
-    private byte[] checkMacScrypt(KeystoreFormat keystore, String password) throws Exception {
+    private byte[] checkMacScrypt(KeystoreItem keystore, String password) throws Exception {
         byte[] part = new byte[16];
         KdfParams params = keystore.getCrypto().getKdfparams();
         byte[] h = scrypt(password.getBytes(), Hex.decode(params.getSalt()), params.getN(), params.getR(), params.getP(), params.getDklen());
@@ -193,44 +194,4 @@ public class KeystoreFormat {
         KECCAK.update(h);
         return KECCAK.digest();
     }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
-    public KeystoreCrypto getCrypto() {
-        return crypto;
-    }
-
-    @JsonSetter("crypto")
-    public void setCrypto(KeystoreCrypto crypto) {
-        this.crypto = crypto;
-    }
-
-    @JsonSetter("Crypto")
-    public void setCryptoOld(KeystoreCrypto crypto) {
-        this.crypto = crypto;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public Integer getVersion() {
-        return version;
-    }
-
-    public void setVersion(Integer version) {
-        this.version = version;
-    }
-
-
 }
