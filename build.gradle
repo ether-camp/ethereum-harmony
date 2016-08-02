@@ -87,16 +87,16 @@ sourceCompatibility=1.8
 //    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
 //}
 
-
+//applicationDefaultJvmArgs = []
 
 task runMorden (type: JavaExec) {
-    main = mainClassName
+    main = "com.ethercamp.harmony.Application"
     classpath = sourceSets.main.runtimeClasspath
-    jvmArgs = applicationDefaultJvmArgs + '-Dethereumj.conf.res=morden.conf'
+    jvmArgs = [] + '-Dethereumj.conf.res=morden.conf'
 }
 
 task runTest (type: JavaExec) {
-    main = mainClassName
+    main = "com.ethercamp.harmony.Application"
     classpath = sourceSets.main.runtimeClasspath
-    jvmArgs = applicationDefaultJvmArgs + '-Dethereumj.conf.res=test.conf'
+    jvmArgs = [] + '-Dethereumj.conf.res=test.conf'
 }

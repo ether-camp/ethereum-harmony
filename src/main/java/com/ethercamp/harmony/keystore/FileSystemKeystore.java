@@ -109,7 +109,7 @@ public class FileSystemKeystore implements Keystore {
 
     private String getISODate(long milliseconds) {
         TimeZone tz = TimeZone.getTimeZone("UTC");
-        DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
+        DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH-mm'Z'");
         df.setTimeZone(tz);
         return df.format(new Date(milliseconds));
     }
