@@ -65,13 +65,13 @@
                     <form>
                         <div class="form-group">
                             <label>Private key</label>
-                            <textarea class="form-control" rows="3" placeholder=""></textarea>
+                            <textarea id="pkeyInput" class="form-control" rows="3" placeholder=""></textarea>
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary">Sign and send</button>
+                    <button type="button" class="btn btn-primary" ng-click="onSignAndSend()">Sign and send</button>
                 </div>
             </div>
         </div>

@@ -29,21 +29,28 @@
         $scope.hideCommandInfo = true;
         $scope.commandInfoName = null;
         $scope.commandInfoParams = null;
+        $scope.txData = {};
 
         var privateKey = "0xc85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4";
         //var privateKey = "cow";
         var currency = 'wei';   // otherwise need to convert
 
-        //require("./js/eth/eth-utils.js");
-        $scope.onSignTransaction = function(fromAddress, toAddress, gasLimit,
-                                            gasPrice, value, data, nonce) {
-            RlpBuilder.balanceTransfer(toAddress)
-                .from(fromAddress)
+        $scope.onSignAndSend = function() {
+            //var privateKey = "0xc85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4";
+            var privateKey = $('#pkeyInput').val();
+            var txData = $scope.txData;
+
+            console.log('onSignAndSend');
+            console.log(privateKey);
+            console.log(txData);
+
+            RlpBuilder.balanceTransfer(txData.toAddress)
+                .from(txData.fromAddress)
                 .secretKey(privateKey)
-                .gasLimit(gasLimit)
-                .gasPrice(gasPrice)
-                .value(value, currency)
-                .nonce(nonce)
+                .gasLimit(txData.gasLimit)
+                .gasPrice(txData.gasPrice)
+                .value(txData.value, currency)
+                .nonce(txData.nonce)
                 //.invokeData(data)
                 .format()
                 .done(function (rlp) {
@@ -59,33 +66,6 @@
                             console.log('Error sending raw transaction');
                             console.log(error);
                         });
-
-                    return;
-                    var rlpEnc = new Buffer.Buffer(rlp, 'hex');
-                    var hash = new SHA3.SHA3Hash();
-                    hash.update(rlpEnc);
-                    var rlpHash = hash.digest().toString('hex');
-
-                    console.log("Finished signing rlp" + rlp);
-                    console.log("Finished signing rlpHash" + rlpHash);
-
-                    // Init RLP dialog data
-                    $rlpDlg.find('.rlp-hash').text(rlpHash);
-                    $rlpDlg.find('.raw-data').text(rlp);
-
-                    $rlpDlg.find('.back-button').click(function () {
-                        $('.line-numbers').empty();
-                        $('.formatted-data').empty();
-                        $('.rlp-hash').empty();
-
-                        dialogUtils.slideBack($rlpDlg, $balanceDlg);
-                    });
-
-                    $rlpDlg.find('.formatted-data')
-                        .empty()
-                        .append(txDialog.renderRLP(rlp));
-
-                    dialogUtils.slideForward($balanceDlg, $rlpDlg);
                 })
                 .fail(function(error) {
                     console.log('Error signing tx ' + error);
@@ -100,7 +80,7 @@
                 });
         };
 
-        //$scope.onSignTransaction(
+        //$scope.onSignAndSend(
         //    'cd2a3d9f938e13cd947ec05abc7fe734df8dd826',
         //    '79b08ad8787060333663d19704909ee7b1903e58',
         //    '0x300000',
@@ -109,14 +89,14 @@
         //    '0x1',
         //    '0x101F15');
 
-        $scope.onSignTransaction(
-            'cd2a3d9f938e13cd947ec05abc7fe734df8dd826',
-            '79b08ad8787060333663d19704909ee7b1903e58',
-            3145728,
-            1099511627776,
-            40001,
-            '0x1',
-            1056546);
+        //$scope.onSignAndSend(
+        //    'cd2a3d9f938e13cd947ec05abc7fe734df8dd826',
+        //    '79b08ad8787060333663d19704909ee7b1903e58',
+        //    3145728,
+        //    1099511627776,
+        //    40001,
+        //    '0x1',
+        //    1056546);
 
         var commandLinePendingUnlock = null;
 
@@ -254,6 +234,18 @@
                                 term.echo('[[;#f6a821;]' + 'Unlocked account is required. Please unlock with personal_unlockAccount'  + ']');
                             } else if (error.data.message == 'Key not found in keystore') {
                                 // show modal popup
+                                $scope.txData = {
+                                    command:        command,
+                                    fromAddress:    args[0],            // hex
+                                    toAddress:      args[1],            // hex
+                                    gas:            hexToInt(args[2]),
+                                    gasPrice:       hexToInt(args[3]),
+                                    value:          hexToInt(args[4]),
+                                    data:           args[5],            // hex
+                                    nonce:          hexToInt(args[6])
+                                };
+                                console.log('Show modal');
+                                console.log($scope.txData);
                                 $('#signWithKeyModal').modal({});
                                 commandLinePendingUnlock = line;
                             }
@@ -303,6 +295,13 @@
             return terminalCompletionWords.filter(function(w) {
                 return w.startsWith(command);
             })[0];
+        }
+
+        function hexToInt(hexValue) {
+            if (hexValue.indexOf('0x') == 0) {
+                hexValue = hexValue.substr(2);
+            }
+            return '' + parseInt(hexValue, 16);
         }
     }
 
