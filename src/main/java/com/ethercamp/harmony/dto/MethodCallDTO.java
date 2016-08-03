@@ -15,4 +15,6 @@ public class MethodCallDTO {
     private Long count;
 
     private Long lastTime;
+
+    private String lastResult;
 }

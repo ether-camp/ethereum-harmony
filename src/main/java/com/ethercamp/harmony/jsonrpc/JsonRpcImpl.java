@@ -41,8 +41,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import static java.lang.Math.max;
-import static org.ethereum.crypto.HashUtil.sha3;
 import static com.ethercamp.harmony.jsonrpc.TypeConverter.*;
 import static org.ethereum.util.ByteUtil.EMPTY_BYTE_ARRAY;
 import static org.ethereum.util.ByteUtil.bigIntegerToBytes;

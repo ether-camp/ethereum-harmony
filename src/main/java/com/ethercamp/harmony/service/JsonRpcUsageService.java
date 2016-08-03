@@ -1,6 +1,7 @@
 package com.ethercamp.harmony.service;
 
 import com.ethercamp.harmony.dto.MethodCallDTO;
+import com.ethercamp.harmony.jsonrpc.JsonRpc;
 import com.ethercamp.harmony.jsonrpc.JsonRpcImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
 
@@ -25,18 +27,19 @@ import java.util.stream.Collectors;
 @Slf4j(topic = "jsonrpc")
 public class JsonRpcUsageService extends JsonRpcImpl {
 
-    // storage for stats. Method name to count
-    private final Map<String, LongAdder> callsCounter = new ConcurrentHashMap();
+    @Autowired
+    JsonRpc jsonRpc;
 
-    // storage for stats. Method name to time called last time in ms
-    private final Map<String, AtomicLong> callsTime = new ConcurrentHashMap();
+    private final Map<String, CallStats> stats = new ConcurrentHashMap();
+
+
 
     @PostConstruct
     private void init() {
-        Arrays.asList("eth_protocolVersion", "net_version")
-                .forEach(method -> {
-                    callsCounter.put(method, new LongAdder());
-                    callsTime.put(method, new AtomicLong(0l));
+        Arrays.stream(jsonRpc.listAvailableMethods())
+                .forEach(line -> {
+                    String methodName = line.split(" ")[0];
+                    stats.put(methodName, new CallStats(methodName, 0l, null));
                 });
     }
 
@@ -46,30 +49,46 @@ public class JsonRpcUsageService extends JsonRpcImpl {
     /**
      * Send stats to client side.
      */
-    @Scheduled(fixedRate = 1500)
+    @Scheduled(fixedRate = 2000)
     private void doSendRpcUsage() {
-        List<MethodCallDTO> items = callsCounter.keySet()
+        List<MethodCallDTO> items = stats.values()
                 .stream()
-                .map(name -> new MethodCallDTO(
-                        name,
-                        callsCounter.get(name).longValue(),
-                        callsTime.get(name).longValue()))
+                .map(stat -> new MethodCallDTO(
+                        stat.name,
+                        stat.count.longValue(),
+                        stat.lastCall.longValue(),
+                        stat.lastResult.get()))
+                .sorted((s1, s2) -> s1.getMethodName().compareTo(s2.getMethodName()))
                 .collect(Collectors.toList());
 
         clientMessageService.sendToTopic("/topic/rpcUsage", items);
     }
 
-    public void updateStats(String methodName) {
-        long timeNow = System.currentTimeMillis();
-        callsCounter.computeIfAbsent(methodName, k -> new LongAdder()).increment();
-        callsTime.computeIfAbsent(methodName, k -> new AtomicLong()).set(timeNow);
+    public void updateStats(String methodName, String result) {
+        final long timeNow = System.currentTimeMillis();
+        final CallStats callStats = stats.computeIfAbsent(methodName, k -> new CallStats(methodName, timeNow, result));
+
+        callStats.count.increment();
+        callStats.lastCall.set(timeNow);
+        callStats.lastResult.set(result);
     }
 
-    /**
-     * Sample of method which can be called.
-     */
-    @Override
-    public String net_version() {
-        return super.net_version();
+    class CallStats {
+
+        public String name;
+
+        // time called last time in ms
+        public LongAdder count = new LongAdder();
+
+        public AtomicLong lastCall = new AtomicLong();
+
+        public AtomicReference<String> lastResult = new AtomicReference<>();
+
+        public CallStats(String name, long lastCallTime, String lastResultString) {
+            this.name = name;
+            lastCall.set(lastCallTime);
+            lastResult.set(lastResultString);
+        }
     }
+
 }

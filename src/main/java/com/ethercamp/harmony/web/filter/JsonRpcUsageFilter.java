@@ -14,6 +14,7 @@ import javax.servlet.annotation.WebFilter;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletResponseWrapper;
 import java.io.*;
 
 /**
@@ -43,17 +44,28 @@ public class JsonRpcUsageFilter implements Filter {
                 mapper.configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, true);
 
                 try {
-                    ResettableStreamHttpServletRequest wrappedRequest = new ResettableStreamHttpServletRequest(
+                    final ResettableStreamHttpServletRequest wrappedRequest = new ResettableStreamHttpServletRequest(
                             (HttpServletRequest) request);
-                    String body = IOUtils.toString(wrappedRequest.getReader());
+                    final String body = IOUtils.toString(wrappedRequest.getReader());
 
                     wrappedRequest.resetInputStream();
 
-                    JsonNode json = mapper.readTree(body);
-                    String methodName = json.get("method").asText();
-                    jsonRpcUsageService.updateStats(methodName);
+                    final JsonNode json = mapper.readTree(body);
+                    final String methodName = json.get("method").asText();
 
-                    chain.doFilter(wrappedRequest, response);
+                    if (response.getCharacterEncoding() == null) {
+                        response.setCharacterEncoding("UTF-8");
+                    }
+                    HttpServletResponseCopier responseCopier = new HttpServletResponseCopier((HttpServletResponse) response);
+
+                    try {
+                        chain.doFilter(wrappedRequest, responseCopier);
+                        responseCopier.flushBuffer();
+                    } finally {
+                        final byte[] copy = responseCopier.getCopy();
+                        final String responseText = new String(copy, response.getCharacterEncoding());
+                        jsonRpcUsageService.updateStats(methodName, responseText);
+                    }
                 } catch (IOException e) {
                     log.error("Error parsing JSON-RPC request", e);
                 }
@@ -132,6 +144,94 @@ public class JsonRpcUsageFilter implements Filter {
 
             }
         }
+    }
+
+    public class ServletOutputStreamCopier extends ServletOutputStream {
+
+        private OutputStream outputStream;
+        private ByteArrayOutputStream copy;
+
+        public ServletOutputStreamCopier(OutputStream outputStream) {
+            this.outputStream = outputStream;
+            this.copy = new ByteArrayOutputStream(1024);
+        }
+
+        @Override
+        public void write(int b) throws IOException {
+            outputStream.write(b);
+            copy.write(b);
+        }
+
+        public byte[] getCopy() {
+            return copy.toByteArray();
+        }
+
+        @Override
+        public boolean isReady() {
+            return true;
+        }
+
+        @Override
+        public void setWriteListener(WriteListener listener) {
+
+        }
+    }
+
+    public class HttpServletResponseCopier extends HttpServletResponseWrapper {
+
+        private ServletOutputStream outputStream;
+        private PrintWriter writer;
+        private ServletOutputStreamCopier copier;
+
+        public HttpServletResponseCopier(HttpServletResponse response) throws IOException {
+            super(response);
+        }
+
+        @Override
+        public ServletOutputStream getOutputStream() throws IOException {
+            if (writer != null) {
+                throw new IllegalStateException("getWriter() has already been called on this response.");
+            }
+
+            if (outputStream == null) {
+                outputStream = getResponse().getOutputStream();
+                copier = new ServletOutputStreamCopier(outputStream);
+            }
+
+            return copier;
+        }
+
+        @Override
+        public PrintWriter getWriter() throws IOException {
+            if (outputStream != null) {
+                throw new IllegalStateException("getOutputStream() has already been called on this response.");
+            }
+
+            if (writer == null) {
+                copier = new ServletOutputStreamCopier(getResponse().getOutputStream());
+                writer = new PrintWriter(new OutputStreamWriter(copier, getResponse().getCharacterEncoding()), true);
+            }
+
+            return writer;
+        }
+
+        @Override
+        public void flushBuffer() throws IOException {
+            if (writer != null) {
+                writer.flush();
+            } else if (outputStream != null) {
+                copier.flush();
+            }
+        }
+
+        public byte[] getCopy() {
+            if (copier != null) {
+                return copier.getCopy();
+            } else {
+                return new byte[0];
+            }
+        }
+
     }
 }
 
