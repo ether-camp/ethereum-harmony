@@ -4,6 +4,15 @@
         <div class="col-lg-12">
             <div class="view-header">
 
+                <div class="m-l-sm pull-right text-right" style="line-height: 14px">
+                    <form class="navbar-form navbar-right" role="search">
+                        <div class="form-group">
+                            <input type="text" class="form-control query" placeholder="Filter" tabindex="1"
+                                   ng-model="filterWord"/>
+                        </div>
+                    </form>
+                </div>
+
                 <div class="header-icon">
                     <i class="pe page-header-icon pe-7s-graph3"></i>
                 </div>
@@ -16,38 +25,56 @@
                 </div>
 
             </div>
+
             <hr>
         </div>
     </div>
 
-    <div class="panel panel-filled">
-        <div class="table-responsive" id="rpc-scroll-container">
-            <table class="table peers-table">
-                <thead>
-                <tr>
-                    <th>
-                        Call Name
-                    </th>
-                    <th>
-                        Invoked Counter
-                    </th>
-                    <th>
-                        Last Time
-                    </th>
-                </tr>
-                </thead>
-                <tbody>
+    <div class="table-responsive" id="rpc-scroll-container">
+        <ul class="table peers-table" style="padding: 0;">
 
-                    <tr ng-repeat="item in rpcItems"
-                        ng-cloak>
-                        <td class="c-white">{{item.methodName}}</td>
-                        <td>{{item.count}}</td>
-                        <td>{{item.lastTime}}</td>
-                    </tr>
+            <il ng-repeat="item in rpcItems"
+                ng-cloak>
+                <div class="panel panel-dark-filled">
+                    <div class="panel-heading">
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <u><h3 style="font-weight: normal">{{item.methodName}}</h3></u>
+                            </div>
+                            <div class="col-sm-3">
+                                <h4 style="font-weight: normal">Invoked: {{item.count}}</h4>
+                            </div>
+                            <div class="col-sm-3">
+                                <h4 style="font-weight: normal">Last: {{item.lastTime}}</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rpc-item-header">
+                        <a href="#">
+                            <div class="header-icon">
+                                <i class="pe page-header-icon pe-7s-plus"></i>
+                            </div>
+                            <div class="header-title"><h5>Last Result</h5>
+                            </div>
+                        </a>
+                    </div>
 
-                </tbody>
-            </table>
-        </div>
+                    <div class="rpc-item-header">
+                        <a href="#">
+                            <div class="header-icon">
+                                <i class="pe page-header-icon pe-7s-study"></i>
+                            </div>
+                            <div class="header-title"><h5>Curl</h5>
+                            </div>
+                        </a>
+                    </div>
+
+                    <div class="panel-footer">
+                        <pre class="panel panel-black-filled">curl NOT IMPLEMENTED -X POST --data '{"jsonrpc":"2.0","method":"eth_getLogs","params":[{"topics":["0x000000000000000000000000a94f5374fce5edbc8e2a8697c15331677e6ebf0b"]}],"id":74}'</pre>
+                    </div>
+                </div>
+            </il>
+        </ul>
     </div>
 
 </section>

@@ -8,6 +8,7 @@
     function RpcUsageCtrl($scope, $timeout, scrollConfig) {
         console.log('RpcUsage controller activated.');
         $scope.rpcItems = $scope.rpcItems || [];
+        $scope.filterWord = '';
         $scope.scrollConfig = jQuery.extend(true, {}, scrollConfig);
 
         $scope.$on('$destroy', function() {
