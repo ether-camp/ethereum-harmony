@@ -50,9 +50,9 @@
     </div>
 
     <!-- Button trigger modal -->
-    <button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#myModal">
-        Launch demo modal
-    </button>
+    <!--<button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#myModal">-->
+        <!--Launch demo modal-->
+    <!--</button>-->
 
     <!-- Modal -->
     <div class="modal fade" id="signWithKeyModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
@@ -64,6 +64,18 @@
                 </div>
                 <div class="modal-body">
                     <form>
+                        <div class="form-group">
+                            <label>From address</label>
+                            <input class="form-control" placeholder="{{txData.fromAddress}}" readonly type="text">
+                        </div>
+                        <div class="form-group">
+                            <label>To address</label>
+                            <input class="form-control" placeholder="{{txData.toAddress}}" readonly type="text">
+                        </div>
+                        <div class="form-group">
+                            <label>Value</label>
+                            <input class="form-control" placeholder="{{txData.value}}" readonly type="text">
+                        </div>
                         <div class="form-group">
                             <label>Private key</label>
                             <textarea id="pkeyInput" class="form-control" rows="3" placeholder=""></textarea>

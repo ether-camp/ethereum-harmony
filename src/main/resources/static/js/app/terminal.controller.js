@@ -44,8 +44,9 @@
             console.log(privateKey);
             console.log(txData);
 
-            RlpBuilder.balanceTransfer(txData.toAddress)
-                .from(txData.fromAddress)
+            RlpBuilder
+                .balanceTransfer(remove0x(txData.toAddress))    // to address
+                .from(remove0x(txData.fromAddress))
                 .secretKey(privateKey)
                 .gasLimit(txData.gasLimit)
                 .gasPrice(txData.gasPrice)
@@ -61,6 +62,8 @@
                         .then(function(result) {
                             //console.log(result);
                             console.log('eth_sendRawTransaction result:' + result);
+                            terminal.echo(result);
+                            $('#signWithKeyModal').modal('hide');
                         })
                         .catch(function(error) {
                             console.log('Error sending raw transaction');
@@ -97,6 +100,19 @@
         //    40001,
         //    '0x1',
         //    1056546);
+
+        /*
+         'cd2a3d9f938e13cd947ec05abc7fe734df8dd826'
+         pkeyOrSeed:"cow"
+         value:"100000"
+         data:""
+         gasLimit:21000
+         gasPrice:20000000000
+         nonce:1056547
+
+         */
+
+
 
         var commandLinePendingUnlock = null;
 
@@ -240,7 +256,7 @@
                                     command:        command,
                                     fromAddress:    args[0],            // hex
                                     toAddress:      args[1],            // hex
-                                    gas:            hexToInt(args[2]),
+                                    gasLimit:       hexToInt(args[2]),
                                     gasPrice:       hexToInt(args[3]),
                                     value:          hexToInt(args[4]),
                                     data:           args[5],            // hex
@@ -300,10 +316,15 @@
         }
 
         function hexToInt(hexValue) {
-            if (hexValue.indexOf('0x') == 0) {
-                hexValue = hexValue.substr(2);
+            return parseInt(remove0x(hexValue), 16);
+        }
+
+        function remove0x(value) {
+            if (value && value.indexOf('0x' == 0)) {
+                return value.substr(2);
+            } else {
+                return value;
             }
-            return '' + parseInt(hexValue, 16);
         }
     }
 

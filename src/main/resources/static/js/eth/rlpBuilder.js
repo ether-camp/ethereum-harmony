@@ -47,7 +47,7 @@ var RlpBuilder = (function() {
 
         this.data = {
             to: toAddr.replace('0x', ''),
-            data: '1',
+            data: '',
             dummy: dummy
         };
 
@@ -100,9 +100,9 @@ var RlpBuilder = (function() {
             }
 
             $.when.apply($, dfds).done(function () {
-                //console.log("TxData");
-                //console.log(txData);
                 txData.pkey = '0x' + txData.pkey;
+                console.log('txData before create tx');
+                console.log(txData);
                 var rlp = EthUtil.createTx(txData);
                 dfd.resolve(rlp.replace('0x', ''));
             }).fail(function () {
