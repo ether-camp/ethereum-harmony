@@ -1,5 +1,7 @@
-package com.ethercamp.harmony.jsonrpc;
+package com.ethercamp.harmony.api;
 
+import com.ethercamp.harmony.jsonrpc.TransactionReceiptDTO;
+import com.ethercamp.harmony.jsonrpc.TransactionResultDTO;
 import org.ethereum.core.Block;
 import org.ethereum.core.CallTransaction;
 import org.ethereum.core.Transaction;
@@ -9,10 +11,8 @@ import java.util.Arrays;
 
 import static com.ethercamp.harmony.jsonrpc.TypeConverter.toJsonHex;
 
-/**
- * Created by Anton Nashatyrev on 25.11.2015.
- */
-public interface JsonRpc {
+
+public interface EthereumApi {
 
     class SyncingResult {
         public String startingBlock;
@@ -194,16 +194,16 @@ public interface JsonRpc {
     String web3_clientVersion();
     String web3_sha3(String data) throws Exception;
     String net_version();
-    String net_peerCount();
+    int net_peerCount();
     boolean net_listening();
     String eth_protocolVersion();
     SyncingResult eth_syncing();
     String eth_coinbase();
     boolean eth_mining();
     String eth_hashrate();
-    String eth_gasPrice();
+    long eth_gasPrice();
     String[] eth_accounts();
-    String eth_blockNumber();
+    long eth_blockNumber();
     String eth_getBalance(String address, String block) throws Exception;
     String eth_getLastBalance(String address) throws Exception;
 
@@ -220,7 +220,7 @@ public interface JsonRpc {
     String eth_sendTransaction(CallArguments transactionArgs) throws Exception;
     // TODO: Remove, obsolete with this params
     String eth_sendTransactionArgs(String from, String to, String gas,
-                               String gasPrice, String value, String data, String nonce) throws Exception;
+                                   String gasPrice, String value, String data, String nonce) throws Exception;
     String eth_sendRawTransaction(String rawData) throws Exception;
     String eth_call(CallArguments args, String bnOrId) throws Exception;
     String eth_estimateGas(CallArguments args) throws Exception;
@@ -236,12 +236,11 @@ public interface JsonRpc {
     BlockResult eth_getUncleByBlockNumberAndIndex(String blockId, String uncleIdx) throws Exception;
 
     String[] eth_getCompilers();
-//    CompilationResult eth_compileLLL(String contract);
+    CompilationResult eth_compileLLL(String contract);
     CompilationResult eth_compileSolidity(String contract) throws Exception;
-
-//    CompilationResult eth_compileSerpent(String contract);
-//    String eth_resend();
-//    String eth_pendingTransactions();
+    CompilationResult eth_compileSerpent(String contract);
+    String eth_resend();
+    String eth_pendingTransactions();
 
     String eth_newFilter(FilterRequest fr) throws Exception;
 
@@ -256,66 +255,64 @@ public interface JsonRpc {
 
     Object[] eth_getLogs(FilterRequest fr) throws Exception;
 
-//    String eth_getWork();
-//    String eth_submitWork();
-//    String eth_submitHashrate();
-//    String db_putString();
-//    String db_getString();
-//    String db_putHex();
-//    String db_getHex();
-//    String shh_post();
-//    String shh_version();
-//    String shh_newIdentity();
-//    String shh_hasIdentity();
-//    String shh_newGroup();
-//    String shh_addToGroup();
-//    String shh_newFilter();
-//    String shh_uninstallFilter();
-//    String shh_getFilterChanges();
-//    String shh_getMessages();
-//
-//
-//    boolean admin_addPeer(String s);
-//
-//    String admin_exportChain();
-//    String admin_importChain();
-//    String admin_sleepBlocks();
-//    String admin_verbosity();
-//    String admin_setSolc();
-//    String admin_startRPC();
-//    String admin_stopRPC();
-//    String admin_setGlobalRegistrar();
-//    String admin_setHashReg();
-//    String admin_setUrlHint();
-//    String admin_saveInfo();
-//    String admin_register();
-//    String admin_registerUrl();
-//    String admin_startNatSpec();
-//    String admin_stopNatSpec();
-//    String admin_getContractInfo();
-//    String admin_httpGet();
-//    String admin_nodeInfo();
-//    String admin_peers();
-//    String admin_datadir();
-//    String net_addPeer();
+    String eth_getWork();
+    String eth_submitWork();
+    String eth_submitHashrate();
+    String db_putString();
+    String db_getString();
+    String db_putHex();
+    String db_getHex();
+    String shh_post();
+    String shh_version();
+    String shh_newIdentity();
+    String shh_hasIdentity();
+    String shh_newGroup();
+    String shh_addToGroup();
+    String shh_newFilter();
+    String shh_uninstallFilter();
+    String shh_getFilterChanges();
+    String shh_getMessages();
 
+
+    boolean admin_addPeer(String s);
+
+    String admin_exportChain();
+    String admin_importChain();
+    String admin_sleepBlocks();
+    String admin_verbosity();
+    String admin_setSolc();
+    String admin_startRPC();
+    String admin_stopRPC();
+    String admin_setGlobalRegistrar();
+    String admin_setHashReg();
+    String admin_setUrlHint();
+    String admin_saveInfo();
+    String admin_register();
+    String admin_registerUrl();
+    String admin_startNatSpec();
+    String admin_stopNatSpec();
+    String admin_getContractInfo();
+    String admin_httpGet();
+    String admin_nodeInfo();
+    String admin_peers();
+    String admin_datadir();
+    String net_addPeer();
     boolean miner_start();
     boolean miner_stop();
     boolean miner_setEtherbase(String coinBase) throws Exception;
     boolean miner_setExtra(String data) throws Exception;
     boolean miner_setGasPrice(String newMinGasPrice);
-//    boolean miner_startAutoDAG();
-//    boolean miner_stopAutoDAG();
-//    boolean miner_makeDAG();
-//    String miner_hashrate();
-
-//    String debug_printBlock();
-//    String debug_getBlockRlp();
-//    String debug_setHead();
-//    String debug_processBlock();
-//    String debug_seedHash();
-//    String debug_dumpBlock();
-//    String debug_metrics();
+    boolean miner_startAutoDAG();
+    boolean miner_stopAutoDAG();
+    boolean miner_makeDAG();
+    String miner_hashrate();
+    String debug_printBlock();
+    String debug_getBlockRlp();
+    String debug_setHead();
+    String debug_processBlock();
+    String debug_seedHash();
+    String debug_dumpBlock();
+    String debug_metrics();
 
     String personal_newAccount(String seed);
 

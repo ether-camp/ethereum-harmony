@@ -1,15 +1,14 @@
 package com.ethercamp.harmony.keystore;
 
-import com.ethercamp.harmony.jsonrpc.TypeConverter;
+import org.ethereum.core.Block;
 import org.ethereum.crypto.ECKey;
-import org.ethereum.crypto.HashUtil;
 import org.junit.Test;
-import org.spongycastle.jcajce.provider.asymmetric.ec.KeyFactorySpi;
 import org.spongycastle.util.encoders.Hex;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 import static org.junit.Assert.*;
 
@@ -22,7 +21,6 @@ public class KeystoreTest {
      * Keystore which uses temp dir instead of real user keystore dir
      */
     Keystore fileSystemKeystore = new FileSystemKeystore() {
-
         Path keystorePath = null;
 
         {

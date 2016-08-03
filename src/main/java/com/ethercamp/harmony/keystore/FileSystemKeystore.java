@@ -26,8 +26,7 @@ import java.util.stream.Collectors;
 @Slf4j(topic = "keystore")
 public class FileSystemKeystore implements Keystore {
 
-    @Autowired
-    KeystoreFormat keystoreFormat;
+    KeystoreFormat keystoreFormat = new KeystoreFormat();
 
     @Override
     public void removeKey(String address) {

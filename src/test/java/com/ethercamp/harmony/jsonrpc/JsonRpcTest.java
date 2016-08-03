@@ -1,6 +1,8 @@
 package com.ethercamp.harmony.jsonrpc;
 
+import com.ethercamp.harmony.api.EthereumApiImpl;
 import com.ethercamp.harmony.keystore.FileSystemKeystore;
+import com.ethercamp.harmony.keystore.KeystoreFormat;
 import com.typesafe.config.ConfigFactory;
 import org.ethereum.config.SystemProperties;
 import org.ethereum.config.blockchain.FrontierConfig;
@@ -18,7 +20,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Scope;
 
+import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import static java.math.BigInteger.valueOf;
 import static org.ethereum.crypto.HashUtil.sha3;
@@ -72,7 +77,25 @@ public class JsonRpcTest {
 
         @Bean
         public FileSystemKeystore keystoreManager() {
-            return new FileSystemKeystore();
+            return new FileSystemKeystore() {
+                Path keystorePath = null;
+                {
+                    try {
+                        keystorePath = Files.createTempDirectory("keystore");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                @Override
+                protected Path getKeyStoreLocation() {
+                    return keystorePath;
+                }
+            };
+        }
+
+        @Bean
+        public EthereumApiImpl ethereumApi() {
+            return new EthereumApiImpl();
         }
 
         @Bean
@@ -108,6 +131,7 @@ public class JsonRpcTest {
             ECKey newKey = ECKey.fromPrivate(sha3("cow".getBytes()));
             String keydata = Hex.toHexString(newKey.getPrivKeyBytes());
             String cowAcct = jsonRpc.personal_importRawKey(keydata, passphrase);
+            jsonRpc.personal_unlockAccount(cowAcct, passphrase, "");
 
             String bal0 = jsonRpc.eth_getBalance(cowAcct, "latest");
             System.out.println("Balance: " + bal0);
@@ -199,7 +223,7 @@ public class JsonRpcTest {
                     valueOf(3_000_000),
                     TypeConverter.StringHexToByteArray(receipt2.contractAddress),
                     valueOf(0), function.encode(0x777));
-            rawTx.sign(sha3("cow".getBytes()));
+            rawTx.sign(ECKey.fromPrivate(sha3("cow".getBytes())));
 
             String txHash3 = jsonRpc.eth_sendRawTransaction(TypeConverter.toJsonHex(rawTx.getEncoded()));
 

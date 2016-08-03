@@ -1,5 +1,7 @@
 package com.ethercamp.harmony.jsonrpc;
 
+import com.ethercamp.harmony.api.EthereumApi;
+import com.ethercamp.harmony.api.EthereumApiImpl;
 import com.ethercamp.harmony.keystore.Keystore;
 import com.ethercamp.harmony.util.ErrorCodes;
 import com.ethercamp.harmony.util.HarmonyException;
@@ -33,6 +35,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.PostConstruct;
 import java.lang.reflect.Modifier;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -51,9 +54,6 @@ import static org.ethereum.util.ByteUtil.bigIntegerToBytes;
 public class JsonRpcImpl implements JsonRpc {
 
     private static final String BLOCK_LATEST = "latest";
-
-    @Autowired
-    Keystore keystore;
 
     public class BinaryCallArguments {
         public long nonce;
@@ -89,6 +89,12 @@ public class JsonRpcImpl implements JsonRpc {
                 data = TypeConverter.StringHexToByteArray(args.data);
         }
     }
+
+    @Autowired
+    EthereumApiImpl ethereumApi;
+
+    @Autowired
+    Keystore keystore;
 
     @Autowired
     SystemProperties config;
@@ -132,8 +138,6 @@ public class JsonRpcImpl implements JsonRpc {
     @Autowired
     PendingStateImpl pendingState;
 
-    long initialBlockNumber;
-
 //    Map<ByteArrayWrapper, Account> accounts = new HashMap<>();
     Map<ByteArrayWrapper, Account> unlockedAccounts = new ConcurrentHashMap<>();
 
@@ -142,8 +146,6 @@ public class JsonRpcImpl implements JsonRpc {
 
     @PostConstruct
     private void init() {
-        initialBlockNumber = blockchain.getBestBlock().getNumber();
-
         compositeEthereumListener.addListener(new EthereumListenerAdapter() {
             @Override
             public void onBlock(Block block, List<TransactionReceipt> receipts) {
@@ -246,18 +248,18 @@ public class JsonRpcImpl implements JsonRpc {
     }
 
     public String web3_clientVersion() {
-
-        String s = "EthereumJ" + "/v" + config.projectVersion() + "/" +
-                System.getProperty("os.name") + "/Java1.7/" + config.projectVersionModifier() + "-" + BuildInfo.buildHash;
-        if (log.isDebugEnabled()) log.debug("web3_clientVersion(): " + s);
-        return s;
-    };
+        String s = null;
+        try {
+            return s = ethereumApi.web3_clientVersion();
+        } finally {
+            if (log.isDebugEnabled()) log.debug("web3_clientVersion(): " + s);
+        }
+    }
 
     public String web3_sha3(String data) throws Exception {
         String s = null;
         try {
-            byte[] result = HashUtil.sha3(TypeConverter.StringHexToByteArray(data));
-            return s = TypeConverter.toJsonHex(result);
+            return s = ethereumApi.web3_sha3(data);
         } finally {
             if (log.isDebugEnabled()) log.debug("web3_sha3(" + data + "): " + s);
         }
@@ -266,7 +268,7 @@ public class JsonRpcImpl implements JsonRpc {
     public String net_version() {
         String s = null;
         try {
-            return s = eth_protocolVersion();
+            return s = ethereumApi.eth_protocolVersion();
         } finally {
             if (log.isDebugEnabled()) log.debug("net_version(): " + s);
         }
@@ -275,7 +277,7 @@ public class JsonRpcImpl implements JsonRpc {
     public String net_peerCount(){
         String s = null;
         try {
-            int n = channelManager.getActivePeers().size();
+            int n = ethereumApi.net_peerCount();
             return s = TypeConverter.toJsonHex(n);
         } finally {
             if (log.isDebugEnabled()) log.debug("net_peerCount(): " + s);
@@ -285,7 +287,7 @@ public class JsonRpcImpl implements JsonRpc {
     public boolean net_listening() {
         Boolean s = null;
         try {
-            return s = peerServer.isListening();
+            return s = ethereumApi.net_listening();
         }finally {
             if (log.isDebugEnabled()) log.debug("net_listening(): " + s);
         }
@@ -294,13 +296,7 @@ public class JsonRpcImpl implements JsonRpc {
     public String eth_protocolVersion(){
         String s = null;
         try {
-            int version = 0;
-            for (Capability capability : configCapabilities.getConfigCapabilities()) {
-                if (capability.isEth()) {
-                    version = max(version, capability.getVersion());
-                }
-            }
-            return s = Integer.toString(version);
+            return s = ethereumApi.eth_protocolVersion();
         } finally {
             if (log.isDebugEnabled()) log.debug("eth_protocolVersion(): " + s);
         }
@@ -309,9 +305,9 @@ public class JsonRpcImpl implements JsonRpc {
     public SyncingResult eth_syncing(){
         SyncingResult s = new SyncingResult();
         try {
-            s.startingBlock = TypeConverter.toJsonHex(initialBlockNumber);
-            s.currentBlock = TypeConverter.toJsonHex(blockchain.getBestBlock().getNumber());
-            s.highestBlock = TypeConverter.toJsonHex(syncManager.getLastKnownBlockNumber());
+            s.startingBlock = TypeConverter.toJsonHex(ethereumApi.getInitialBlockNumber());
+            s.currentBlock = TypeConverter.toJsonHex(ethereumApi.getLastKnownBlockNumber());
+            s.highestBlock = TypeConverter.toJsonHex(ethereumApi.getBestBlockNumber());
 
             return s;
         }finally {
@@ -322,7 +318,7 @@ public class JsonRpcImpl implements JsonRpc {
     public String eth_coinbase() {
         String s = null;
         try {
-            return s = toJsonHex(blockchain.getMinerCoinbase());
+            return s = toJsonHex(ethereumApi.eth_coinbase());
         } finally {
             if (log.isDebugEnabled()) log.debug("eth_coinbase(): " + s);
         }
@@ -350,7 +346,7 @@ public class JsonRpcImpl implements JsonRpc {
     public String eth_gasPrice(){
         String s = null;
         try {
-            return s = TypeConverter.toJsonHex(eth.getGasPrice());
+            return s = TypeConverter.toJsonHex(ethereumApi.eth_gasPrice());
         } finally {
             if (log.isDebugEnabled()) log.debug("eth_gasPrice(): " + s);
         }
@@ -365,15 +361,10 @@ public class JsonRpcImpl implements JsonRpc {
         }
     }
 
-    public String eth_blockNumber(){
+    public String eth_blockNumber() {
         String s = null;
         try {
-            Block bestBlock = blockchain.getBestBlock();
-            long b = 0;
-            if (bestBlock != null) {
-                b = bestBlock.getNumber();
-            }
-            return s = TypeConverter.toJsonHex(b);
+            return s = TypeConverter.toJsonHex(ethereumApi.getBestBlockNumber());
         } finally {
             if (log.isDebugEnabled()) log.debug("eth_blockNumber(): " + s);
         }
@@ -522,7 +513,7 @@ public class JsonRpcImpl implements JsonRpc {
                     args.to != null ? StringHexToByteArray(args.to) : EMPTY_BYTE_ARRAY,
                     args.value != null ? StringHexToByteArray(args.value) : EMPTY_BYTE_ARRAY,
                     args.data != null ? StringHexToByteArray(args.data) : EMPTY_BYTE_ARRAY);
-            tx.sign(account.getEcKey().getPrivKeyBytes());
+            tx.sign(account.getEcKey());
 
             eth.submitTransaction(tx);
 
@@ -573,7 +564,7 @@ public class JsonRpcImpl implements JsonRpc {
         }
     }
 
-    public TransactionReceipt createCallTxAndExecute(CallArguments args, Block block) throws Exception {
+    protected TransactionReceipt createCallTxAndExecute(CallArguments args, Block block) throws Exception {
         BinaryCallArguments bca = new BinaryCallArguments();
         bca.setArguments(args);
         Transaction tx = CallTransaction.createRawTransaction(0,
@@ -791,10 +782,10 @@ public class JsonRpcImpl implements JsonRpc {
         }
     }
 
-    @Override
-    public CompilationResult eth_compileLLL(String contract) {
-        throw new UnsupportedOperationException("LLL compiler not supported");
-    }
+//    @Override
+//    public CompilationResult eth_compileLLL(String contract) {
+//        throw new UnsupportedOperationException("LLL compiler not supported");
+//    }
 
     @Override
     public CompilationResult eth_compileSolidity(String contract) throws Exception {
@@ -821,20 +812,20 @@ public class JsonRpcImpl implements JsonRpc {
         }
     }
 
-    @Override
-    public CompilationResult eth_compileSerpent(String contract){
-        throw new UnsupportedOperationException("Serpent compiler not supported");
-    }
-
-    @Override
-    public String eth_resend() {
-        throw new UnsupportedOperationException("JSON RPC method eth_resend not implemented yet");
-    }
-
-    @Override
-    public String eth_pendingTransactions() {
-        throw new UnsupportedOperationException("JSON RPC method eth_pendingTransactions not implemented yet");
-    }
+//    @Override
+//    public CompilationResult eth_compileSerpent(String contract){
+//        throw new UnsupportedOperationException("Serpent compiler not supported");
+//    }
+//
+//    @Override
+//    public String eth_resend() {
+//        throw new UnsupportedOperationException("JSON RPC method eth_resend not implemented yet");
+//    }
+//
+//    @Override
+//    public String eth_pendingTransactions() {
+//        throw new UnsupportedOperationException("JSON RPC method eth_pendingTransactions not implemented yet");
+//    }
 
     static class Filter {
         static final int MAX_EVENT_COUNT = 1024; // prevent OOM when Filers are forgotten
@@ -1085,201 +1076,201 @@ public class JsonRpcImpl implements JsonRpc {
         return ret;
     }
 
-    @Override
-    public String eth_getWork() {
-        throw new UnsupportedOperationException("JSON RPC method eth_getWork not implemented yet");
-    }
-
-    @Override
-    public String eth_submitWork() {
-        throw new UnsupportedOperationException("JSON RPC method eth_submitWork not implemented yet");
-    }
-
-    @Override
-    public String eth_submitHashrate() {
-        throw new UnsupportedOperationException("JSON RPC method eth_submitHashrate not implemented yet");
-    }
-
-    @Override
-    public String db_putString() {
-        throw new UnsupportedOperationException("JSON RPC method db_putString not implemented yet");
-    }
-
-    @Override
-    public String db_getString() {
-        throw new UnsupportedOperationException("JSON RPC method db_getString not implemented yet");
-    }
-
-    @Override
-    public String db_putHex() {
-        throw new UnsupportedOperationException("JSON RPC method db_putHex not implemented yet");
-    }
-
-    @Override
-    public String db_getHex() {
-        throw new UnsupportedOperationException("JSON RPC method db_getHex not implemented yet");
-    }
-
-    @Override
-    public String shh_post() {
-        throw new UnsupportedOperationException("JSON RPC method shh_post not implemented yet");
-    }
-
-    @Override
-    public String shh_version() {
-        throw new UnsupportedOperationException("JSON RPC method shh_version not implemented yet");
-    }
-
-    @Override
-    public String shh_newIdentity() {
-        throw new UnsupportedOperationException("JSON RPC method shh_newIdentity not implemented yet");
-    }
-
-    @Override
-    public String shh_hasIdentity() {
-        throw new UnsupportedOperationException("JSON RPC method shh_hasIdentity not implemented yet");
-    }
-
-    @Override
-    public String shh_newGroup() {
-        throw new UnsupportedOperationException("JSON RPC method shh_newGroup not implemented yet");
-    }
-
-    @Override
-    public String shh_addToGroup() {
-        throw new UnsupportedOperationException("JSON RPC method shh_addToGroup not implemented yet");
-    }
-
-    @Override
-    public String shh_newFilter() {
-        throw new UnsupportedOperationException("JSON RPC method shh_newFilter not implemented yet");
-    }
-
-    @Override
-    public String shh_uninstallFilter() {
-        throw new UnsupportedOperationException("JSON RPC method shh_uninstallFilter not implemented yet");
-    }
-
-    @Override
-    public String shh_getFilterChanges() {
-        throw new UnsupportedOperationException("JSON RPC method shh_getFilterChanges not implemented yet");
-    }
-
-    @Override
-    public String shh_getMessages() {
-        throw new UnsupportedOperationException("JSON RPC method shh_getMessages not implemented yet");
-    }
-
-    @Override
-    public boolean admin_addPeer(String enodeUrl) {
-        eth.connect(new Node(enodeUrl));
-        return true;
-    }
-
-    @Override
-    public String admin_exportChain() {
-        throw new UnsupportedOperationException("JSON RPC method admin_exportChain not implemented yet");
-    }
-
-    @Override
-    public String admin_importChain() {
-        throw new UnsupportedOperationException("JSON RPC method admin_importChain not implemented yet");
-    }
-
-    @Override
-    public String admin_sleepBlocks() {
-        throw new UnsupportedOperationException("JSON RPC method admin_sleepBlocks not implemented yet");
-    }
-
-    @Override
-    public String admin_verbosity() {
-        throw new UnsupportedOperationException("JSON RPC method admin_verbosity not implemented yet");
-    }
-
-    @Override
-    public String admin_setSolc() {
-        throw new UnsupportedOperationException("JSON RPC method admin_setSolc not implemented yet");
-    }
-
-    @Override
-    public String admin_startRPC() {
-        throw new UnsupportedOperationException("JSON RPC method admin_startRPC not implemented yet");
-    }
-
-    @Override
-    public String admin_stopRPC() {
-        throw new UnsupportedOperationException("JSON RPC method admin_stopRPC not implemented yet");
-    }
-
-    @Override
-    public String admin_setGlobalRegistrar() {
-        throw new UnsupportedOperationException("JSON RPC method admin_setGlobalRegistrar not implemented yet");
-    }
-
-    @Override
-    public String admin_setHashReg() {
-        throw new UnsupportedOperationException("JSON RPC method admin_setHashReg not implemented yet");
-    }
-
-    @Override
-    public String admin_setUrlHint() {
-        throw new UnsupportedOperationException("JSON RPC method admin_setUrlHint not implemented yet");
-    }
-
-    @Override
-    public String admin_saveInfo() {
-        throw new UnsupportedOperationException("JSON RPC method admin_saveInfo not implemented yet");
-    }
-
-    @Override
-    public String admin_register() {
-        throw new UnsupportedOperationException("JSON RPC method admin_register not implemented yet");
-    }
-
-    @Override
-    public String admin_registerUrl() {
-        throw new UnsupportedOperationException("JSON RPC method admin_registerUrl not implemented yet");
-    }
-
-    @Override
-    public String admin_startNatSpec() {
-        throw new UnsupportedOperationException("JSON RPC method admin_startNatSpec not implemented yet");
-    }
-
-    @Override
-    public String admin_stopNatSpec() {
-        throw new UnsupportedOperationException("JSON RPC method admin_stopNatSpec not implemented yet");
-    }
-
-    @Override
-    public String admin_getContractInfo() {
-        throw new UnsupportedOperationException("JSON RPC method admin_getContractInfo not implemented yet");
-    }
-
-    @Override
-    public String admin_httpGet() {
-        throw new UnsupportedOperationException("JSON RPC method admin_httpGet not implemented yet");
-    }
-
-    @Override
-    public String admin_nodeInfo() {
-        throw new UnsupportedOperationException("JSON RPC method admin_nodeInfo not implemented yet");
-    }
-
-    @Override
-    public String admin_peers() {
-        throw new UnsupportedOperationException("JSON RPC method admin_peers not implemented yet");
-    }
-
-    @Override
-    public String admin_datadir() {
-        throw new UnsupportedOperationException("JSON RPC method admin_datadir not implemented yet");
-    }
-
-    @Override
-    public String net_addPeer() {
-        throw new UnsupportedOperationException("JSON RPC method net_addPeer not implemented yet");
-    }
+//    @Override
+//    public String eth_getWork() {
+//        throw new UnsupportedOperationException("JSON RPC method eth_getWork not implemented yet");
+//    }
+//
+//    @Override
+//    public String eth_submitWork() {
+//        throw new UnsupportedOperationException("JSON RPC method eth_submitWork not implemented yet");
+//    }
+//
+//    @Override
+//    public String eth_submitHashrate() {
+//        throw new UnsupportedOperationException("JSON RPC method eth_submitHashrate not implemented yet");
+//    }
+//
+//    @Override
+//    public String db_putString() {
+//        throw new UnsupportedOperationException("JSON RPC method db_putString not implemented yet");
+//    }
+//
+//    @Override
+//    public String db_getString() {
+//        throw new UnsupportedOperationException("JSON RPC method db_getString not implemented yet");
+//    }
+//
+//    @Override
+//    public String db_putHex() {
+//        throw new UnsupportedOperationException("JSON RPC method db_putHex not implemented yet");
+//    }
+//
+//    @Override
+//    public String db_getHex() {
+//        throw new UnsupportedOperationException("JSON RPC method db_getHex not implemented yet");
+//    }
+//
+//    @Override
+//    public String shh_post() {
+//        throw new UnsupportedOperationException("JSON RPC method shh_post not implemented yet");
+//    }
+//
+//    @Override
+//    public String shh_version() {
+//        throw new UnsupportedOperationException("JSON RPC method shh_version not implemented yet");
+//    }
+//
+//    @Override
+//    public String shh_newIdentity() {
+//        throw new UnsupportedOperationException("JSON RPC method shh_newIdentity not implemented yet");
+//    }
+//
+//    @Override
+//    public String shh_hasIdentity() {
+//        throw new UnsupportedOperationException("JSON RPC method shh_hasIdentity not implemented yet");
+//    }
+//
+//    @Override
+//    public String shh_newGroup() {
+//        throw new UnsupportedOperationException("JSON RPC method shh_newGroup not implemented yet");
+//    }
+//
+//    @Override
+//    public String shh_addToGroup() {
+//        throw new UnsupportedOperationException("JSON RPC method shh_addToGroup not implemented yet");
+//    }
+//
+//    @Override
+//    public String shh_newFilter() {
+//        throw new UnsupportedOperationException("JSON RPC method shh_newFilter not implemented yet");
+//    }
+//
+//    @Override
+//    public String shh_uninstallFilter() {
+//        throw new UnsupportedOperationException("JSON RPC method shh_uninstallFilter not implemented yet");
+//    }
+//
+//    @Override
+//    public String shh_getFilterChanges() {
+//        throw new UnsupportedOperationException("JSON RPC method shh_getFilterChanges not implemented yet");
+//    }
+//
+//    @Override
+//    public String shh_getMessages() {
+//        throw new UnsupportedOperationException("JSON RPC method shh_getMessages not implemented yet");
+//    }
+//
+//    @Override
+//    public boolean admin_addPeer(String enodeUrl) {
+//        eth.connect(new Node(enodeUrl));
+//        return true;
+//    }
+//
+//    @Override
+//    public String admin_exportChain() {
+//        throw new UnsupportedOperationException("JSON RPC method admin_exportChain not implemented yet");
+//    }
+//
+//    @Override
+//    public String admin_importChain() {
+//        throw new UnsupportedOperationException("JSON RPC method admin_importChain not implemented yet");
+//    }
+//
+//    @Override
+//    public String admin_sleepBlocks() {
+//        throw new UnsupportedOperationException("JSON RPC method admin_sleepBlocks not implemented yet");
+//    }
+//
+//    @Override
+//    public String admin_verbosity() {
+//        throw new UnsupportedOperationException("JSON RPC method admin_verbosity not implemented yet");
+//    }
+//
+//    @Override
+//    public String admin_setSolc() {
+//        throw new UnsupportedOperationException("JSON RPC method admin_setSolc not implemented yet");
+//    }
+//
+//    @Override
+//    public String admin_startRPC() {
+//        throw new UnsupportedOperationException("JSON RPC method admin_startRPC not implemented yet");
+//    }
+//
+//    @Override
+//    public String admin_stopRPC() {
+//        throw new UnsupportedOperationException("JSON RPC method admin_stopRPC not implemented yet");
+//    }
+//
+//    @Override
+//    public String admin_setGlobalRegistrar() {
+//        throw new UnsupportedOperationException("JSON RPC method admin_setGlobalRegistrar not implemented yet");
+//    }
+//
+//    @Override
+//    public String admin_setHashReg() {
+//        throw new UnsupportedOperationException("JSON RPC method admin_setHashReg not implemented yet");
+//    }
+//
+//    @Override
+//    public String admin_setUrlHint() {
+//        throw new UnsupportedOperationException("JSON RPC method admin_setUrlHint not implemented yet");
+//    }
+//
+//    @Override
+//    public String admin_saveInfo() {
+//        throw new UnsupportedOperationException("JSON RPC method admin_saveInfo not implemented yet");
+//    }
+//
+//    @Override
+//    public String admin_register() {
+//        throw new UnsupportedOperationException("JSON RPC method admin_register not implemented yet");
+//    }
+//
+//    @Override
+//    public String admin_registerUrl() {
+//        throw new UnsupportedOperationException("JSON RPC method admin_registerUrl not implemented yet");
+//    }
+//
+//    @Override
+//    public String admin_startNatSpec() {
+//        throw new UnsupportedOperationException("JSON RPC method admin_startNatSpec not implemented yet");
+//    }
+//
+//    @Override
+//    public String admin_stopNatSpec() {
+//        throw new UnsupportedOperationException("JSON RPC method admin_stopNatSpec not implemented yet");
+//    }
+//
+//    @Override
+//    public String admin_getContractInfo() {
+//        throw new UnsupportedOperationException("JSON RPC method admin_getContractInfo not implemented yet");
+//    }
+//
+//    @Override
+//    public String admin_httpGet() {
+//        throw new UnsupportedOperationException("JSON RPC method admin_httpGet not implemented yet");
+//    }
+//
+//    @Override
+//    public String admin_nodeInfo() {
+//        throw new UnsupportedOperationException("JSON RPC method admin_nodeInfo not implemented yet");
+//    }
+//
+//    @Override
+//    public String admin_peers() {
+//        throw new UnsupportedOperationException("JSON RPC method admin_peers not implemented yet");
+//    }
+//
+//    @Override
+//    public String admin_datadir() {
+//        throw new UnsupportedOperationException("JSON RPC method admin_datadir not implemented yet");
+//    }
+//
+//    @Override
+//    public String net_addPeer() {
+//        throw new UnsupportedOperationException("JSON RPC method net_addPeer not implemented yet");
+//    }
 
     @Override
     public boolean miner_start() {
@@ -1311,60 +1302,60 @@ public class JsonRpcImpl implements JsonRpc {
         return true;
     }
 
-    @Override
-    public boolean miner_startAutoDAG() {
-        return false;
-    }
+//    @Override
+//    public boolean miner_startAutoDAG() {
+//        return false;
+//    }
+//
+//    @Override
+//    public boolean miner_stopAutoDAG() {
+//        return false;
+//    }
+//
+//    @Override
+//    public boolean miner_makeDAG() {
+//        return false;
+//    }
+//
+//    @Override
+//    public String miner_hashrate() {
+//        return "0x01";
+//    }
 
-    @Override
-    public boolean miner_stopAutoDAG() {
-        return false;
-    }
+//    @Override
+//    public String debug_printBlock() {
+//        throw new UnsupportedOperationException("JSON RPC method debug_printBlock not implemented yet");
+//    }
+//
+//    @Override
+//    public String debug_getBlockRlp() {
+//        throw new UnsupportedOperationException("JSON RPC method debug_getBlockRlp not implemented yet");
+//    }
+//
+//    @Override
+//    public String debug_setHead() {
+//        throw new UnsupportedOperationException("JSON RPC method debug_setHead not implemented yet");
+//    }
+//
+//    @Override
+//    public String debug_processBlock() {
+//        throw new UnsupportedOperationException("JSON RPC method debug_processBlock not implemented yet");
+//    }
 
-    @Override
-    public boolean miner_makeDAG() {
-        return false;
-    }
-
-    @Override
-    public String miner_hashrate() {
-        return "0x01";
-    }
-
-    @Override
-    public String debug_printBlock() {
-        throw new UnsupportedOperationException("JSON RPC method debug_printBlock not implemented yet");
-    }
-
-    @Override
-    public String debug_getBlockRlp() {
-        throw new UnsupportedOperationException("JSON RPC method debug_getBlockRlp not implemented yet");
-    }
-
-    @Override
-    public String debug_setHead() {
-        throw new UnsupportedOperationException("JSON RPC method debug_setHead not implemented yet");
-    }
-
-    @Override
-    public String debug_processBlock() {
-        throw new UnsupportedOperationException("JSON RPC method debug_processBlock not implemented yet");
-    }
-
-    @Override
-    public String debug_seedHash() {
-        throw new UnsupportedOperationException("JSON RPC method debug_seedHash not implemented yet");
-    }
-
-    @Override
-    public String debug_dumpBlock() {
-        throw new UnsupportedOperationException("JSON RPC method debug_dumpBlock not implemented yet");
-    }
-
-    @Override
-    public String debug_metrics() {
-        throw new UnsupportedOperationException("JSON RPC method debug_metrics not implemented yet");
-    }
+//    @Override
+//    public String debug_seedHash() {
+//        throw new UnsupportedOperationException("JSON RPC method debug_seedHash not implemented yet");
+//    }
+//
+//    @Override
+//    public String debug_dumpBlock() {
+//        throw new UnsupportedOperationException("JSON RPC method debug_dumpBlock not implemented yet");
+//    }
+//
+//    @Override
+//    public String debug_metrics() {
+//        throw new UnsupportedOperationException("JSON RPC method debug_metrics not implemented yet");
+//    }
 
     @Override
     public String personal_newAccount(String password) {
@@ -1462,6 +1453,7 @@ public class JsonRpcImpl implements JsonRpc {
                     params.add(0, method.getName());
                     return params.stream().collect(Collectors.joining(" "));
                 })
+                .sorted(String::compareTo)
                 .toArray(size -> new String[size]);
     }
 }

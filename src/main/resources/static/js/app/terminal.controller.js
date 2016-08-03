@@ -1,5 +1,5 @@
 /**
- * Allows use terminal component to call JSON-RPC methods.
+ * Allow use terminal component to call JSON-RPC methods.
  */
 
 (function() {
@@ -31,18 +31,15 @@
         $scope.commandInfoParams = null;
         $scope.txData = {};
 
-        var privateKey = "0xc85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4";
-        //var privateKey = "cow";
-        var currency = 'wei';   // otherwise need to convert
+        var defaultCurrency = 'wei';   // otherwise need to convert
 
         $scope.onSignAndSend = function() {
-            //var privateKey = "0xc85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4";
             var privateKey = $('#pkeyInput').val();
             var txData = $scope.txData;
 
-            console.log('onSignAndSend');
-            console.log(privateKey);
-            console.log(txData);
+            //console.log('onSignAndSend');
+            //console.log(privateKey);
+            //console.log(txData);
 
             RlpBuilder
                 .balanceTransfer(remove0x(txData.toAddress))    // to address
@@ -50,9 +47,10 @@
                 .secretKey(privateKey)
                 .gasLimit(txData.gasLimit)
                 .gasPrice(txData.gasPrice)
-                .value(txData.value, currency)
+                .value(txData.value, defaultCurrency)
                 .nonce(txData.nonce)
                 //.invokeData(data)
+                .withData(txData.data)
                 .format()
                 .done(function (rlp) {
                     console.log('Signed transaction');
@@ -68,11 +66,12 @@
                         .catch(function(error) {
                             console.log('Error sending raw transaction');
                             console.log(error);
+                            showErrorToastr('ERROR', 'Wasn\'t to send signed raw transaction.\n' + error);
                         });
                 })
                 .fail(function(error) {
                     console.log('Error signing tx ' + error);
-                    //Message.showError(error);
+                    showErrorToastr('ERROR', 'Wasn\'t able to sign transaction.\n' + error);
                     //$balanceDlg.find('input[name="key"]').addClass('error').focus();
                 })
                 .always(function () {
@@ -147,7 +146,13 @@
          * Resize table to fit all available space.
          * Otherwise many HTML changes are required to achieve same result
          */
-        $(window).ready(onResize);
+        $(window).ready(function() {
+            onResize();
+            // force cleaning pkey value when modal closed
+            $('#signWithKeyModal').on('hidden.bs.modal', function () {
+                $('#pkeyInput').val('');
+            })
+        });
         $scope.$on('windowResizeEvent', onResize);
 
         function onResize() {
@@ -177,8 +182,6 @@
 
         function createTerminal(list) {
             var methods = extractMethods(list);
-
-
 
             terminal = $('#' + CONTAINER_ID)
                 .terminal(
@@ -325,6 +328,18 @@
             } else {
                 return value;
             }
+        }
+
+        function showErrorToastr(topMessage, bottomMessage) {
+            toastr.clear()
+            toastr.options = {
+                "positionClass": "toast-top-right",
+                "closeButton": true,
+                "progressBar": true,
+                "showEasing": "swing",
+                "timeOut": "4000"
+            };
+            toastr.error('<strong>' + topMessage + '</strong> <br/><small>' + bottomMessage + '</small>');
         }
     }
 

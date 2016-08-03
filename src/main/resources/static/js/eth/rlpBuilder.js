@@ -43,10 +43,10 @@ var RlpBuilder = (function() {
         return isAbs ? Math.abs(value) : value;
     };
 
-    var TxRlpFormatter = function (toAddr, dummy) {
+    var TxRlpFormatter = function (toAddress, dummy) {
 
         this.data = {
-            to: toAddr.replace('0x', ''),
+            to: toAddress.replace('0x', ''),
             data: '',
             dummy: dummy
         };
@@ -60,9 +60,9 @@ var RlpBuilder = (function() {
             gasLimit: setGasLimit,
             gasPrice: setGasPrice,
             invokeData: setInvokeData,
+            withData: setData,
             nonce: setNonce,
-            format: format,
-            formatAndSubmit: formatAndSubmit
+            format: format
         });
 
         var self = this;
@@ -107,24 +107,6 @@ var RlpBuilder = (function() {
                 dfd.resolve(rlp.replace('0x', ''));
             }).fail(function () {
                 dfd.reject();
-            });
-
-            return dfd.promise();
-        }
-
-        function formatAndSubmit() {
-            var dfd = $.Deferred();
-            format().done(function (rlp) {
-                $.ajax(workspace.serviceUrl.state + '/transaction/submit', {
-                    method: 'POST',
-                    data: {
-                        rlp: rlp
-                    }
-                }).done(function (resp) {
-                    dfd.resolve(resp);
-                }).fail(function () {
-                    dfd.reject();
-                });
             });
 
             return dfd.promise();
@@ -180,6 +162,11 @@ var RlpBuilder = (function() {
             return self;
         }
 
+        function setData(value) {
+            self.data.data = value;
+            return self;
+        }
+
         function from(sender) {
             self.data.sender = sender;
             return self;
@@ -200,12 +187,12 @@ var RlpBuilder = (function() {
 
     return {
 
-        contractInvoke: function (toAddr, methodAbi, methodArgs) {
-            return new TxRlpFormatter(toAddr).invokeData(methodAbi, methodArgs);
+        contractInvoke: function (toAddress, methodAbi, methodArgs) {
+            return new TxRlpFormatter(toAddress).invokeData(methodAbi, methodArgs);
         },
 
-        balanceTransfer: function (toAddr) {
-            return new TxRlpFormatter(toAddr);
+        balanceTransfer: function (toAddress) {
+            return new TxRlpFormatter(toAddress);
         },
 
         dummy: function () {

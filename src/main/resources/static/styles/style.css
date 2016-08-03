@@ -2778,3 +2778,6 @@ fieldset[disabled] .form-control {
 /*
  * TERMINAL PAGE
  */
+.terminal .cmd, .terminal-output {
+    /*font-size: 16px;*/
+}
