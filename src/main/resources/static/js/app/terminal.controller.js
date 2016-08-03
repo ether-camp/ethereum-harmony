@@ -344,5 +344,23 @@
     }
 
     angular.module('HarmonyApp')
-        .controller('TerminalCtrl', ['$scope', '$timeout', 'jsonrpc', 'scrollConfig', TerminalCtrl]);
+        .controller('TerminalCtrl', ['$scope', '$timeout', 'jsonrpc', 'scrollConfig', TerminalCtrl])
+        .filter('rpcItemFilter', function() {
+            return function( items, condition) {
+                var filtered = [];
+
+                if(condition === undefined || condition === ''){
+                    return items;
+                }
+                condition = condition.toLowerCase();
+
+                angular.forEach(items, function(item) {
+                    if(item.methodName.toLowerCase().indexOf(condition) > -1){
+                        filtered.push(item);
+                    }
+                });
+
+                return filtered;
+            };
+        });
 })();

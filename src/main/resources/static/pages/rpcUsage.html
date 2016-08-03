@@ -33,7 +33,7 @@
     <div class="table-responsive" id="rpc-scroll-container">
         <ul class="table peers-table" style="padding: 0;">
 
-            <il ng-repeat="item in rpcItems"
+            <il ng-repeat="item in rpcItems | rpcItemFilter:filterWord"
                 ng-cloak>
                 <div class="panel panel-dark-filled">
                     <div class="panel-heading">

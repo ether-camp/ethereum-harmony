@@ -30,21 +30,22 @@ public class JsonRpcUsageService extends JsonRpcImpl {
     @Autowired
     JsonRpc jsonRpc;
 
+    @Autowired
+    ClientMessageService clientMessageService;
+
     private final Map<String, CallStats> stats = new ConcurrentHashMap();
-
-
 
     @PostConstruct
     private void init() {
+        /**
+         * Initialize empty stats for all methods.
+         */
         Arrays.stream(jsonRpc.listAvailableMethods())
                 .forEach(line -> {
                     String methodName = line.split(" ")[0];
                     stats.put(methodName, new CallStats(methodName, 0l, null));
                 });
     }
-
-    @Autowired
-    ClientMessageService clientMessageService;
 
     /**
      * Send stats to client side.
@@ -66,20 +67,25 @@ public class JsonRpcUsageService extends JsonRpcImpl {
 
     public void updateStats(String methodName, String result) {
         final long timeNow = System.currentTimeMillis();
-        final CallStats callStats = stats.computeIfAbsent(methodName, k -> new CallStats(methodName, timeNow, result));
 
-        callStats.count.increment();
-        callStats.lastCall.set(timeNow);
-        callStats.lastResult.set(result);
+//        final CallStats callStats = stats.computeIfAbsent(methodName, k -> new CallStats(methodName, timeNow, result));
+        CallStats callStats = stats.get(methodName);
+
+        if (callStats != null) {
+            callStats.count.increment();
+            callStats.lastCall.set(timeNow);
+            callStats.lastResult.set(result);
+        }
+        // do not track stats for non existing methods
     }
 
     class CallStats {
 
         public String name;
 
-        // time called last time in ms
         public LongAdder count = new LongAdder();
 
+        // time called last time in ms
         public AtomicLong lastCall = new AtomicLong();
 
         public AtomicReference<String> lastResult = new AtomicReference<>();
