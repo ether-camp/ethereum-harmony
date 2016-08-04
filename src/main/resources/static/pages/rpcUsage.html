@@ -4,7 +4,7 @@
         <div class="col-lg-12">
             <div class="view-header">
 
-                <div class="m-l-sm pull-right text-right" style="line-height: 14px">
+                <div class="m-l-sm pull-right text-right" style="line-height: 14px; margin-right: 30px">
                     <form class="navbar-form navbar-right" role="search">
                         <div class="form-group">
                             <input type="text" class="form-control query" placeholder="Filter" tabindex="1"
@@ -36,7 +36,7 @@
             <il ng-repeat="item in rpcItems | rpcItemFilter:filterWord"
                 ng-cloak>
                 <div class="panel panel-dark-filled">
-                    <div class="panel-heading">
+                    <div class="panel-heading" style="padding-top: 0;padding-bottom: 0">
                         <div class="row">
                             <div class="col-sm-6">
                                 <u><h3 style="font-weight: normal">{{item.methodName}}</h3></u>
@@ -49,28 +49,38 @@
                             </div>
                         </div>
                     </div>
-                    <div class="rpc-item-header">
-                        <a href="#">
-                            <div class="header-icon">
-                                <i class="pe page-header-icon pe-7s-plus"></i>
-                            </div>
-                            <div class="header-title"><h5>Last Result</h5>
-                            </div>
-                        </a>
-                    </div>
 
-                    <div class="rpc-item-header">
-                        <a href="#">
-                            <div class="header-icon">
-                                <i class="pe page-header-icon pe-7s-study"></i>
-                            </div>
-                            <div class="header-title"><h5>Curl</h5>
-                            </div>
-                        </a>
-                    </div>
+                    <div class="panel-footer" style="padding-top: 0;padding-bottom: 0">
+                        <!-- Last Result -->
+                        <div class="rpc-item-header">
+                            <a href="#" ng-click="showLastResult(item.methodName)">
+                                <div class="header-icon">
+                                    <i class="pe page-header-icon pe-7s-plus"></i>
+                                </div>
+                                <div class="header-title"><h5 style="font-weight: 100">Last Result</h5>
+                                </div>
+                            </a>
+                        </div>
 
-                    <div class="panel-footer">
-                        <pre class="panel panel-black-filled">curl NOT IMPLEMENTED -X POST --data '{"jsonrpc":"2.0","method":"eth_getLogs","params":[{"topics":["0x000000000000000000000000a94f5374fce5edbc8e2a8697c15331677e6ebf0b"]}],"id":74}'</pre>
+                        <div class="rpc-item-result-{{item.methodName}}" ng-show="item.lastResult != null">
+                            <pre class="panel panel-black-filled">{{item.lastResult}}</pre>
+                        </div>
+
+                        <!-- Usage Sample -->
+                        <div class="rpc-item-header">
+                            <a href="#" ng-click="showUsageHelp(item.methodName)">
+                                <div class="header-icon">
+                                    <i class="pe page-header-icon pe-7s-study"></i>
+                                </div>
+                                <div class="header-title"><h5 style="font-weight: 100">Curl</h5>
+                                </div>
+                            </a>
+                        </div>
+
+                        <div class="rpc-item-usage-{{item.methodName}}">
+                            <pre class="panel panel-black-filled"
+                                 style="margin-top: 0; margin-bottom: 10px;padding-bottom: 10px">{{item.curl}}</pre>
+                        </div>
                     </div>
                 </div>
             </il>

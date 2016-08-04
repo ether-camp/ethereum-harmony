@@ -7,10 +7,11 @@ import com.ethercamp.harmony.util.AppConst;
 import com.ethercamp.harmony.web.filter.JsonRpcUsageFilter;
 import com.googlecode.jsonrpc4j.spring.JsonServiceExporter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.embedded.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.filter.HiddenHttpMethodFilter;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
-
 
 /**
  * Created by Stan Reshetnyk on 18.07.16.
@@ -37,18 +38,19 @@ public class ApplicationConfig extends WebMvcConfigurerAdapter {
         return new JsonRpcImpl();
     }
 
-//    @Bean
-//    public FilterRegistrationBean filterRegistrationBean() {
-//        FilterRegistrationBean registrationBean = new FilterRegistrationBean();
-//        Filter filter = new AddContentTypeFilter();
-//        registrationBean.setFilter(filter);
-//        registrationBean.setUrlPatterns(Arrays.asList(AppConst.JSON_RPC_PATH));
-//        registrationBean.setOrder(Integer.MIN_VALUE);
-//        return registrationBean;
-//    }
+    /**
+     * With this code we aren't required to pass explicit "Content-Type: application/json" in curl.
+     * Found at https://github.com/spring-projects/spring-boot/issues/4782
+     */
+    @Bean
+    public FilterRegistrationBean registration(HiddenHttpMethodFilter filter) {
+        FilterRegistrationBean registration = new FilterRegistrationBean(filter);
+        registration.setEnabled(false);
+        return registration;
+    }
 
     /**
-     * Configuration of filter which is gathering invocation events.
+     * Configuration of filter which gatheres JSON-RPC invocation stats.
      */
     @Bean
     public JsonRpcUsageFilter rpcUsageFilter() {

@@ -3,6 +3,8 @@ package com.ethercamp.harmony.service;
 import com.ethercamp.harmony.dto.MethodCallDTO;
 import com.ethercamp.harmony.jsonrpc.JsonRpc;
 import com.ethercamp.harmony.jsonrpc.JsonRpcImpl;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -10,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -38,12 +41,23 @@ public class JsonRpcUsageService extends JsonRpcImpl {
     @PostConstruct
     private void init() {
         /**
+         * Load conf file with curl examples per each JSON-RPC method.
+         */
+        Config config = ConfigFactory.load("json-rpc-help");
+        Map<String, String> curlExamples = config.getAnyRefList("doc.curlExamples").stream()
+                .map(e -> (HashMap<String, String>) e)
+                .collect(Collectors.toMap(
+                        e -> e.get("method"),
+                        e -> e.get("curl")));
+
+
+        /**
          * Initialize empty stats for all methods.
          */
         Arrays.stream(jsonRpc.listAvailableMethods())
                 .forEach(line -> {
                     String methodName = line.split(" ")[0];
-                    stats.put(methodName, new CallStats(methodName, 0l, null));
+                    stats.put(methodName, new CallStats(methodName, 0l, null, curlExamples.get(methodName)));
                 });
     }
 
@@ -58,23 +72,24 @@ public class JsonRpcUsageService extends JsonRpcImpl {
                         stat.name,
                         stat.count.longValue(),
                         stat.lastCall.longValue(),
-                        stat.lastResult.get()))
+                        stat.lastResult.get(),
+                        stat.curl))
                 .sorted((s1, s2) -> s1.getMethodName().compareTo(s2.getMethodName()))
                 .collect(Collectors.toList());
 
         clientMessageService.sendToTopic("/topic/rpcUsage", items);
     }
 
-    public void updateStats(String methodName, String result) {
+    public void methodInvoked(String methodName, String resultReturned) {
         final long timeNow = System.currentTimeMillis();
 
-//        final CallStats callStats = stats.computeIfAbsent(methodName, k -> new CallStats(methodName, timeNow, result));
+//        final CallStats callStats = stats.computeIfAbsent(methodName, k -> new CallStats(methodName, timeNow, resultReturned));
         CallStats callStats = stats.get(methodName);
 
         if (callStats != null) {
             callStats.count.increment();
             callStats.lastCall.set(timeNow);
-            callStats.lastResult.set(result);
+            callStats.lastResult.set(resultReturned);
         }
         // do not track stats for non existing methods
     }
@@ -90,10 +105,13 @@ public class JsonRpcUsageService extends JsonRpcImpl {
 
         public AtomicReference<String> lastResult = new AtomicReference<>();
 
-        public CallStats(String name, long lastCallTime, String lastResultString) {
+        public String curl;
+
+        public CallStats(String name, long lastCallTime, String lastResultString, String curl) {
             this.name = name;
             lastCall.set(lastCallTime);
             lastResult.set(lastResultString);
+            this.curl = curl;
         }
     }
 

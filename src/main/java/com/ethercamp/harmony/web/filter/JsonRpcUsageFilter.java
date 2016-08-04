@@ -40,18 +40,28 @@ public class JsonRpcUsageFilter implements Filter {
             HttpServletRequest httpRequest = (HttpServletRequest) request;
 
             if (AppConst.JSON_RPC_PATH.equals(httpRequest.getRequestURI())) {
-                ObjectMapper mapper = new ObjectMapper();
-                mapper.configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, true);
+                final ObjectMapper mapper = new ObjectMapper();
+//                mapper.configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, true);
 
                 try {
+
+//                    final BufferedReader reader = request.getReader();
+//                    final String body1 = IOUtils.toString(reader);
+//                    IOUtils.toString(reader);
+
+
                     final ResettableStreamHttpServletRequest wrappedRequest = new ResettableStreamHttpServletRequest(
                             (HttpServletRequest) request);
-                    final String body = IOUtils.toString(wrappedRequest.getReader());
 
-                    wrappedRequest.resetInputStream();
+//                    wrappedRequest.getInputStream();
+//                    wrappedRequest.resetInputStream();
+
+                    final String body = IOUtils.toString(wrappedRequest.getReader());
 
                     final JsonNode json = mapper.readTree(body);
                     final String methodName = json.get("method").asText();
+
+                    wrappedRequest.resetInputStream();
 
                     if (response.getCharacterEncoding() == null) {
                         response.setCharacterEncoding("UTF-8");
@@ -64,7 +74,7 @@ public class JsonRpcUsageFilter implements Filter {
                     } finally {
                         final byte[] copy = responseCopier.getCopy();
                         final String responseText = new String(copy, response.getCharacterEncoding());
-                        jsonRpcUsageService.updateStats(methodName, responseText);
+                        jsonRpcUsageService.methodInvoked(methodName, responseText);
                     }
                 } catch (IOException e) {
                     log.error("Error parsing JSON-RPC request", e);
@@ -114,8 +124,9 @@ public class JsonRpcUsageFilter implements Filter {
         public BufferedReader getReader() throws IOException {
             if (rawData == null) {
                 rawData = IOUtils.toByteArray(this.request.getReader());
-                servletStream.stream = new ByteArrayInputStream(rawData);
             }
+            servletStream = new ResettableServletInputStream();
+            servletStream.stream = new ByteArrayInputStream(rawData);
             return new BufferedReader(new InputStreamReader(servletStream));
         }
 

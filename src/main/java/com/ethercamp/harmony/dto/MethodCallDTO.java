@@ -17,4 +17,6 @@ public class MethodCallDTO {
     private Long lastTime;
 
     private String lastResult;
+
+    private String curl;
 }

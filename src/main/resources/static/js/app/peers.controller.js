@@ -16,7 +16,7 @@
      * Updates items in array without recreating them
      */
     function synchronizeArrays(source, target, updateFun) {
-        var newPeers = [];
+        var newItems = [];
         var sourceMap = source.reduce(function(s, v) {
             s[v.nodeId] = v;
             return s;
@@ -48,9 +48,9 @@
         angular.forEach(sourceMap, function(item) {
             updateFun(item, item);
             target.push(item);
-            newPeers.push(item);
+            newItems.push(item);
         });
-        return newPeers;
+        return newItems;
     }
 
     function getPingString(value) {

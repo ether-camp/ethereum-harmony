@@ -5,6 +5,26 @@
 (function() {
     'use strict';
 
+    /**
+     * Updates items in array without recreating them
+     */
+    function synchronizeArrays(source, target, updateFun) {
+        var newItems = [];
+        var sourceMap = source.reduce(function(s, v) {
+            s[v.methodName] = v;
+            return s;
+        }, {});
+
+        // update current items
+        angular.forEach(target, function(item, index) {
+            var updatedItem = sourceMap[item.methodName];
+            if (updatedItem) {
+                updateFun(item, updatedItem);
+            }
+        });
+        return newItems;
+    }
+
     function RpcUsageCtrl($scope, $timeout, scrollConfig) {
         console.log('RpcUsage controller activated.');
         $scope.rpcItems = $scope.rpcItems || [];
@@ -26,13 +46,18 @@
          * Received stats update from server
          */
         $scope.$on('rpcUsageListEvent', function(event, items) {
-            angular.forEach(items, function(item) {
-                item.lastTime = item.lastTime > 0 ? moment(item.lastTime).fromNow() : '';
-            });
-
             $timeout(function() {
-                $scope.rpcItems = items;
+                if ($scope.rpcItems.length == 0) {
+                    $scope.rpcItems = items;
+                }
+                synchronizeArrays(items, $scope.rpcItems, function(item, updatedItem) {
+                    item.count = updatedItem.count;
+                    item.count = updatedItem.count;
+                    item.lastTime = updatedItem.lastTime > 0 ? moment(updatedItem.lastTime).fromNow() : '';
+                });
             }, 10);
+
+            console.log("Methods count " + items.length);
         });
 
         function onResize() {
