@@ -56,8 +56,6 @@
                     item.lastTime = updatedItem.lastTime > 0 ? moment(updatedItem.lastTime).fromNow() : '';
                 });
             }, 10);
-
-            console.log("Methods count " + items.length);
         });
 
         function onResize() {

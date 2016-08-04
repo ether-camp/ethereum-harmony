@@ -2782,6 +2782,10 @@ fieldset[disabled] .form-control {
     /*font-size: 16px;*/
 }
 
+
+/**
+ * RPC USAGE PAGE
+ */
 .panel.panel-dark-filled {
     background-color: rgba(31, 31, 31, 0.5);
 }
@@ -2790,13 +2794,21 @@ fieldset[disabled] .form-control {
     background-color: #000000;
     marning-bottom: 0;
     marging-top: 0;
+    white-space: pre-wrap;       /* Since CSS 2.1 */
+    word-wrap: break-word;       /* Internet Explorer 5.5+ */
 }
 
 .rpc-item-header {
     font-weight: normal;
     margin: 0px 0;
-    min-height: 28px;
+    min-height: 20px;
     padding: 0;
+}
+
+.rpc-item-text {
+    font-weight: 100;
+    padding-bottom: 3px;
+    margin-bottom: 3px;
 }
 
 .rpc-item-header .header-icon {

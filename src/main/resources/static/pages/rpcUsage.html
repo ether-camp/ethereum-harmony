@@ -7,7 +7,7 @@
                 <div class="m-l-sm pull-right text-right" style="line-height: 14px; margin-right: 30px">
                     <form class="navbar-form navbar-right" role="search">
                         <div class="form-group">
-                            <input type="text" class="form-control query" placeholder="Filter" tabindex="1"
+                            <input type="text" class="form-control query" placeholder="Filter by name" tabindex="1"
                                    ng-model="filterWord"/>
                         </div>
                     </form>
@@ -52,18 +52,20 @@
 
                     <div class="panel-footer" style="padding-top: 0;padding-bottom: 0">
                         <!-- Last Result -->
-                        <div class="rpc-item-header">
+                        <div class="rpc-item-header" ng-show="item.lastResult != null">
                             <a href="#" ng-click="showLastResult(item.methodName)">
                                 <div class="header-icon">
                                     <i class="pe page-header-icon pe-7s-plus"></i>
                                 </div>
-                                <div class="header-title"><h5 style="font-weight: 100">Last Result</h5>
+                                <div class="header-title"><h5 class="rpc-item-text">Last Result</h5>
                                 </div>
                             </a>
                         </div>
 
                         <div class="rpc-item-result-{{item.methodName}}" ng-show="item.lastResult != null">
-                            <pre class="panel panel-black-filled">{{item.lastResult}}</pre>
+                            <pre class="panel panel-black-filled"
+                                 style="margin-top: 0px; padding-top: 10px; margin-bottom: 10px;padding-bottom: 10px"
+                            >{{item.lastResult}}</pre>
                         </div>
 
                         <!-- Usage Sample -->
@@ -72,7 +74,7 @@
                                 <div class="header-icon">
                                     <i class="pe page-header-icon pe-7s-study"></i>
                                 </div>
-                                <div class="header-title"><h5 style="font-weight: 100">Curl</h5>
+                                <div class="header-title"><h5 class="rpc-item-text">Curl</h5>
                                 </div>
                             </a>
                         </div>

@@ -186,8 +186,19 @@
             filterElement(div);
             logContainer.appendChild(div);
 
-            if (logContainer.children.length > LINES_LIMIT) {
-                logContainer.removeChild(logContainer.children[0]);
+            // removing items when auto scroll turned off, will cause logs to move
+            if ($scope.isAutoScroll) {
+                var len = logContainer.children.length;
+                if (len > LINES_LIMIT) {
+                    if (len - LINES_LIMIT > 1) {
+                        for (var i = len - LINES_LIMIT; i > 0; i--) {
+                            logContainer.removeChild(logContainer.children[0]);
+                        }
+                        console.log('Removed ' + (len - LINES_LIMIT) + ' log entries');
+                    } else {
+                        logContainer.removeChild(logContainer.children[0]);
+                    }
+                }
             }
 
             if ($scope.isAutoScroll) {
