@@ -1,5 +1,8 @@
 /**
  * Rendering list of peers.
+ *  - show table of active/non active peers;
+ *  - show world map of where peers are located;
+ *
  */
 
 (function() {

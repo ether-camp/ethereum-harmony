@@ -3,14 +3,17 @@ package com.ethercamp.harmony.service;
 import com.ethercamp.harmony.dto.MethodCallDTO;
 import com.ethercamp.harmony.jsonrpc.JsonRpc;
 import com.ethercamp.harmony.jsonrpc.JsonRpcImpl;
+import com.ethercamp.harmony.util.AppConst;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.embedded.EmbeddedServletContainerInitializedEvent;
+import org.springframework.context.ApplicationEvent;
+import org.springframework.context.ApplicationListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -20,6 +23,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Services which is suites as endpoint for JSON-RPC requests. Does:
@@ -28,7 +32,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j(topic = "jsonrpc")
-public class JsonRpcUsageService extends JsonRpcImpl {
+public class JsonRpcUsageService extends JsonRpcImpl implements ApplicationListener {
 
     @Autowired
     JsonRpc jsonRpc;
@@ -38,8 +42,9 @@ public class JsonRpcUsageService extends JsonRpcImpl {
 
     private final Map<String, CallStats> stats = new ConcurrentHashMap();
 
-    @PostConstruct
-    private void init() {
+    private void init(int port) {
+        final String serverUrl = "http://localhost:" + port + AppConst.JSON_RPC_PATH;
+
         /**
          * Load conf file with curl examples per each JSON-RPC method.
          */
@@ -48,7 +53,7 @@ public class JsonRpcUsageService extends JsonRpcImpl {
                 .map(e -> (HashMap<String, String>) e)
                 .collect(Collectors.toMap(
                         e -> e.get("method"),
-                        e -> e.get("curl")));
+                        e -> e.get("curl").replace("${host}", serverUrl)));
 
 
         /**
@@ -56,9 +61,36 @@ public class JsonRpcUsageService extends JsonRpcImpl {
          */
         Arrays.stream(jsonRpc.listAvailableMethods())
                 .forEach(line -> {
-                    String methodName = line.split(" ")[0];
-                    stats.put(methodName, new CallStats(methodName, 0l, null, curlExamples.get(methodName)));
+                    final String methodName = line.split(" ")[0];
+                    String curlExample = curlExamples.get(methodName);
+                    if (curlExample == null) {
+                        curlExample = generateCurlExample(line) + " " + serverUrl;
+                        log.info("Generate curl example for JSON-RPC method: " + methodName);
+                    }
+                    stats.put(methodName, new CallStats(methodName, 0l, null, curlExample));
                 });
+    }
+
+    private String generateCurlExample(String line) {
+        final String[] arr = line.split(" ");
+        final String method = arr[0];
+        final String paramsString = Stream.of(arr)
+                .skip(1)
+                .map(i -> "\"0x0\"")
+                .collect(Collectors.joining(", "));
+
+        return "curl -X POST --data '{\"jsonrpc\":\"2.0\",\"method\":\"" + method +
+                "\",\"params\":[" + paramsString +
+                "],\"id\":64}'";
+    }
+
+    @Override
+    public void onApplicationEvent(ApplicationEvent event) {
+        if (event instanceof EmbeddedServletContainerInitializedEvent) {
+            int port = ((EmbeddedServletContainerInitializedEvent) event).getEmbeddedServletContainer().getPort();
+
+            init(port);
+        }
     }
 
     /**

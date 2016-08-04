@@ -238,10 +238,10 @@ public class JsonRpcImpl implements JsonRpc {
     }
 
     protected Account importAccount(ECKey key, String password) {
-        Account account = new Account();
+        final Account account = new Account();
         account.init(key);
+
         keystore.storeKey(key, password);
-//        accounts.put(new ByteArrayWrapper(account.getAddress()), account);
         return account;
     }
 
@@ -1385,17 +1385,17 @@ public class JsonRpcImpl implements JsonRpc {
             Objects.requireNonNull(address, "address is required");
             Objects.requireNonNull(password, "password is required");
 
-            return keystore
-                    .loadStoredKey(JSonHexToHex(address), password)
-                    .map(key -> {
-                        Account account = new Account();
-                        account.init(key);
-                        unlockedAccounts.put(new ByteArrayWrapper(account.getAddress()), account);
-                        return true;
-                    })
-                    // we can return false or send description message with exception
-                    // prefer exception for now
-                    .orElseThrow(() -> new RuntimeException("No key was found in keystore for account:" + address));
+            final ECKey key = keystore.loadStoredKey(JSonHexToHex(address), password);
+            if (key != null) {
+                final Account account = new Account();
+                account.init(key);
+                unlockedAccounts.put(new ByteArrayWrapper(account.getAddress()), account);
+                return true;
+            } else {
+                // we can return false or send description message with exception
+                // prefer exception for now
+                throw new RuntimeException("No key was found in keystore for account:" + address);
+            }
         } finally {
             if (log.isDebugEnabled()) log.debug("personal_unlockAccount(" + address + ", ***, " + duration + "): " + s);
         }
@@ -1429,7 +1429,7 @@ public class JsonRpcImpl implements JsonRpc {
 
     /**
      * List method names for client side terminal competition.
-     * Forms strings list in format: `List("methodName arg1 arg2", "methodName2")`
+     * @return array in format: `["methodName arg1 arg2", "methodName2"]`
      */
     @Override
     public String[] listAvailableMethods() {

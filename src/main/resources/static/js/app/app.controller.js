@@ -9,7 +9,8 @@
         autoHideScrollbar: true,
         theme: 'dark',
         advanced: {
-            updateOnContentResize: true
+            // enabling this will cause container to scroll down whenever Cmd or Ctrl pressed
+            //updateOnContentResize: true
         },
         axis: 'y',
         setHeight: 200,

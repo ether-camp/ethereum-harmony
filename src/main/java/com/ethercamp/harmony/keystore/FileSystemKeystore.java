@@ -39,10 +39,14 @@ public class FileSystemKeystore implements Keystore {
 
     @Override
     public void storeKey(ECKey key, String password) {
+        final String address = Hex.toHexString(key.getAddress());
+        if (hasStoredKey(address)) {
+            throw new RuntimeException("Keystore is already exist for address: " + address +
+                    " Please remove old one first if you want to add with new password.");
+        }
+
         final File keysFolder = getKeyStoreLocation().toFile();
         keysFolder.mkdirs();
-
-        String address = Hex.toHexString(key.getAddress());
 
         String content = keystoreFormat.toKeystore(key, password);
         storeRawKeystore(content, address);
@@ -73,10 +77,10 @@ public class FileSystemKeystore implements Keystore {
     }
 
     /**
-     * @return some loaded key or None
+     * @return some loaded key or null
      */
     @Override
-    public Optional<ECKey> loadStoredKey(String address, String password) {
+    public ECKey loadStoredKey(String address, String password) {
         final File dir = getKeyStoreLocation().toFile();
         return Arrays.stream(dir.listFiles())
                 .filter(f -> hasAddressInName(address, f))
@@ -90,7 +94,8 @@ public class FileSystemKeystore implements Keystore {
                     }
                 })
                 .map(content -> keystoreFormat.fromKeystore(content, password))
-                .findFirst();
+                .findFirst()
+                .orElse(null);
     }
 
     private boolean hasAddressInName(String address, File file) {

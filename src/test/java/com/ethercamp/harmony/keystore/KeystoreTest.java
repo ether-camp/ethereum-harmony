@@ -1,6 +1,5 @@
 package com.ethercamp.harmony.keystore;
 
-import org.ethereum.core.Block;
 import org.ethereum.crypto.ECKey;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
@@ -8,8 +7,6 @@ import org.spongycastle.util.encoders.Hex;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Optional;
 import static org.junit.Assert.*;
 
 /**
@@ -46,6 +43,7 @@ public class KeystoreTest {
         final ECKey key = new ECKey();
         final String address = Hex.toHexString(key.getAddress());
 
+        fileSystemKeystore.removeKey(address);
         fileSystemKeystore.storeKey(key, password);
 
         fileSystemKeystore.loadStoredKey(address, password);
@@ -58,13 +56,14 @@ public class KeystoreTest {
         final String password = "123";
         final String address = "dc212a894a3575c61eadfb012c8db93923d806f5";
 
+        fileSystemKeystore.removeKey(address);
         fileSystemKeystore.storeRawKeystore(CORRECT_KEY, address);
 
-        final Optional<ECKey> key = fileSystemKeystore.loadStoredKey(address, password);
+        final ECKey key = fileSystemKeystore.loadStoredKey(address, password);
 
         fileSystemKeystore.removeKey(address);
 
-        assertTrue(key.isPresent());
+        assertNotNull(key);
     }
 
     @Test(expected = RuntimeException.class)
@@ -72,9 +71,24 @@ public class KeystoreTest {
         final String password = "1234";
         final String address = "dc212a894a3575c61eadfb012c8db93923d806f5";
 
+        fileSystemKeystore.removeKey(address);
         fileSystemKeystore.storeRawKeystore(CORRECT_KEY, address);
 
         fileSystemKeystore.loadStoredKey(address, password);
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void importDuplicateKey() throws Exception {
+        // generate new random private key
+        final ECKey key = new ECKey();
+        final String address = Hex.toHexString(key.getAddress());
+
+        try {
+            fileSystemKeystore.storeKey(key, address);
+            fileSystemKeystore.storeKey(key, address);
+        } finally {
+            fileSystemKeystore.removeKey(address);
+        }
     }
 
     private static String CORRECT_KEY = "{\"address\":\"dc212a894a3575c61eadfb012c8db93923d806f5\",\"crypto\":{\"cipher\":\"aes-128-ctr\",\"ciphertext\":\"4baa65c9e3438e28c657a3585c5b444746578a5b0f35e1816e43146a09dc9f94\",\"cipherparams\":{\"iv\":\"bca4d9a043c68a9b9d995492d29653f5\"},\"kdf\":\"scrypt\",\"kdfparams\":{\"dklen\":32,\"n\":262144,\"p\":1,\"r\":8,\"salt\":\"eadb4203d8618141268903a9c8c0ace4f45954e5c4679257b89b874f24b56ea3\"},\"mac\":\"b1b34957940158569ed129f9bb4373979c78748bdf6e33354bcc922d2a207efa\"},\"id\":\"c985b75c-01ef-49b7-b7f0-0c2db4c299bc\",\"version\":3}";

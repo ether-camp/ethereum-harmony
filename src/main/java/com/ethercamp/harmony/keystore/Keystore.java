@@ -19,7 +19,7 @@ public interface Keystore {
 
     String[] listStoredKeys();
 
-    Optional<ECKey> loadStoredKey(String address, String password);
+    ECKey loadStoredKey(String address, String password);
 
     boolean hasStoredKey(String address);
 }
