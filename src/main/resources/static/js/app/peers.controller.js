@@ -75,6 +75,28 @@
         $scope.showInactive = false;
         $scope.scrollConfig = jQuery.extend(true, {}, scrollConfig);
 
+        $scope.hidePeerDetails = true;
+        $scope.peerDetails = '';
+        $scope.selectedPeer = null;
+
+        $scope.onOverPeer = function(node) {
+            $scope.peerDetails = getPeerDetails(node);
+            $scope.hidePeerDetails = false;
+        };
+        $scope.onOutPeer = function(node) {
+            if ($scope.selectedPeer) {
+                $scope.peerDetails = getPeerDetails($scope.selectedPeer);
+            } else {
+                $scope.hidePeerDetails = true;
+            }
+        };
+
+        $scope.onClickPeer = function(node) {
+            $scope.selectedPeer = node;
+            $scope.peerDetails = getPeerDetails(node);
+            $scope.hidePeerDetails = false;
+        };
+
         $scope.$on('$destroy', function() {
             $timeout.cancel($scope.promise);
             console.log('Peers controller exited.');
@@ -205,6 +227,10 @@
         $scope.onShowInactiveChange = function() {
 
         };
+
+        function getPeerDetails(item) {
+            return item ? item.details : '';
+        }
 
         function onResize() {
             console.log("Peers page resize");

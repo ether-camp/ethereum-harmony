@@ -30,4 +30,6 @@ public class PeerDTO {
 
     private Boolean isActive;
 
+    private String details;
+
 }

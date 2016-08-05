@@ -5,7 +5,6 @@ import com.ethercamp.harmony.util.AppConst;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -18,7 +17,9 @@ import javax.servlet.http.HttpServletResponseWrapper;
 import java.io.*;
 
 /**
- * Intercepts JSON-RPC requests and updates usage stats.
+ * Intercept JSON-RPC requests and updates usage stats.
+ *  - use custom request wrapper to allow read input stream multiple times;
+ *  - use custom response wrapper to allow read output stream multiple times.
  *
  * Created by Stan Reshetnyk on 22.07.16.
  */
@@ -41,20 +42,10 @@ public class JsonRpcUsageFilter implements Filter {
 
             if (AppConst.JSON_RPC_PATH.equals(httpRequest.getRequestURI())) {
                 final ObjectMapper mapper = new ObjectMapper();
-//                mapper.configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, true);
 
                 try {
-
-//                    final BufferedReader reader = request.getReader();
-//                    final String body1 = IOUtils.toString(reader);
-//                    IOUtils.toString(reader);
-
-
                     final ResettableStreamHttpServletRequest wrappedRequest = new ResettableStreamHttpServletRequest(
                             (HttpServletRequest) request);
-
-//                    wrappedRequest.getInputStream();
-//                    wrappedRequest.resetInputStream();
 
                     final String body = IOUtils.toString(wrappedRequest.getReader());
 

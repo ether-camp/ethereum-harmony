@@ -1,6 +1,5 @@
 package com.ethercamp.harmony.jsonrpc;
 
-import com.ethercamp.harmony.api.EthereumApi;
 import com.ethercamp.harmony.api.EthereumApiImpl;
 import com.ethercamp.harmony.keystore.Keystore;
 import com.ethercamp.harmony.util.ErrorCodes;
@@ -17,25 +16,22 @@ import org.ethereum.listener.CompositeEthereumListener;
 import org.ethereum.listener.EthereumListenerAdapter;
 import org.ethereum.manager.WorldManager;
 import org.ethereum.mine.BlockMiner;
-import org.ethereum.net.client.Capability;
 import org.ethereum.net.client.ConfigCapabilities;
-import org.ethereum.net.rlpx.Node;
 import org.ethereum.net.server.ChannelManager;
 import org.ethereum.net.server.PeerServer;
 import org.ethereum.solidity.compiler.SolidityCompiler;
 import org.ethereum.sync.SyncManager;
-import org.ethereum.util.BuildInfo;
 import org.ethereum.util.ByteUtil;
 import org.ethereum.util.RLP;
 import org.ethereum.vm.DataWord;
 import org.ethereum.vm.LogInfo;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.lang.reflect.Modifier;
 import java.math.BigInteger;
-import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -49,6 +45,7 @@ import static org.ethereum.util.ByteUtil.bigIntegerToBytes;
  * @author Anton Nashatyrev
  */
 @Slf4j(topic = "jsonrpc")
+// cant put @Component definition as will conflict with class in core
 public class JsonRpcImpl implements JsonRpc {
 
     private static final String BLOCK_LATEST = "latest";

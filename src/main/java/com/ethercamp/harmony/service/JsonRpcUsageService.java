@@ -2,7 +2,6 @@ package com.ethercamp.harmony.service;
 
 import com.ethercamp.harmony.dto.MethodCallDTO;
 import com.ethercamp.harmony.jsonrpc.JsonRpc;
-import com.ethercamp.harmony.jsonrpc.JsonRpcImpl;
 import com.ethercamp.harmony.util.AppConst;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -26,13 +25,14 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Services which is suites as endpoint for JSON-RPC requests. Does:
- *  - serving requests calls, by extending {@link JsonRpcImpl};
- *  - gathering statistics info of how many times RPC methods were called
+ * Services for:
+ *  - gathering statistics info of how many times RPC methods were called;
+ *  - pushing updates to client side;
+ *  - reading curl examples from conf file.
  */
 @Service
 @Slf4j(topic = "jsonrpc")
-public class JsonRpcUsageService extends JsonRpcImpl implements ApplicationListener {
+public class JsonRpcUsageService implements ApplicationListener {
 
     @Autowired
     JsonRpc jsonRpc;
@@ -112,6 +112,9 @@ public class JsonRpcUsageService extends JsonRpcImpl implements ApplicationListe
         clientMessageService.sendToTopic("/topic/rpcUsage", items);
     }
 
+    /**
+     * Account method invocation into statistics.
+     */
     public void methodInvoked(String methodName, String resultReturned) {
         final long timeNow = System.currentTimeMillis();
 

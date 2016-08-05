@@ -2774,6 +2774,16 @@ fieldset[disabled] .form-control {
 
 }
 
+.peer-row:hover {
+    background-color: #3f404a;
+    border: none;
+}
+
+.peer-row {
+    border: none;
+    background-color: #3b3c46;
+}
+
 
 /*
  * TERMINAL PAGE

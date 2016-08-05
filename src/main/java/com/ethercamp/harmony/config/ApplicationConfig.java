@@ -2,7 +2,6 @@ package com.ethercamp.harmony.config;
 
 import com.ethercamp.harmony.jsonrpc.JsonRpc;
 import com.ethercamp.harmony.jsonrpc.JsonRpcImpl;
-import com.ethercamp.harmony.service.JsonRpcUsageService;
 import com.ethercamp.harmony.util.AppConst;
 import com.ethercamp.harmony.web.filter.JsonRpcUsageFilter;
 import com.googlecode.jsonrpc4j.spring.JsonServiceExporter;
@@ -20,7 +19,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter
 public class ApplicationConfig extends WebMvcConfigurerAdapter {
 
     @Autowired
-    JsonRpcUsageService jsonRpcUsageService;
+    JsonRpc jsonRpc;
 
     /**
      * Configuration for publishing all service methods as JSON-RPC
@@ -28,13 +27,13 @@ public class ApplicationConfig extends WebMvcConfigurerAdapter {
     @Bean(name = AppConst.JSON_RPC_PATH)
     public JsonServiceExporter rpc() {
         JsonServiceExporter ret = new JsonServiceExporter();
-        ret.setService(jsonRpcUsageService);
+        ret.setService(jsonRpc);
         ret.setServiceInterface(JsonRpc.class);
         return ret;
     }
 
     @Bean
-    public JsonRpc jsonRpc() {
+    public JsonRpc harmonyJsonRpc() {
         return new JsonRpcImpl();
     }
 
@@ -50,7 +49,7 @@ public class ApplicationConfig extends WebMvcConfigurerAdapter {
     }
 
     /**
-     * Configuration of filter which gatheres JSON-RPC invocation stats.
+     * Configuration of filter which gathers JSON-RPC invocation stats.
      */
     @Bean
     public JsonRpcUsageFilter rpcUsageFilter() {

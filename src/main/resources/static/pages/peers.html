@@ -48,7 +48,7 @@
                             <div style="z-index: 10001; position: absolute;" class="datamaps-hoverover"></div>
                         </div>
 
-                        <div class="row" align="center">
+                        <div class="row" align="center" style="height: 50px;">
                             <div class="datamaps-legend">
                                 <dl>
                                     <dt style="margin-left: 15px">Country with peers:</dt>
@@ -61,6 +61,11 @@
                                     <dd style="margin-top: 3px;width:10px;height:10px;-webkit-border-radius: 5px;-moz-border-radius: 5px;border-radius: 5px;border:1px solid #FFFFFF;background-color:#FF0000;">&nbsp;</dd>
                                 </dl>
                             </div>
+                        </div>
+
+                        <div class="panel panel-filled" ng-hide="hidePeerDetails">
+                            <div class="panel-body text-left" style="white-space: pre-wrap; word-wrap: break-word;"
+                                >{{peerDetails}}</div>
                         </div>
 
                     </div>
@@ -123,8 +128,13 @@
                                 <tbody>
 
                                     <tr ng-repeat="peer in peers | filter: { isActive: !showInactive }"
+                                        ng-click="onClickPeer(peer)"
+                                        ng-mouseover="onOverPeer(peer)"
+                                        ng-mouseout="onOutPeer(peer)"
                                         ng-cloak
-                                        ng-class="{'peer-active': peer.isActive}">
+                                        ng-class="{'peer-active': peer.isActive}"
+                                        class="peer-row"
+                                        style="cursor: pointer;">
                                         <td data-toggle="tooltip" title="{{peer.nodeId}}">
                                             0x{{peer.nodeId | limitTo : 12 : 0}}...
                                         </td>

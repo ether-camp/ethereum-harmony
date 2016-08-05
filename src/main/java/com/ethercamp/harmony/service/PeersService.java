@@ -1,10 +1,12 @@
 package com.ethercamp.harmony.service;
 
 import com.ethercamp.harmony.dto.PeerDTO;
+import com.maxmind.geoip.Country;
 import com.maxmind.geoip.LookupService;
 import lombok.extern.slf4j.Slf4j;
 import org.ethereum.facade.Ethereum;
 import org.ethereum.listener.EthereumListenerAdapter;
+import org.ethereum.manager.WorldManager;
 import org.ethereum.net.eth.message.EthMessageCodes;
 import org.ethereum.net.message.Message;
 import org.ethereum.net.rlpx.Node;
@@ -15,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
@@ -61,7 +64,8 @@ public class PeersService {
                             channel.getInetSocketAddress().getHostName(),
                             0l, 0.0,
                             0,
-                            true
+                            true,
+                            null
                     ));
                 }
             }
@@ -85,7 +89,7 @@ public class PeersService {
      */
     @Scheduled(fixedRate = 1500)
     private void doSendPeersInfo() {
-        // #1 Read discovered peers. Usually ~150 peers
+        // #1 Read discovered nodes. Usually ~150 nodes
         final List<Node> nodes = nodeManager.getTable()
                 .getAllNodes().stream()
                 .map(n -> n.getNode())
@@ -94,13 +98,14 @@ public class PeersService {
         // #2 Convert active peers to DTO
         final List<PeerDTO> resultPeers = ethereum.getChannelManager().getActivePeers()
                 .stream()
-                .map(p -> createPeerDTO(
-                        p.getPeerId(),
-                        p.getNode().getHost(),
-                        p.getNodeStatistics().lastPongReplyTime.get(),
-                        p.getPeerStats().getAvgLatency(),
-                        p.getNodeStatistics().getReputation(),
-                        true))
+                .map(channel -> createPeerDTO(
+                        channel.getPeerId(),
+                        channel.getNode().getHost(),
+                        channel.getNodeStatistics().lastPongReplyTime.get(),
+                        channel.getPeerStats().getAvgLatency(),
+                        channel.getNodeStatistics().getReputation(),
+                        true,
+                        channel.getNodeStatistics()))
                 .collect(Collectors.toList());
 
         // #3 Convert discovered peers to DTO and add to result
@@ -115,7 +120,8 @@ public class PeersService {
                         nodeStatistics.lastPongReplyTime.get(),
                         0.0,
                         nodeStatistics.getReputation(),
-                        false
+                        false,
+                        null
                 ));
             }
         });
@@ -123,10 +129,40 @@ public class PeersService {
         clientMessageService.sendToTopic("/topic/peers", resultPeers);
     }
 
-    private PeerDTO createPeerDTO(String peerId, String ip, long lastPing, double avgLatency, int reputation, boolean isActive) {
+    private String getPeerDetails(NodeStatistics nodeStatistics, String country) {
+        final String countryRow = "Country: " + country;
+
+        if (nodeStatistics == null || nodeStatistics.getClientId() == null) {
+            return countryRow;
+        }
+
+        final String delimiter = "\n";
+        final String clientId = StringUtils.trimWhitespace(nodeStatistics.getClientId());
+        final String details = "Details: " + clientId;
+        final String supports = "Supported protocols: " + nodeStatistics.capabilities
+                .stream()
+                .map(c -> StringUtils.capitalize(c.getName()) + ": " + c.getVersion())
+                .collect(Collectors.joining(", "));
+
+        final String[] array = clientId.split("/");
+        if (array.length >= 4) {
+            final String type = "Type: " + array[0];
+            final String os = "OS: " + StringUtils.capitalize(array[2]);
+            final String version = "Version: " + array[3];
+
+            return String.join(delimiter, type, os, version, countryRow, "", details, "", supports);
+        } else {
+            return String.join(delimiter, countryRow, details, supports);
+        }
+    }
+
+    private PeerDTO createPeerDTO(String peerId, String ip, long lastPing, double avgLatency, int reputation,
+                                  boolean isActive, NodeStatistics nodeStatistics) {
         // code or ""
-        final String country2Code = lookupService
-                .map(service -> service.getCountry(ip).getCode())
+
+        final Optional<Country> country = lookupService.map(service -> service.getCountry(ip));
+        final String country2Code = country
+                .map(c -> c.getCode())
                 .orElse("");
 
         // code or ""
@@ -140,7 +176,8 @@ public class PeersService {
                 lastPing,
                 avgLatency,
                 reputation,
-                isActive);
+                isActive,
+                getPeerDetails(nodeStatistics, country.map(Country::getName).orElse("Unknown location")));
     }
 
     /**
