@@ -47,12 +47,22 @@
          */
         $scope.$on('rpcUsageListEvent', function(event, items) {
             $timeout(function() {
+                // one time operation
                 if ($scope.rpcItems.length == 0) {
+                    angular.forEach(items, function(item) {
+                        var curl = item.curl;
+                        if (curl) {
+                            var spaceIndex = curl.lastIndexOf(' ');
+                            item.curl = curl.substr(0, spaceIndex);
+                            item.curlUrl = curl.substr(spaceIndex + 1);
+                        }
+                    });
                     $scope.rpcItems = items;
                 }
                 synchronizeArrays(items, $scope.rpcItems, function(item, updatedItem) {
                     item.count = updatedItem.count;
                     item.count = updatedItem.count;
+                    item.curl = item.curl;
                     item.lastTime = updatedItem.lastTime > 0 ? moment(updatedItem.lastTime).fromNow() : '';
                 });
             }, 10);

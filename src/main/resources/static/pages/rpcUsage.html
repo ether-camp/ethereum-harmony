@@ -69,19 +69,16 @@
                         </div>
 
                         <!-- Usage Sample -->
-                        <div class="rpc-item-header">
-                            <a href="#" ng-click="showUsageHelp(item.methodName)">
-                                <div class="header-icon">
+                        <div class="rpc-item-header flex-row flex-align-center" style="padding-bottom: 8px">
+                            <!--<a href="#" ng-click="showUsageHelp(item.methodName)">-->
+                                <div class="header-icon m-l-xs m-r-xs">
                                     <i class="pe page-header-icon pe-7s-study"></i>
                                 </div>
-                                <div class="header-title"><h5 class="rpc-item-text">Curl</h5>
-                                </div>
-                            </a>
-                        </div>
+                            <pre class="panel panel-black-filled m-t-xs m-b-xs">{{item.curl}} <span style="color: #c4660f">{{item.curlUrl}}</span></pre>
+                                <!--<div class="header-title"><h5 class="rpc-item-text">Curl</h5>-->
+                                <!--</div>-->
+                            <!--</a>-->
 
-                        <div class="rpc-item-usage-{{item.methodName}}">
-                            <pre class="panel panel-black-filled"
-                                 style="margin-top: 0; margin-bottom: 10px;padding-bottom: 10px">{{item.curl}}</pre>
                         </div>
                     </div>
                 </div>

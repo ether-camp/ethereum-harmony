@@ -2800,12 +2800,13 @@ fieldset[disabled] .form-control {
 
 .rpc-item-header {
     font-weight: normal;
-    margin: 0px 0;
+    margin: 0;
     min-height: 20px;
     padding: 0;
 }
 
 .rpc-item-text {
+    color: #c3c3c4;
     font-weight: 100;
     padding-bottom: 3px;
     margin-bottom: 3px;
@@ -2820,4 +2821,16 @@ fieldset[disabled] .form-control {
     line-height: 0;
 }
 
+.flex {
+    display: flex;
+}
+
+.flex-row {
+    display: flex;
+    flex-direction: row;
+}
+
+.flex-align-center {
+    align-items: center;
+}
 

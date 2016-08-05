@@ -9,13 +9,13 @@
         autoHideScrollbar: true,
         theme: 'dark',
         advanced: {
-            // enabling this will cause container to scroll down whenever Cmd or Ctrl pressed
-            //updateOnContentResize: true
+            updateOnContentResize: true
         },
         axis: 'y',
         setHeight: 200,
         scrollInertia: 0,
-        keyboard: { enable: false },
+        // having this will cause container to scroll down whenever Cmd or Ctrl pressed
+        //keyboard: { enable: false },
         scrollButtons: { enable: false }
     });
 
