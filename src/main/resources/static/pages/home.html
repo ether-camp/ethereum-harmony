@@ -1,3 +1,5 @@
+<script src="js/blockchain-view.js"></script>
+
 <!-- Main content-->
 <section class="content">
     <div class="container-fluid">
@@ -22,48 +24,8 @@
             </div>
         </div>
 
-        <div class="row">
 
-            <!-- CPU -->
-            <div class="col-lg-2 col-xs-6">
-                <div class="panel panel-filled">
-
-                    <div class="panel-body">
-                        <h2 class="m-b-none" ng-cloak>
-                            {{vm.data.cpuUsage}}% <!--<span class="slight"><i class="fa fa-play fa-rotate-270 text-warning"> </i> +20%</span>-->
-                        </h2>
-                        <div class="small">Cpu usage</div>
-                        <!--<div class="slight m-t-sm"><i class="fa fa-clock-o"> </i> Updated: <span class="c-white">10:22pm</span>  </div>-->
-                    </div>
-                </div>
-            </div>
-
-            <!-- Memory -->
-            <div class="col-lg-4 col-xs-6">
-                <div class="panel panel-filled">
-                    <div class="panel-body">
-                        <h2 class="m-b-none">
-                            {{vm.data.memoryOccupied}} / {{vm.data.memoryFree}} <!-- <span class="slight"><i class="fa fa-play fa-rotate-90 c-white"> </i> 5%</span>-->
-                        </h2>
-                        <div class="small">Memory usage (occupied / free)</div>
-                        <!--<div class="slight m-t-sm"><i class="fa fa-clock-o"> </i> Updated: <span class="c-white">9:10am</span> </div>-->
-                    </div>
-                </div>
-            </div>
-
-            <!-- Disc -->
-            <div class="col-lg-2 col-xs-6">
-                <div class="panel panel-filled">
-                    <div class="panel-body">
-                        <h2 class="m-b-none">
-                            {{vm.data.freeSpace}} <!--<span class="slight"><i class="fa fa-play fa-rotate-270 text-warning"> </i> +56%</span>-->
-                        </h2>
-                        <div class="small">Free disk space</div>
-                        <!--<div class="slight m-t-sm"><i class="fa fa-clock-o"> </i> Updated: <span class="c-white">05:42pm</span> </div>-->
-                    </div>
-                </div>
-            </div>
-        </div>
+        <div id="blockchain-chart"></div>
 
     </div>
 </section>

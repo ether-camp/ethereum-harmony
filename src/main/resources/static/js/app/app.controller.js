@@ -29,7 +29,8 @@
         $routeProvider
 
             .when('/', {
-                templateUrl : 'pages/home.html'
+                templateUrl : 'pages/home.html',
+                controller  : 'HomeCtrl'
             })
 
             .when('/systemLog', {
