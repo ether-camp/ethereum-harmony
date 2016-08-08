@@ -18,11 +18,51 @@ var BlockchainView = (function () {
     };
 
     /**
-     * @param state
+     * @param columns - state
      * @param block
      */
-    function addBlock(state, block) {
+    function addBlock(columns, block) {
+        //console.log('addBlock ' + block.blockHash);
 
+        if (columns.length == 0) {
+            var newColumn = [];
+            newColumn[block.index] = block;
+            // assume the first block is canonical, and put it in the middle
+            columns.push([]);
+            columns.push(newColumn);
+            console.log('Added initial column for block ' + block.blockHash);
+        } else {
+            var putOverParent = columns.some(function(column) {
+                return column.some(function(b) {
+                    if (b.blockHash == block.parentHash) {
+                        if (!column[block.index]) {
+                            column[block.index] = block;
+                            console.log('Put block over parent ' + block.blockHash);
+                            return true;
+                        }
+                    }
+                    return false;
+                });
+            });
+            if (!putOverParent) {
+
+                var putInFreeSpace = columns.some(function(column) {
+                    if (!column[block.index]) {
+                        column[block.index] = block;
+                        console.log('Added block to free space ' + block.blockHash);
+                        return true;
+                    }
+                    return false;
+                });
+
+                if (!putInFreeSpace) {
+                    var newColumn = [];
+                    newColumn[block.index] = block;
+                    columns.push(newColumn);
+                    console.log('New column created to put block ' + block.blockHash);
+                }
+            }
+        }
     }
 
     /**
@@ -253,8 +293,12 @@ var BlockchainView = (function () {
                     }
                 });
 
+                var renderColumns = [];
+                data.forEach(function(b) {
+                    addBlock(renderColumns, b);
+                });
 
-                var renderColumns = addBlockViaSorting(data);
+                //var renderColumns = addBlockViaSorting(data);
 
 
                 renderState(svgContainer, renderColumns, blockNumbers, width, height);
