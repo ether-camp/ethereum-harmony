@@ -387,7 +387,7 @@ var BlockchainView = (function () {
         var self = this;
 
         /**
-         * Mutates data array!
+         * @data - component creates copy
          */
         self.setData = function(data) {
             data = data || [];
@@ -395,6 +395,9 @@ var BlockchainView = (function () {
             if (data.length == 0) {
                 return;
             }
+
+            // deep clone
+            data = jQuery.extend(true, [], data);
 
             var blockNumbers = prepareData(data);
 
@@ -409,6 +412,13 @@ var BlockchainView = (function () {
             //var renderColumns = addBlockViaSorting(data);
 
             renderState(svgContainer, renderColumns, blockNumbers, width, maxHeight);
+            return self;
+        };
+
+        self.setWidth = function(newWidth) {
+            if (width != newWidth) {
+                width = newWidth;
+            }
             return self;
         };
 
