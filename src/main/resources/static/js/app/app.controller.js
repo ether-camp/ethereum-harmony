@@ -85,14 +85,23 @@
         }
     };
 
+    // change default animation step time
+    jQuery.fx.interval = 100;
+    var c = 0;
+
     function updateBlockCounter(value) {
         var blockCounter = $('#blockCounter');
-        blockCounter.prop('Counter', blockCounter.attr('value')).stop().animate({
+        if (value == blockCounter.attr('value')) {
+            return;
+        }
+
+        blockCounter.stop(true, false).prop('Counter', blockCounter.attr('value')).animate({
             Counter: '' + value
         }, {
             duration: 1500,
             easing: 'linear',
             step: function(now) {
+                //console.log('Interval step ' + c++);
                 var value = Math.ceil(now);
                 blockCounter.attr('value', value);
                 blockCounter.text(numberWithCommas(value));

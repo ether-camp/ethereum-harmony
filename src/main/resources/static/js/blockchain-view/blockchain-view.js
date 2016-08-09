@@ -2,7 +2,7 @@ var BlockchainView = (function () {
 
     var GAP = 14;
     var BLOCK_HEIGHT = 30;
-    var NUMBERING_WIDTH = 100;
+    var NUMBERING_WIDTH = 120;
     var BLANK_HASH = -1;
     var MAX_BLOCK_WIDTH = 80;
 
@@ -354,7 +354,7 @@ var BlockchainView = (function () {
             .data(blockNumberObjects)
             .enter()
             .append('text')
-            .attr('x', function(d) { return d.x + 15; })
+            .attr('x', function(d) { return d.x + NUMBERING_WIDTH / 2; })
             .attr('y', function(d) { return d.y + 22; })
             .text( function (d) { return d.text; })
             .attr('font-family', 'sans-serif')

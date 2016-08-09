@@ -7,9 +7,6 @@
 (function() {
     'use strict';
 
-
-
-
     function HomeCtrl($scope, $timeout, scrollConfig) {
         $scope.scrollConfig = jQuery.extend(true, {}, scrollConfig);
 
@@ -20,19 +17,24 @@
         var treeContainer = document.getElementById('blockchain-chart');
 
         var chart = BlockchainView.create(treeContainer);
-        chart.setData(chartData);
+        redrawChartLater();
 
         function addBlock(block) {
-            chartData.push(block);
-            if (chartData.length > 50) {
-                chartData.shift();
+            var isExist = chartData.some(function(b) {
+                return b.blockHash == block.blockHash;
+            });
+            if (!isExist) {
+                chartData.push(block);
+                if (chartData.length > 50) {
+                    chartData.shift();
+                }
             }
         }
 
-        $scope.$on('newBlockInfoEvent', function(event, item) {
-            addBlock(item);
-
-            // delay rendering, but if not many blocks - first rendering should occur immediately
+        /**
+         * Delay rendering, but if not many blocks - first rendering should occur immediately
+         */
+        function redrawChartLater() {
             if (!timeoutPromise) {
                 if (new Date().getTime() - 2000 > lastRenderingTime) {
                     chart.setData(chartData);
@@ -44,10 +46,16 @@
                     timeoutPromise = null;
                 }, 2000);
             }
+        }
+
+        $scope.$on('newBlockInfoEvent', function(event, item) {
+            addBlock(item);
+
+            redrawChartLater();
         });
         $scope.$on('currentBlocksEvent', function(event, items) {
             items.forEach(addBlock);
-            chart.setData(chartData);
+            redrawChartLater();
         });
 
         function resizeContainer() {
