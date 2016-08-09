@@ -1,10 +1,9 @@
 var BlockchainView = (function () {
 
-    var GAP = 8;
+    var GAP = 14;
     var BLOCK_HEIGHT = 30;
     var NUMBERING_WIDTH = 60;
     var BLANK_HASH = -1;
-    var MIN_COLUMNS = 3;
     var MAX_BLOCK_WIDTH = 80;
 
     var unique = function(xs) {
@@ -16,6 +15,91 @@ var BlockchainView = (function () {
             return x;
         })
     };
+
+    var blockHashFun = function(b) {return b.blockHash};
+
+
+    function prepareData(data) {
+        var blockStore = {};
+        var parentsMap = {};
+        var blockNumbers = [];
+
+        data.forEach(function(b) {
+            parentsMap[b.blockHash] = true;
+            blockStore[b.blockHash] = b;
+            if (blockNumbers.indexOf(b.blockNumber) < 0) {
+                blockNumbers.push(b.blockNumber);
+            }
+        });
+        blockNumbers.sort();
+        var minBlockNumber = blockNumbers[0];
+        data.forEach(function(b) {
+            b.index = b.blockNumber - minBlockNumber;
+        });
+
+
+        // calculate total difficulty per each leaf
+        data.forEach(function(b) {
+            var parentBlock = blockStore[b.parentHash];
+            if (parentBlock) {
+                b.totalDifficulty = b.difficulty + (parentBlock.totalDifficulty || 0);
+            } else {
+                b.totalDifficulty = b.difficulty;
+            }
+        });
+
+        var canonicalLeaf = data.reduce(function(result, b) {
+            return b.totalDifficulty > result.totalDifficulty ? b : result;
+        }, data[0]);
+        var canonicalColumn = data
+            .reverse()
+            .reduce(function(column, b) {
+                if (b.blockHash == column[0].parentHash) {
+                    column.unshift(b);
+                }
+                return column;
+            }, [canonicalLeaf]);
+        data.reverse(); // back
+        canonicalColumn.forEach(function(b) {
+            b.isCanonical = true;
+        });
+
+        console.log('Canonical chain ' + canonicalColumn.map(blockHashFun));
+
+        return blockNumbers;
+    }
+
+    function point(x, y) {
+        return {x: x, y: y};
+    }
+
+    /**
+     * @param mW - parameter for left(0) or right(1) side bracket
+     * @param mS - direction of bracket: to right(-1) or to left(1)
+     * @returns {Function}
+     */
+    function markerLineData(mW, mS) {
+        return function(block) {
+            var g = 4;
+            var side = 6;
+            var x = block.x;
+            var y = block.y;
+            var w = block.width;
+            var h = block.height;
+
+            var xOffset = x + mS * g + w * mW;
+
+            return [
+                point(xOffset - mS * side,    y - g),
+                point(xOffset,                y - g),
+                point(xOffset,                y + g + h),
+                point(xOffset - mS * side,    y + g + h)
+            ];
+        }
+    }
+
+    var markerLeftLineData      = markerLineData(0, -1);
+    var markerRightLineData     = markerLineData(1, 1);
 
     /**
      * @param columns - state
@@ -114,7 +198,6 @@ var BlockchainView = (function () {
             })
             .reverse();
         var reversedData = data.map(function(b) {return b;}).reverse();
-        var blockHashFun = function(b) {return b.blockHash};
 
         var isCanonical = true;
         var renderColumns = [];
@@ -167,17 +250,15 @@ var BlockchainView = (function () {
         renderColumns
             .forEach(function(column, c) {
                 column.forEach(function(block, n) {
-                    if (block != BLANK_HASH) {
-                        //console.log('Adding block for rendering ' + block);
-                        blocks.push({
-                            text:   block.blockHash,
-                            x:      NUMBERING_WIDTH + GAP * (c + 1) + blockWidth * c,
-                            y:      height - GAP * (n + 1) - BLOCK_HEIGHT * (n + 1),
-                            width:  blockWidth,
-                            height: BLOCK_HEIGHT,
-                            isCanonical: block.isCanonical
-                        });
-                    }
+                    //console.log('Adding block for rendering ' + block);
+                    blocks.push({
+                        text:   block.blockHash,
+                        x:      NUMBERING_WIDTH + GAP * (c + 1) + blockWidth * c,
+                        y:      height - GAP * (n + 1) - BLOCK_HEIGHT * (n + 1),
+                        width:  blockWidth,
+                        height: BLOCK_HEIGHT,
+                        isCanonical: block.isCanonical
+                    });
                 });
             });
 
@@ -196,54 +277,103 @@ var BlockchainView = (function () {
         console.log('blockNumberObjects');
         console.log(blockNumberObjects);
 
+        // Clear all
+        svgContainer
+            .attr('width', width)
+            .attr('height', height)
+            .selectAll('*')
+            .remove();
+
         var numberingContainer = svgContainer
-            .append("g")
-            .attr("id", 'numberingContainer');
+            .append('g')
+            .attr('id', 'numberingContainer');
 
         var blockContainer = svgContainer
-            .append("g")
-            .attr("id", 'blockContainer');
+            .append('g')
+            .attr('id', 'blockContainer');
 
+        // Blocks
         blockContainer
-            .selectAll("rect")
+            .selectAll('rect')
             .data(blocks)
             .enter()
-            .append("rect")
-            .attr("x", function (d) { return d.x; })
-            .attr("y", function (d) { return d.y; })
-            .attr("width", function (d) { return d.width; })
-            .attr("height", function (d) { return d.height; })
-            .style("fill", function (d) { return "#5E9CD3"; });
-
-
-        blockContainer
-            .selectAll("text")
-            .data(blocks)
-            .enter()
-            .append("text")
-            .attr("x", function(d) { return d.x + 15; })
-            .attr("y", function(d) { return d.y + 22; })
-            .text( function (d) { return d.text; })
-            .attr("font-family", "sans-serif")
-            .attr("text-anchor", "middle")
-            .attr("font-size", "20px")
-            .attr("fill", "##5E9CD3");
-
-        // Left Numbers
-        numberingContainer
-            .selectAll("text")
-            .data(blockNumberObjects)
-            .enter()
-            .append("text")
-            .attr("x", function(d) { return d.x + 15; })
-            .attr("y", function(d) { return d.y + 22; })
-            .text( function (d) { return d.text; })
-            .attr("font-family", "sans-serif")
-            .attr("text-anchor", "middle")
-            .attr("font-size", "20px")
-            .attr("fill", "#C5E0B4");
+            .append('rect')
+            .attr('x', function (d) { return d.x; })
+            .attr('y', function (d) { return d.y; })
+            .attr('width', function (d) { return d.width; })
+            .attr('height', function (d) { return d.height; })
+            .style('fill', function (d) { return '#5E9CD3'; })
+            .style("stroke", '#41719C')
+            .style("stroke-width", 2);
 
         // Marking canonical
+        var lineFunction = d3.svg
+            .line()
+            .x(function(d) { return d.x; })
+            .y(function(d) { return d.y; })
+            .interpolate("linear");
+        blocks
+            .forEach(function(b) {
+                if (b.isCanonical) {
+                    var lLineData = markerLeftLineData(b);
+                    blockContainer
+                        .append("path")
+                        .attr("d", lineFunction(lLineData))
+                        .attr("stroke", "#FFD966")
+                        .attr("stroke-width", 3)
+                        .attr("fill", "none");
+
+                    var rLineData = markerRightLineData(b);
+                    blockContainer
+                        .append("path")
+                        .attr("d", lineFunction(rLineData))
+                        .attr("stroke", "#FFD966")
+                        .attr("stroke-width", 3)
+                        .attr("fill", "none");
+                }
+            });
+
+
+
+        // Block labels
+        blockContainer
+            .selectAll('text')
+            .data(blocks)
+            .enter()
+            .append('text')
+            .attr('x', function(d) { return d.x + 15; })
+            .attr('y', function(d) { return d.y + 22; })
+            .text( function (d) { return d.text; })
+            .attr('font-family', 'sans-serif')
+            .attr('text-anchor', 'middle')
+            .attr('font-size', '20px')
+            .attr('fill', '##5E9CD3');
+
+        // Left Block Numbers
+        numberingContainer
+            .selectAll('text')
+            .data(blockNumberObjects)
+            .enter()
+            .append('text')
+            .attr('x', function(d) { return d.x + 15; })
+            .attr('y', function(d) { return d.y + 22; })
+            .text( function (d) { return d.text; })
+            .attr('font-family', 'sans-serif')
+            .attr('text-anchor', 'middle')
+            .attr('font-size', '20px')
+            .attr('fill', '#C5E0B4');
+
+        // Blue vertical line
+        numberingContainer
+            .append("path")
+            .attr("d", lineFunction([
+                point(NUMBERING_WIDTH, 0),
+                point(NUMBERING_WIDTH, height)
+            ]))
+            .attr("stroke", "#41719C")
+            .attr("stroke-width", 2)
+            .attr("fill", "none");
+
     }
 
     var Chart = function(element, config) {
@@ -252,13 +382,9 @@ var BlockchainView = (function () {
         var width = config.width || 600;
         var height = config.height || 600;
         var state = []; // array of arrays of blocks
-        var blockStore = {};
-        var blockNumbers = [];
 
         var svgContainer = d3.select(element)
-            .append("svg")
-            .attr("width", width)
-            .attr("height", height);
+            .append('svg');
 
 
         var self =  {
@@ -269,29 +395,9 @@ var BlockchainView = (function () {
                     return;
                 }
 
-                var parentsMap = {};
-                data.forEach(function(b) {
-                    parentsMap[b.blockHash] = true;
-                    blockStore[b.blockHash] = b;
-                    if (blockNumbers.indexOf(b.blockNumber) < 0) {
-                        blockNumbers.push(b.blockNumber);
-                    }
-                });
-                var minBlockNumber = blockNumbers[0];
-                data.forEach(function(b) {
-                    b.index = b.blockNumber - minBlockNumber;
-                });
-
-
-                // calculate total difficulty per each leaf
-                data.forEach(function(b) {
-                    var parentBlock = blockStore[b.parentHash];
-                    if (parentBlock) {
-                        b.totalDifficulty = b.difficulty + (parentBlock.totalDifficulty || 0);
-                    } else {
-                        b.totalDifficulty = b.difficulty;
-                    }
-                });
+                var blockNumbers = prepareData(data);
+                console.log('Data');
+                console.log(data);
 
                 var renderColumns = [];
                 data.forEach(function(b) {
