@@ -1,5 +1,6 @@
 package com.ethercamp.harmony.web.controller;
 
+import com.ethercamp.harmony.dto.BlockInfo;
 import com.ethercamp.harmony.dto.InitialInfoDTO;
 import com.ethercamp.harmony.dto.MachineInfoDTO;
 import com.ethercamp.harmony.service.MachineInfoService;
@@ -28,6 +29,11 @@ public class WebSocketController {
     @MessageMapping("/initialInfo")
     public InitialInfoDTO getInitialInfo() {
         return machineInfoService.getInitialInfo();
+    }
+
+    @MessageMapping("/currentBlocks")
+    public Queue<BlockInfo> getBlocks() {
+        return machineInfoService.getBlocks();
     }
 
     @MessageMapping("/currentSystemLogs")

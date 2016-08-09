@@ -7,6 +7,7 @@ import ch.qos.logback.classic.PatternLayout;
 import ch.qos.logback.classic.filter.LevelFilter;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.UnsynchronizedAppenderBase;
+import com.ethercamp.harmony.dto.BlockInfo;
 import com.ethercamp.harmony.dto.BlockchainInfoDTO;
 import com.ethercamp.harmony.dto.InitialInfoDTO;
 import com.ethercamp.harmony.dto.MachineInfoDTO;
@@ -17,6 +18,7 @@ import org.ethereum.core.TransactionReceipt;
 import org.ethereum.facade.Ethereum;
 import org.ethereum.listener.EthereumListenerAdapter;
 import org.slf4j.LoggerFactory;
+import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -41,6 +43,7 @@ public class MachineInfoService {
 
     public static final int KEEP_LOG_ENTRIES = 1000;
     private final int BLOCK_COUNT_FOR_HASH_RATE = 100;
+    private final int BLOCK_COUNT_FOR_CLIENT = 50;
 
     @Autowired
     private Environment env;
@@ -58,6 +61,8 @@ public class MachineInfoService {
      * Service reads items with interval.
      */
     private final Queue<Block> lastBlocksForHashRate = new ConcurrentLinkedQueue();
+
+    private final Queue<BlockInfo> lastBlocksForClient = new ConcurrentLinkedQueue();
 
     private final AtomicReference<MachineInfoDTO> machineInfo = new AtomicReference<>(new MachineInfoDTO(0, 0l, 0l, 0l));
 
@@ -80,9 +85,22 @@ public class MachineInfoService {
             @Override
             public void onBlock(Block block, List<TransactionReceipt> receipts) {
                 lastBlocksForHashRate.add(block);
+
                 if (lastBlocksForHashRate.size() > BLOCK_COUNT_FOR_HASH_RATE) {
                     lastBlocksForHashRate.poll();
                 }
+                if (lastBlocksForClient.size() > BLOCK_COUNT_FOR_CLIENT) {
+                    lastBlocksForClient.poll();
+                }
+
+                BlockInfo blockInfo = new BlockInfo(
+                        block.getNumber(),
+                        Hex.toHexString(block.getHash()),
+                        Hex.toHexString(block.getParentHash()),
+                        block.getDifficultyBI().longValue()
+                );
+                lastBlocksForClient.add(blockInfo);
+                clientMessageService.sendToTopic("/topic/newBlockInfo", blockInfo);
             }
         });
 
@@ -99,6 +117,10 @@ public class MachineInfoService {
 
     public Queue<String> getSystemLogs() {
         return lastLogs;
+    }
+
+    public Queue<BlockInfo> getBlocks() {
+        return lastBlocksForClient;
     }
 
     @Scheduled(fixedRate = 5000)

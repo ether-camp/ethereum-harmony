@@ -69,6 +69,7 @@
     var isLogPageActive = false;        // TODO move to related controller
     var isPeersPageActive = false;      // TODO move to related controller
     var isRpcPageActive = false;        // TODO move to related controller
+    var isHomePageActive = false;        // TODO move to related controller
 
     var topicStorage = {};
 
@@ -149,11 +150,17 @@
             ethereumJVersion: "n/a"
         };
 
-        var updateLogSubscription       = updateSubscriptionFun('/topic/systemLog', onSystemLogResult, function() {
-            stompClient.send('/app/currentSystemLogs');
-        });
+        var updateLogSubscription       = updateSubscriptionFun('/topic/systemLog', onSystemLogResult,
+            function() {
+                stompClient.send('/app/currentSystemLogs');
+            });
         var updatePeersSubscription     = updateSubscriptionFun('/topic/peers', onPeersListResult);
         var updateRpcSubscription       = updateSubscriptionFun('/topic/rpcUsage', onRpcUsageResult);
+        var updateBlockSubscription     = updateSubscriptionFun('/topic/newBlockInfo', onNewBlockInfoResult,
+            function() {
+                stompClient.send('/app/currentBlocks');
+            });
+
 
         /**
          * Listen for page changes and subscribe to 'systemLog' topic only when we stay on that page.
@@ -165,16 +172,19 @@
             vm.data.currentPage = path;
 
             // #1 Change subscription
+            isHomePageActive = path == '/';
             isLogPageActive = path == '/systemLog';
             isPeersPageActive = path == '/peers';
             isRpcPageActive = path == '/rpcUsage';
-            var isMainPageActive = path == '/';
+
+            var isLongPageActive = path == '/???';
+            updateBlockSubscription(isHomePageActive);
             updateLogSubscription(isLogPageActive);
             updatePeersSubscription(isPeersPageActive);
             updateRpcSubscription(isRpcPageActive);
 
             // #2 Change body scroll behavior depending on selected page
-            $('body').css('overflow', isMainPageActive ? 'auto' : 'hidden');
+            $('body').css('overflow', isLongPageActive ? 'auto' : 'hidden');
         });
 
         /**
@@ -217,6 +227,8 @@
                     stompClient.subscribe('/topic/blockchainInfo', onBlockchainInfoResult);
                     stompClient.subscribe('/topic/newBlockFrom', onNewBlockFromResult);
                     stompClient.subscribe('/topic/currentSystemLogs', onCurrentSystemLogsResult);
+                    stompClient.subscribe('/topic/currentBlocks', onCurrentBlocksResult);
+                    updateBlockSubscription(isHomePageActive);
                     updateLogSubscription(isLogPageActive);
                     updatePeersSubscription(isPeersPageActive);
                     updateRpcSubscription(isRpcPageActive);
@@ -276,6 +288,18 @@
 
             // send event to SystemLogCtrl
             $scope.$broadcast('systemLogEvent', msg);
+        }
+
+        function onNewBlockInfoResult(data) {
+            var item = JSON.parse(data.body);
+
+            $scope.$broadcast('newBlockInfoEvent', item);
+        }
+
+        function onCurrentBlocksResult(data) {
+            var items = JSON.parse(data.body);
+
+            $scope.$broadcast('currentBlocksEvent', items);
         }
 
         function onCurrentSystemLogsResult(data) {

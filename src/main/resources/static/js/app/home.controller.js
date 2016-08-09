@@ -8,82 +8,62 @@
     'use strict';
 
 
+
+
     function HomeCtrl($scope, $timeout, scrollConfig) {
+        $scope.scrollConfig = jQuery.extend(true, {}, scrollConfig);
+
+        var chartData = [];
+        var timeoutPromise = null;
+        var lastRenderingTime = new Date().getTime();
 
         var treeContainer = document.getElementById('blockchain-chart');
 
-        var data = [
-            {
-                blockHash: '10',
-                blockNumber: 1,
-                difficulty: 10
-            },
-            {
-                blockHash: '11',
-                blockNumber: 1,
-                difficulty: 10
-            },
-            {
-                blockHash: '12',
-                blockNumber: 1,
-                difficulty: 10
-            },
-            {
-                blockHash: '20',
-                blockNumber: 2,
-                parentHash: '10',
-                difficulty: 10
-            },
-            {
-                blockHash: '30',
-                blockNumber: 3,
-                parentHash: '20',
-                difficulty: 10
-            },
-            {
-                blockHash: '31',
-                blockNumber: 3,
-                parentHash: '20',
-                difficulty: 10
-            },
-            {
-                blockHash: '32',
-                blockNumber: 3,
-                parentHash: '20',
-                difficulty: 10
-            },
-            {
-                blockHash: '42',
-                blockNumber: 4,
-                parentHash: '32',
-                difficulty: 10
-            },
-            {
-                blockHash: '44',
-                blockNumber: 4,
-                parentHash: '32',
-                difficulty: 10
-            },
-            {
-                blockHash: '52',
-                blockNumber: 5,
-                parentHash: '42',
-                difficulty: 10
-            },
-            {
-                blockHash: '62',
-                blockNumber: 6,
-                parentHash: '52',
-                difficulty: 10
+        var chart = BlockchainView.create(treeContainer);
+        chart.setData(chartData);
+
+        function addBlock(block) {
+            chartData.push(block);
+            if (chartData.length > 50) {
+                chartData.shift();
             }
+        }
 
-        ];
+        $scope.$on('newBlockInfoEvent', function(event, item) {
+            addBlock(item);
 
-        BlockchainView
-            .create(treeContainer)
-            //.setData(data)
-            .setData(data);
+            // delay rendering, but if not many blocks - first rendering should occur immediately
+            if (!timeoutPromise) {
+                if (new Date().getTime() - 2000 > lastRenderingTime) {
+                    chart.setData(chartData);
+                    lastRenderingTime = new Date().getTime();
+                }
+                timeoutPromise = $timeout(function() {
+                    chart.setData(chartData);
+                    lastRenderingTime = new Date().getTime();
+                    timeoutPromise = null;
+                }, 2000);
+            }
+        });
+        $scope.$on('currentBlocksEvent', function(event, items) {
+            items.forEach(addBlock);
+            chart.setData(chartData);
+        });
 
+        function resizeContainer() {
+            console.log('Home page resize');
+            var scrollContainer = document.getElementById('chart-scroll-container');
+            var rect = scrollContainer.getBoundingClientRect();
+            var newHeight = $(window).height() - rect.top - 20;
+            //$(scrollContainer).css('maxHeight', newHeight + 'px');
+
+            $timeout(function() {
+                $scope.scrollConfig.setHeight = newHeight;
+                $(scrollContainer).mCustomScrollbar($scope.scrollConfig);
+            }, 10);
+        }
+        $(window).ready(resizeContainer);
+        $scope.$on('windowResizeEvent', resizeContainer);
     }
 
     angular.module('HarmonyApp')

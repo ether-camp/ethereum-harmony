@@ -2,7 +2,7 @@ var BlockchainView = (function () {
 
     var GAP = 14;
     var BLOCK_HEIGHT = 30;
-    var NUMBERING_WIDTH = 60;
+    var NUMBERING_WIDTH = 100;
     var BLANK_HASH = -1;
     var MAX_BLOCK_WIDTH = 80;
 
@@ -64,7 +64,7 @@ var BlockchainView = (function () {
             b.isCanonical = true;
         });
 
-        console.log('Canonical chain ' + canonicalColumn.map(blockHashFun));
+        //console.log('Canonical chain ' + canonicalColumn.map(blockHashFun));
 
         return blockNumbers;
     }
@@ -114,14 +114,14 @@ var BlockchainView = (function () {
             // assume the first block is canonical, and put it in the middle
             columns.push([]);
             columns.push(newColumn);
-            console.log('Added initial column for block ' + block.blockHash);
+            //console.log('Added initial column for block ' + block.blockHash);
         } else {
             var putOverParent = columns.some(function(column) {
                 return column.some(function(b) {
                     if (b.blockHash == block.parentHash) {
                         if (!column[block.index]) {
                             column[block.index] = block;
-                            console.log('Put block over parent ' + block.blockHash);
+                            //console.log('Put block over parent ' + block.blockHash);
                             return true;
                         }
                     }
@@ -133,7 +133,7 @@ var BlockchainView = (function () {
                 var putInFreeSpace = columns.some(function(column) {
                     if (!column[block.index]) {
                         column[block.index] = block;
-                        console.log('Added block to free space ' + block.blockHash);
+                        //console.log('Added block to free space ' + block.blockHash);
                         return true;
                     }
                     return false;
@@ -143,7 +143,7 @@ var BlockchainView = (function () {
                     var newColumn = [];
                     newColumn[block.index] = block;
                     columns.push(newColumn);
-                    console.log('New column created to put block ' + block.blockHash);
+                    //console.log('New column created to put block ' + block.blockHash);
                 }
             }
         }
@@ -154,7 +154,7 @@ var BlockchainView = (function () {
      * @param newColumn - new array of blocks to add, starts from root block till leaf
      */
     function addColumn(columns, newColumn) {
-        console.log('Checking where to insert column ' + newColumn.map(function(b) {return b.blockHash}));
+        //console.log('Checking where to insert column ' + newColumn.map(function(b) {return b.blockHash}));
 
         if (columns.length == 0) {
             columns.push(newColumn);
@@ -238,12 +238,11 @@ var BlockchainView = (function () {
      */
     function renderState(svgContainer, renderColumns, blockNumbers, width, height) {
 
-        console.log('renderColumns ' + renderColumns.length);
-        console.log(renderColumns);
+        //console.log('renderColumns ' + renderColumns.length);
 
         var columnCount = renderColumns.length;
         var blockWidth = Math.min(MAX_BLOCK_WIDTH, (width - NUMBERING_WIDTH - GAP * (columnCount + 1)) / columnCount);
-        console.log('Block width ' + blockWidth);
+        //console.log('Block width ' + blockWidth);
 
         var blocks = [];
 
@@ -252,7 +251,7 @@ var BlockchainView = (function () {
                 column.forEach(function(block, n) {
                     //console.log('Adding block for rendering ' + block);
                     blocks.push({
-                        text:   block.blockHash,
+                        text:   '0x' + block.blockHash.substr(0, 4),
                         x:      NUMBERING_WIDTH + GAP * (c + 1) + blockWidth * c,
                         y:      height - GAP * (n + 1) - BLOCK_HEIGHT * (n + 1),
                         width:  blockWidth,
@@ -274,8 +273,8 @@ var BlockchainView = (function () {
                 };
             });
 
-        console.log('blockNumberObjects');
-        console.log(blockNumberObjects);
+        //console.log('blockNumberObjects');
+        //console.log(blockNumberObjects);
 
         // Clear all
         svgContainer
@@ -341,7 +340,7 @@ var BlockchainView = (function () {
             .data(blocks)
             .enter()
             .append('text')
-            .attr('x', function(d) { return d.x + 15; })
+            .attr('x', function(d) { return d.x + d.width / 2; })
             .attr('y', function(d) { return d.y + 22; })
             .text( function (d) { return d.text; })
             .attr('font-family', 'sans-serif')
@@ -376,51 +375,49 @@ var BlockchainView = (function () {
 
     }
 
-    var Chart = function(element, config) {
+    function ChartComponent(element, config) {
 
         config = config || {};
         var width = config.width || 600;
-        var height = config.height || 600;
-        var state = []; // array of arrays of blocks
+        var height = config.height || 400;
 
         var svgContainer = d3.select(element)
             .append('svg');
 
+        var self = this;
 
-        var self =  {
-            setData: function(data) {
-                data = data || [];
+        /**
+         * Mutates data array!
+         */
+        self.setData = function(data) {
+            data = data || [];
 
-                if (data.length == 0) {
-                    return;
-                }
-
-                var blockNumbers = prepareData(data);
-                console.log('Data');
-                console.log(data);
-
-                var renderColumns = [];
-                data.forEach(function(b) {
-                    addBlock(renderColumns, b);
-                });
-
-                //var renderColumns = addBlockViaSorting(data);
-
-
-                renderState(svgContainer, renderColumns, blockNumbers, width, height);
-                return self;
-            },
-
-            addBlock: function(block) {
-                addBlock(state, block);
+            if (data.length == 0) {
+                return;
             }
+
+            var blockNumbers = prepareData(data);
+
+            var numbersCount = blockNumbers.length;
+            var maxHeight = Math.max(BLOCK_HEIGHT * numbersCount + GAP * (numbersCount + 1), height);
+
+            var renderColumns = [];
+            data.forEach(function(b) {
+                addBlock(renderColumns, b);
+            });
+
+            //var renderColumns = addBlockViaSorting(data);
+
+            renderState(svgContainer, renderColumns, blockNumbers, width, maxHeight);
+            return self;
         };
+
         return self;
-    };
+    }
 
     return {
         create: function(element, config) {
-            return new Chart(element, config);
+            return new ChartComponent(element, config);
         }
     }
 })();
