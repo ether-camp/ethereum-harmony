@@ -10,11 +10,11 @@ import lombok.Value;
 @AllArgsConstructor
 public class BlockInfo {
 
-    public final long blockNumber;
+    private final long blockNumber;
 
-    public final String blockHash;
+    private final String blockHash;
 
-    public final String parentHash;
+    private final String parentHash;
 
-    public final long difficulty;
+    private final long difficulty;
 }

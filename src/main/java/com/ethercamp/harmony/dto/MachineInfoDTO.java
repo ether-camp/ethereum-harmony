@@ -13,21 +13,21 @@ public class MachineInfoDTO {
     /**
      * Percentage 0..100
      */
-    private Integer cpuUsage;
+    private final Integer cpuUsage;
 
     /**
      * In bytes.
      */
-    private Long memoryFree;
+    private final Long memoryFree;
 
     /**
      * In bytes.
      */
-    private Long memoryTotal;
+    private final Long memoryTotal;
 
     /**
      * In bytes.
      */
-    private Long freeSpace;
+    private final  Long freeSpace;
 
 }

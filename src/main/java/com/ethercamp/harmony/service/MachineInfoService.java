@@ -7,10 +7,8 @@ import ch.qos.logback.classic.PatternLayout;
 import ch.qos.logback.classic.filter.LevelFilter;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.UnsynchronizedAppenderBase;
-import com.ethercamp.harmony.dto.BlockInfo;
-import com.ethercamp.harmony.dto.BlockchainInfoDTO;
-import com.ethercamp.harmony.dto.InitialInfoDTO;
-import com.ethercamp.harmony.dto.MachineInfoDTO;
+import com.ethercamp.harmony.api.EthereumApiImpl;
+import com.ethercamp.harmony.dto.*;
 import com.sun.management.OperatingSystemMXBean;
 import lombok.extern.slf4j.Slf4j;
 import org.ethereum.core.Block;
@@ -42,8 +40,8 @@ import java.util.concurrent.atomic.AtomicReference;
 public class MachineInfoService {
 
     public static final int KEEP_LOG_ENTRIES = 1000;
-    private final int BLOCK_COUNT_FOR_HASH_RATE = 100;
-    private final int BLOCK_COUNT_FOR_CLIENT = 50;
+    private static final int BLOCK_COUNT_FOR_HASH_RATE = 100;
+    private static final int KEEP_BLOCKS_FOR_CLIENT = 50;
 
     @Autowired
     private Environment env;
@@ -53,6 +51,9 @@ public class MachineInfoService {
 
     @Autowired
     private Ethereum ethereum;
+
+    @Autowired
+    private EthereumApiImpl ethereumApi;
 
 
     /**
@@ -69,7 +70,9 @@ public class MachineInfoService {
     private final AtomicReference<BlockchainInfoDTO> blockchainInfo =
             new AtomicReference<>(new BlockchainInfoDTO(0l, 0l, 0, 0l, 0l, 0l));
 
-    private final AtomicReference<InitialInfoDTO> initialInfo = new AtomicReference<>(new InitialInfoDTO("", ""));
+    private final AtomicReference<NetworkInfoDTO> networkInfo = new AtomicReference<>();
+
+    private final AtomicReference<InitialInfoDTO> initialInfo = new AtomicReference<>();
 
     private final Queue<String> lastLogs = new ConcurrentLinkedQueue();
 
@@ -80,7 +83,11 @@ public class MachineInfoService {
 
     @PostConstruct
     private void postConstruct() {
-        // gather blocks to calculate hash rate
+        /**
+         * - gather blocks to calculate hash rate;
+         * - gather blocks to keep for client block tree;
+         * - notify client on new block.
+         */
         ethereum.addListener(new EthereumListenerAdapter() {
             @Override
             public void onBlock(Block block, List<TransactionReceipt> receipts) {
@@ -89,7 +96,7 @@ public class MachineInfoService {
                 if (lastBlocksForHashRate.size() > BLOCK_COUNT_FOR_HASH_RATE) {
                     lastBlocksForHashRate.poll();
                 }
-                if (lastBlocksForClient.size() > BLOCK_COUNT_FOR_CLIENT) {
+                if (lastBlocksForClient.size() > KEEP_BLOCKS_FOR_CLIENT) {
                     lastBlocksForClient.poll();
                 }
 
@@ -104,9 +111,19 @@ public class MachineInfoService {
             }
         });
 
+        final Optional<String> blockHash = Optional.ofNullable(ethereumApi.getBlock(0l))
+                .map(block -> Hex.toHexString(block.getHash()));
+        final String networkName = blockHash
+                .map(hash -> BlockchainConsts.GENESIS_BLOCK_HASH_MAP.getOrDefault(hash, "Unknown network"))
+                .orElse("Undefined blockchain");
 
-
-        initialInfo.set(new InitialInfoDTO(env.getProperty("ethereumJ.version"), env.getProperty("app.version")));
+        initialInfo.set(new InitialInfoDTO(
+                env.getProperty("ethereumJ.version"),
+                env.getProperty("app.version"),
+                networkName,
+                blockHash.orElse(null),
+                System.currentTimeMillis(),
+                ethereumApi.getNodeId()));
 
         createLogAppenderForMessaging();
     }
@@ -156,6 +173,21 @@ public class MachineInfoService {
         );
 
         clientMessageService.sendToTopic("/topic/blockchainInfo", blockchainInfo.get());
+    }
+
+    @Scheduled(fixedRate = 2000)
+    private void doUpdateNetworkInfo() {
+
+        networkInfo.set(
+                new NetworkInfoDTO(
+                        ethereumApi.getActivePeersCount(),
+                        ethereumApi.getSyncStatus().toString(),
+                        ethereumApi.getEthPort(),
+                        true
+                )
+        );
+
+        clientMessageService.sendToTopic("/topic/networkInfo", blockchainInfo.get());
     }
 
     private long calculateHashRate() {
@@ -251,5 +283,16 @@ public class MachineInfoService {
         // way to subscribe to all loggers existing at the moment
 //        context.getLoggerList().stream()
 //                .forEach(l -> l.addAppender(messagingAppender));
+    }
+
+    public static class BlockchainConsts {
+
+        public static final Map<String, String> GENESIS_BLOCK_HASH_MAP = new HashMap<>();
+
+        static {
+            GENESIS_BLOCK_HASH_MAP.put("d4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3", "Live ETH");
+            GENESIS_BLOCK_HASH_MAP.put("0cd786a2425d16f152c658316c423e6ce1181e15c3295826d7c9904cba9ce303", "Morden ETH");
+            GENESIS_BLOCK_HASH_MAP.put("0cd786a2425d16f152c658316c423e6ce1181e15c3295826d7c9904cba9ce303", "Test ETH");
+        }
     }
 }

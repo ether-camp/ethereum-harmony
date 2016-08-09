@@ -418,6 +418,7 @@ var BlockchainView = (function () {
         self.setWidth = function(newWidth) {
             if (width != newWidth) {
                 width = newWidth;
+                renderState(svgContainer, renderColumns, blockNumbers, width, maxHeight);
             }
             return self;
         };

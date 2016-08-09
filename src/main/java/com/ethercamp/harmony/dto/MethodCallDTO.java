@@ -10,13 +10,13 @@ import lombok.Value;
 @AllArgsConstructor
 public class MethodCallDTO {
 
-    private String methodName;
+    private final String methodName;
 
-    private Long count;
+    private final Long count;
 
-    private Long lastTime;
+    private final Long lastTime;
 
-    private String lastResult;
+    private final String lastResult;
 
-    private String curl;
+    private final String curl;
 }

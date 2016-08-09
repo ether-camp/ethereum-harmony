@@ -159,6 +159,12 @@
             ethereumJVersion: "n/a"
         };
 
+        function jsonParseAndBroadcast(event) {
+            return function(data) {
+                $scope.$broadcast(event, JSON.parse(data.body));
+            }
+        }
+
         var updateLogSubscription       = updateSubscriptionFun('/topic/systemLog', onSystemLogResult,
             function() {
                 stompClient.send('/app/currentSystemLogs');
@@ -169,6 +175,7 @@
             function() {
                 stompClient.send('/app/currentBlocks');
             });
+        var updateNetworkSubscription       = updateSubscriptionFun('/topic/networkInfo', jsonParseAndBroadcast('networkInfoEvent'));
 
 
         /**
@@ -187,6 +194,7 @@
             isRpcPageActive = path == '/rpcUsage';
 
             var isLongPageActive = path == '/???';
+            updateNetworkSubscription(isHomePageActive);
             updateBlockSubscription(isHomePageActive);
             updateLogSubscription(isLogPageActive);
             updatePeersSubscription(isPeersPageActive);
@@ -237,6 +245,8 @@
                     stompClient.subscribe('/topic/newBlockFrom', onNewBlockFromResult);
                     stompClient.subscribe('/topic/currentSystemLogs', onCurrentSystemLogsResult);
                     stompClient.subscribe('/topic/currentBlocks', onCurrentBlocksResult);
+
+                    updateNetworkSubscription(isHomePageActive);
                     updateBlockSubscription(isHomePageActive);
                     updateLogSubscription(isLogPageActive);
                     updatePeersSubscription(isPeersPageActive);
@@ -305,6 +315,10 @@
             $scope.$broadcast('newBlockInfoEvent', item);
         }
 
+        function onNetworkInfoResult(data) {
+
+        }
+
         function onCurrentBlocksResult(data) {
             var items = JSON.parse(data.body);
 
@@ -343,6 +357,11 @@
             $timeout(function() {
                 vm.data.appVersion = info.appVersion;
                 vm.data.ethereumJVersion = info.ethereumJVersion;
+
+                vm.data.networkName = info.networkName;
+                vm.data.genesisHash = info.genesisHash ? '0x' + info.genesisHash.substr(0, 6) : 'n/a';
+                vm.data.serverStartTime = moment(info.serverStartTime).format('MM-DD-YYYY, HH:mm');
+                vm.data.nodeId = '0x' + info.nodeId.substr(0, 6);
             }, 10);
 
             console.log("App version " + info.appVersion);

@@ -10,7 +10,15 @@ import lombok.Value;
 @AllArgsConstructor
 public class InitialInfoDTO {
 
-    private String ethereumJVersion;
+    private final String ethereumJVersion;
 
-    private String appVersion;
+    private final String appVersion;
+
+    private final String networkName;
+
+    private final String genesisHash;
+
+    private final Long serverStartTime;
+
+    private final String nodeId;
 }

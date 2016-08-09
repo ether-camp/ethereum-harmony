@@ -1,6 +1,6 @@
 package com.ethercamp.harmony.api;
 
-import com.ethercamp.harmony.jsonrpc.JsonRpc;
+import com.ethercamp.harmony.api.data.SyncStatus;
 import com.ethercamp.harmony.jsonrpc.TypeConverter;
 import com.ethercamp.harmony.keystore.Keystore;
 import lombok.extern.slf4j.Slf4j;
@@ -10,6 +10,7 @@ import org.ethereum.crypto.HashUtil;
 import org.ethereum.db.TransactionStore;
 import org.ethereum.facade.Ethereum;
 import org.ethereum.listener.CompositeEthereumListener;
+import org.ethereum.listener.EthereumListenerAdapter;
 import org.ethereum.manager.WorldManager;
 import org.ethereum.mine.BlockMiner;
 import org.ethereum.net.client.Capability;
@@ -18,18 +19,12 @@ import org.ethereum.net.server.ChannelManager;
 import org.ethereum.net.server.PeerServer;
 import org.ethereum.sync.SyncManager;
 import org.ethereum.util.BuildInfo;
-import org.ethereum.vm.DataWord;
+import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
 
-import static com.ethercamp.harmony.jsonrpc.TypeConverter.StringHexToByteArray;
-import static com.ethercamp.harmony.jsonrpc.TypeConverter.toJsonHex;
 import static java.lang.Math.max;
 
 /**
@@ -51,10 +46,10 @@ public class EthereumApiImpl {
     ConfigCapabilities configCapabilities;
 
     @Autowired
-    public WorldManager worldManager;
+    WorldManager worldManager;
 
     @Autowired
-    public Repository repository;
+    Repository repository;
 
     @Autowired
     BlockchainImpl blockchain;
@@ -86,16 +81,34 @@ public class EthereumApiImpl {
     @Autowired
     PendingStateImpl pendingState;
 
+    @Autowired
+    private Ethereum ethereum;
+
+    @Autowired
+    ChannelManager channelManager;
 
     /**
-     * State
+     * State fields
      */
-    long initialBlockNumber;
+    protected volatile long initialBlockNumber;
+
+    protected volatile SyncStatus syncStatus = SyncStatus.LONG_SYNC;
 
 
     @PostConstruct
     private void init() {
         initialBlockNumber = blockchain.getBestBlock().getNumber();
+
+        if (!config.isSyncEnabled()) {
+            syncStatus = SyncStatus.DISABLED;
+        } else {
+            ethereum.addListener(new EthereumListenerAdapter() {
+                @Override
+                public void onSyncDone() {
+                    syncStatus = SyncStatus.SHORT_SYNC;
+                }
+            });
+        }
     }
 
     public String web3_clientVersion() {
@@ -139,6 +152,13 @@ public class EthereumApiImpl {
         return blockchain.getBestBlock().getNumber();
     }
 
+    /**
+     * @return found block or null
+     */
+    public Block getBlock(long blockNumber){
+        return blockchain.getBlockByNumber(blockNumber);
+    }
+
     public long getLastKnownBlockNumber(){
         return syncManager.getLastKnownBlockNumber();
     }
@@ -157,6 +177,22 @@ public class EthereumApiImpl {
 
     public long eth_gasPrice(){
         return eth.getGasPrice();
+    }
+
+    public String getNodeId() {
+        return Hex.toHexString(config.nodeId());
+    }
+
+    public int getActivePeersCount() {
+        return channelManager.getActivePeers().size();
+    }
+
+    public SyncStatus getSyncStatus() {
+        return syncStatus;
+    }
+
+    public int getEthPort() {
+        return config.listenPort();
     }
 
 //    public String[] eth_accounts() {

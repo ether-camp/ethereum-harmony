@@ -10,26 +10,26 @@ import lombok.Value;
 @AllArgsConstructor
 public class PeerDTO {
 
-    private String nodeId;
+    private final String nodeId;
 
-    private String ip;
+    private final String ip;
 
     // 3 letter code, used for map in UI
-    private String country3Code;
+    private final String country3Code;
 
     // 2 letter code, used for flags in UI
-    private String country2Code;
+    private final String country2Code;
 
     // seconds???
-    private Long lastPing;
+    private final Long lastPing;
 
     // ms
-    private Double pingLatency;
+    private final Double pingLatency;
 
-    private Integer reputation;
+    private final Integer reputation;
 
-    private Boolean isActive;
+    private final Boolean isActive;
 
-    private String details;
+    private final String details;
 
 }

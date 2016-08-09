@@ -69,16 +69,6 @@ public class PeersService {
                     ));
                 }
             }
-
-            @Override
-            public void onPeerAddedToSyncPool(Channel peer) {
-//                log.info("onPeerAddedToSyncPool peer: " + peer.getPeerId());
-            }
-
-            @Override
-            public void onPeerDisconnect(String host, long port) {
-//                log.info("onPeerDisconnect host:" + host + ", port:" + port);
-            }
         });
 
         createGeoDatabase();

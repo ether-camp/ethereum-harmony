@@ -38,7 +38,7 @@ public class FileSystemKeystore implements Keystore {
     }
 
     @Override
-    public void storeKey(ECKey key, String password) {
+    public void storeKey(ECKey key, String password) throws RuntimeException {
         final String address = Hex.toHexString(key.getAddress());
         if (hasStoredKey(address)) {
             throw new RuntimeException("Keystore is already exist for address: " + address +
@@ -53,7 +53,7 @@ public class FileSystemKeystore implements Keystore {
     }
 
     @Override
-    public void storeRawKeystore(String content, String address) {
+    public void storeRawKeystore(String content, String address) throws RuntimeException {
         String fileName = "UTC--" + getISODate(Util.curTime()) + "--" + address;
         try {
             Files.write(getKeyStoreLocation().resolve(fileName), Arrays.asList(content));
@@ -80,7 +80,7 @@ public class FileSystemKeystore implements Keystore {
      * @return some loaded key or null
      */
     @Override
-    public ECKey loadStoredKey(String address, String password) {
+    public ECKey loadStoredKey(String address, String password) throws RuntimeException {
         final File dir = getKeyStoreLocation().toFile();
         return Arrays.stream(dir.listFiles())
                 .filter(f -> hasAddressInName(address, f))

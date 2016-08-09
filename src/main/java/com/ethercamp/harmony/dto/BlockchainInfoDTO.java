@@ -10,19 +10,19 @@ import lombok.Value;
 @AllArgsConstructor
 public class BlockchainInfoDTO {
 
-    private Long lastBlockNumber;
+    private final Long lastBlockNumber;
 
     /**
      * UTC time in seconds
      */
-    private Long lastBlockTime;
+    private final Long lastBlockTime;
 
-    private Integer lastBlockTransactions;
+    private final Integer lastBlockTransactions;
 
-    private Long difficulty;
+    private final Long difficulty;
 
     // Not used now
-    private Long lastReforkTime;
+    private final Long lastReforkTime;
 
-    private Long networkHashRate;
+    private final Long networkHashRate;
 }

@@ -225,7 +225,7 @@ public interface EthereumApi {
     String eth_call(CallArguments args, String bnOrId) throws Exception;
     String eth_estimateGas(CallArguments args) throws Exception;
     BlockResult eth_getBlockByHash(String blockHash, Boolean fullTransactionObjects) throws Exception;
-    BlockResult eth_getBlockByNumber(String bnOrId, Boolean fullTransactionObjects) throws Exception;
+    BlockResult eth_getBlockByNumber(String bnOrId, Boolean fullTransactionObjects);
     TransactionResultDTO eth_getTransactionByHash(String transactionHash) throws Exception;
     TransactionResultDTO eth_getTransactionByBlockHashAndIndex(String blockHash, String index) throws Exception;
     TransactionResultDTO eth_getTransactionByBlockNumberAndIndex(String bnOrId, String index) throws Exception;
