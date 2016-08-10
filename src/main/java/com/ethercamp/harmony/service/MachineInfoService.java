@@ -18,6 +18,9 @@ import org.ethereum.listener.EthereumListenerAdapter;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.embedded.EmbeddedServletContainerInitializedEvent;
+import org.springframework.context.ApplicationEvent;
+import org.springframework.context.ApplicationListener;
 import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -37,7 +40,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 @Slf4j(topic = "harmony")
 @Service
-public class MachineInfoService {
+public class MachineInfoService implements ApplicationListener {
 
     public static final int KEEP_LOG_ENTRIES = 1000;
     private static final int BLOCK_COUNT_FOR_HASH_RATE = 100;
@@ -111,21 +114,31 @@ public class MachineInfoService {
             }
         });
 
-        final Optional<String> blockHash = Optional.ofNullable(ethereumApi.getBlock(0l))
-                .map(block -> Hex.toHexString(block.getHash()));
-        final String networkName = blockHash
-                .map(hash -> BlockchainConsts.GENESIS_BLOCK_HASH_MAP.getOrDefault(hash, "Unknown network"))
-                .orElse("Undefined blockchain");
-
-        initialInfo.set(new InitialInfoDTO(
-                env.getProperty("ethereumJ.version"),
-                env.getProperty("app.version"),
-                networkName,
-                blockHash.orElse(null),
-                System.currentTimeMillis(),
-                ethereumApi.getNodeId()));
 
         createLogAppenderForMessaging();
+    }
+
+    @Override
+    public void onApplicationEvent(ApplicationEvent event) {
+        if (event instanceof EmbeddedServletContainerInitializedEvent) {
+            int port = ((EmbeddedServletContainerInitializedEvent) event).getEmbeddedServletContainer().getPort();
+
+            final Optional<String> blockHash = Optional.ofNullable(ethereumApi.getBlock(0l))
+                    .map(block -> Hex.toHexString(block.getHash()));
+            final String networkName = blockHash
+                    .map(hash -> BlockchainConsts.GENESIS_BLOCK_HASH_MAP.getOrDefault(hash, "Unknown network"))
+                    .orElse("Undefined blockchain");
+
+            initialInfo.set(new InitialInfoDTO(
+                    env.getProperty("ethereumJ.version"),
+                    env.getProperty("app.version"),
+                    networkName,
+                    blockHash.orElse(null),
+                    System.currentTimeMillis(),
+                    ethereumApi.getNodeId(),
+                    port
+            ));
+        }
     }
 
     public MachineInfoDTO getMachineInfo() {
@@ -187,7 +200,7 @@ public class MachineInfoService {
                 )
         );
 
-        clientMessageService.sendToTopic("/topic/networkInfo", blockchainInfo.get());
+        clientMessageService.sendToTopic("/topic/networkInfo", networkInfo.get());
     }
 
     private long calculateHashRate() {

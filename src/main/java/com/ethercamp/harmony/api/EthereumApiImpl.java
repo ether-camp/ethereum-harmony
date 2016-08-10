@@ -84,8 +84,6 @@ public class EthereumApiImpl {
     @Autowired
     private Ethereum ethereum;
 
-    @Autowired
-    ChannelManager channelManager;
 
     /**
      * State fields

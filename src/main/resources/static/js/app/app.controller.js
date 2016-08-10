@@ -156,7 +156,12 @@
             networkHashRate: "N/A",
 
             appVersion: "n/a",
-            ethereumJVersion: "n/a"
+            ethereumJVersion: "n/a",
+            networkName: 'n/a',
+            genesisHash: 'n/a',
+            serverStartTime: 'n/a',
+            nodeId: 'n/a',
+            rpcPort: 'n/a'
         };
 
         function jsonParseAndBroadcast(event) {
@@ -219,6 +224,7 @@
             }
             vm.isConnected = value;
             console.log("Connected status " + value);
+            $scope.$broadcast('connectedEvent');
         }
 
         function connect() {
@@ -326,8 +332,9 @@
 
                 vm.data.networkName = info.networkName;
                 vm.data.genesisHash = info.genesisHash ? '0x' + info.genesisHash.substr(0, 6) : 'n/a';
-                vm.data.serverStartTime = moment(info.serverStartTime).format('MM-DD-YYYY, HH:mm');
-                vm.data.nodeId = '0x' + info.nodeId.substr(0, 6);
+                vm.data.serverStartTime = moment(info.serverStartTime).format('DD-MMM-YYYY, HH:mm');
+                vm.data.nodeId = info.nodeId ? '0x' + info.nodeId.substr(0, 6) : 'n/a';
+                vm.data.rpcPort = info.rpcPort;
             }, 10);
 
             console.log("App version " + info.appVersion);

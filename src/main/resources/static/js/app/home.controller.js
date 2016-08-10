@@ -11,6 +11,17 @@
         $scope.scrollConfig = jQuery.extend(true, {}, scrollConfig);
         $scope.scrollConfig.axis = 'xy';
 
+        $scope.activePeers = 0;
+        $scope.syncStatus = 'n/a';
+        $scope.ethPort = 'n/a';
+        $scope.ethAccessible = 'n/a';
+
+        var syncStatuses = {
+            'LONG_SYNC': 'Long sync',
+            'SHORT_SYNC': 'Short sync',
+            'DISABLED': 'Sync disabled'
+        };
+
         var chartData = [];
         var timeoutPromise = null;
         var lastRenderingTime = new Date().getTime();
@@ -61,12 +72,14 @@
         $scope.$on('networkInfoEvent', function(event, item) {
             $timeout(function() {
                 $scope.activePeers = item.activePeers;
-                $scope.syncStatus = item.syncStatus;
+                $scope.syncStatus = syncStatuses[item.syncStatus] || item.syncStatus || 'n/a';
                 $scope.ethPort = item.ethPort;
                 $scope.ethAccessible = item.ethAccessible;
             }, 10);
-
-            console.log(item)
+        });
+        $scope.$on('connectedEvent', function (event, item) {
+            // reset state
+            chartData = [];
         });
 
         function resizeContainer() {

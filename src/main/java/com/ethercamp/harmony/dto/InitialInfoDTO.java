@@ -1,12 +1,14 @@
 package com.ethercamp.harmony.dto;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Value;
 
 /**
  * Created by Stan Reshetnyk on 13.07.16.
  */
 @Value
+@Builder
 @AllArgsConstructor
 public class InitialInfoDTO {
 
@@ -21,4 +23,6 @@ public class InitialInfoDTO {
     private final Long serverStartTime;
 
     private final String nodeId;
+
+    private final Integer rpcPort;
 }

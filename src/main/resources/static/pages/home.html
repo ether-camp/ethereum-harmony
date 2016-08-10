@@ -26,8 +26,8 @@
 
         <div class="row">
 
-            <div class="col-lg-6">
-                <form class="form-horizontal home-info-text">
+            <div class="col-lg-6 panel panel-filled">
+                <form class="form-horizontal home-info-text panel-body">
                     <div class="home-info-row">
                         <div class="col-sm-4">
                             Network:
@@ -61,6 +61,44 @@
                         </div>
                         <div class="col-sm-6">
                             {{syncStatus}}
+                        </div>
+                    </div>
+
+                    <div class="home-info-row">
+                        <div class="col-sm-4">
+                            Active peers:
+                        </div>
+                        <div class="col-sm-6">
+                            {{activePeers}}
+                        </div>
+                    </div>
+
+                    <div class="home-info-row">
+                        <div class="col-sm-4">
+                            NodeID:
+                        </div>
+                        <div class="col-sm-6">
+                            {{vm.data.nodeId}}
+                        </div>
+                    </div>
+
+
+
+                    <div class="home-info-row">
+                        <div class="col-sm-4">
+                            Eth port:
+                        </div>
+                        <div class="col-sm-6">
+                            {{ethPort}}
+                        </div>
+                    </div>
+
+                    <div class="home-info-row">
+                        <div class="col-sm-4">
+                            JsonRPC port:
+                        </div>
+                        <div class="col-sm-6">
+                            {{vm.data.rpcPort}}
                         </div>
                     </div>
 

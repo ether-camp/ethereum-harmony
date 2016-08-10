@@ -6,7 +6,6 @@ import com.maxmind.geoip.LookupService;
 import lombok.extern.slf4j.Slf4j;
 import org.ethereum.facade.Ethereum;
 import org.ethereum.listener.EthereumListenerAdapter;
-import org.ethereum.manager.WorldManager;
 import org.ethereum.net.eth.message.EthMessageCodes;
 import org.ethereum.net.message.Message;
 import org.ethereum.net.rlpx.Node;
