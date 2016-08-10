@@ -26,83 +26,106 @@
 
         <div class="row">
 
-            <div class="col-lg-6 panel panel-filled">
-                <form class="form-horizontal home-info-text panel-body">
-                    <div class="home-info-row">
-                        <div class="col-sm-4">
-                            Network:
+            <div class="col-lg-6">
+                <div class="panel panel-filled">
+                    <form class="form-horizontal home-info-text panel-body">
+                        <div class="home-info-row">
+                            <div class="col-sm-4">
+                                Network:
+                            </div>
+                            <div class="col-sm-6">
+                                {{vm.data.networkName}}
+                            </div>
                         </div>
-                        <div class="col-sm-6">
-                            {{vm.data.networkName}}
+
+                        <div class="home-info-row">
+                            <div class="col-sm-4">
+                                Genesis:
+                            </div>
+                            <div class="col-sm-6">
+                                {{vm.data.genesisHash}}
+                            </div>
+                        </div>
+
+                        <div class="home-info-row">
+                            <div class="col-sm-4">
+                                Started:
+                            </div>
+                            <div class="col-sm-6">
+                                {{vm.data.serverStartTime}}
+                            </div>
+                        </div>
+
+                        <div class="home-info-row">
+                            <div class="col-sm-4">
+                                Status:
+                            </div>
+                            <div class="col-sm-6">
+                                {{syncStatus}}
+                            </div>
+                        </div>
+
+                        <div class="home-info-row">
+                            <div class="col-sm-4">
+                                Active peers:
+                            </div>
+                            <div class="col-sm-6">
+                                {{activePeers}}
+                            </div>
+                        </div>
+
+                        <div class="home-info-row">
+                            <div class="col-sm-4">
+                                NodeID:
+                            </div>
+                            <div class="col-sm-6">
+                                {{vm.data.nodeId}}
+                            </div>
+                        </div>
+
+                        <div class="home-info-row">
+                            <div class="col-sm-4">
+                                Eth port:
+                            </div>
+                            <div class="col-sm-6">
+                                {{ethPort}}
+                            </div>
+                        </div>
+
+                        <div class="home-info-row">
+                            <div class="col-sm-4">
+                                JsonRPC port:
+                            </div>
+                            <div class="col-sm-6">
+                                {{vm.data.rpcPort}}
+                            </div>
+                        </div>
+
+                    </form>
+                </div>
+
+                <div class="panel panel-filled">
+                    <div class="panel-heading">
+                        Top block miners
+                    </div>
+                    <div id="miners-scroll-container" class="panel-body" style="padding-top: 0">
+                        <div ng-repeat="item in miners">
+                            <div class="bs-example m-b-sm">
+                                <div style="text-align:left;">
+                                    0x{{item.address}}
+                                    <h4 style="float:right;color:#197BA7;">{{item.count}}</h4>
+                                </div>
+
+                                <ul class="list-inline m-b-none m-l-none" style="overflow: hidden">
+                                    <li style="padding: 0;margin: 0; padding-right: 4px" ng-repeat="n in [] | range:item.count">
+                                        <div class="home-miner-box"></div>
+                                    </li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="home-info-row">
-                        <div class="col-sm-4">
-                            Genesis:
-                        </div>
-                        <div class="col-sm-6">
-                            {{vm.data.genesisHash}}
-                        </div>
-                    </div>
-
-                    <div class="home-info-row">
-                        <div class="col-sm-4">
-                            Started:
-                        </div>
-                        <div class="col-sm-6">
-                            {{vm.data.serverStartTime}}
-                        </div>
-                    </div>
-
-                    <div class="home-info-row">
-                        <div class="col-sm-4">
-                            Status:
-                        </div>
-                        <div class="col-sm-6">
-                            {{syncStatus}}
-                        </div>
-                    </div>
-
-                    <div class="home-info-row">
-                        <div class="col-sm-4">
-                            Active peers:
-                        </div>
-                        <div class="col-sm-6">
-                            {{activePeers}}
-                        </div>
-                    </div>
-
-                    <div class="home-info-row">
-                        <div class="col-sm-4">
-                            NodeID:
-                        </div>
-                        <div class="col-sm-6">
-                            {{vm.data.nodeId}}
-                        </div>
-                    </div>
-
-
-
-                    <div class="home-info-row">
-                        <div class="col-sm-4">
-                            Eth port:
-                        </div>
-                        <div class="col-sm-6">
-                            {{ethPort}}
-                        </div>
-                    </div>
-
-                    <div class="home-info-row">
-                        <div class="col-sm-4">
-                            JsonRPC port:
-                        </div>
-                        <div class="col-sm-6">
-                            {{vm.data.rpcPort}}
-                        </div>
-                    </div>
-
-                </form>
+                </div>
             </div>
 
             <div class="col-lg-6">

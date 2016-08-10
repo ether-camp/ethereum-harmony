@@ -34,6 +34,7 @@ import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 /**
  * Created by Stan Reshetnyk on 11.07.16.
@@ -121,7 +122,7 @@ public class MachineInfoService implements ApplicationListener {
     @Override
     public void onApplicationEvent(ApplicationEvent event) {
         if (event instanceof EmbeddedServletContainerInitializedEvent) {
-            int port = ((EmbeddedServletContainerInitializedEvent) event).getEmbeddedServletContainer().getPort();
+            final int port = ((EmbeddedServletContainerInitializedEvent) event).getEmbeddedServletContainer().getPort();
 
             final Optional<String> blockHash = Optional.ofNullable(ethereumApi.getBlock(0l))
                     .map(block -> Hex.toHexString(block.getHash()));
@@ -190,17 +191,32 @@ public class MachineInfoService implements ApplicationListener {
 
     @Scheduled(fixedRate = 2000)
     private void doUpdateNetworkInfo() {
-
-        networkInfo.set(
-                new NetworkInfoDTO(
-                        ethereumApi.getActivePeersCount(),
-                        ethereumApi.getSyncStatus().toString(),
-                        ethereumApi.getEthPort(),
-                        true
-                )
+        final NetworkInfoDTO info = new NetworkInfoDTO(
+                ethereumApi.getActivePeersCount(),
+                ethereumApi.getSyncStatus().toString(),
+                ethereumApi.getEthPort(),
+                true
         );
 
-        clientMessageService.sendToTopic("/topic/networkInfo", networkInfo.get());
+        final HashMap<String, Integer> miners = new HashMap<>();
+        lastBlocksForHashRate
+                .stream()
+                .forEach(b -> {
+                    String minerAddress = Hex.toHexString(b.getCoinbase());
+                    int count = miners.containsKey(minerAddress) ? miners.get(minerAddress) : 0;
+                    miners.put(minerAddress, count + 1);
+                });
+
+        final List<MinerDTO> minersList = miners.entrySet().stream()
+                .map(entry -> new MinerDTO(entry.getKey(), entry.getValue()))
+                .sorted((a, b) -> Integer.compare(b.getCount(), a.getCount()))
+                .limit(3)
+                .collect(Collectors.toList());
+        info.getMiners().addAll(minersList);
+
+        networkInfo.set(info);
+
+        clientMessageService.sendToTopic("/topic/networkInfo", info);
     }
 
     private long calculateHashRate() {
@@ -210,10 +226,10 @@ public class MachineInfoService implements ApplicationListener {
             return 0;
         }
 
-        Block bestBlock = blocks.get(blocks.size() - 1);
-        long difficulty = bestBlock.getDifficultyBI().longValue();
+        final Block bestBlock = blocks.get(blocks.size() - 1);
+        final long difficulty = bestBlock.getDifficultyBI().longValue();
 
-        long sumTimestamps = blocks.stream().mapToLong(b -> b.getTimestamp()).sum();
+        final long sumTimestamps = blocks.stream().mapToLong(b -> b.getTimestamp()).sum();
         return difficulty / (sumTimestamps / blocks.size() / 1000);
     }
 
