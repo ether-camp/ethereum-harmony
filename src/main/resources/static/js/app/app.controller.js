@@ -169,9 +169,9 @@
             function() {
                 stompClient.send('/app/currentSystemLogs');
             });
-        var updatePeersSubscription     = updateSubscriptionFun('/topic/peers', onPeersListResult);
-        var updateRpcSubscription       = updateSubscriptionFun('/topic/rpcUsage', onRpcUsageResult);
-        var updateBlockSubscription     = updateSubscriptionFun('/topic/newBlockInfo', onNewBlockInfoResult,
+        var updatePeersSubscription     = updateSubscriptionFun('/topic/peers', jsonParseAndBroadcast('peersListEvent'));
+        var updateRpcSubscription       = updateSubscriptionFun('/topic/rpcUsage', jsonParseAndBroadcast('rpcUsageListEvent'));
+        var updateBlockSubscription     = updateSubscriptionFun('/topic/newBlockInfo', jsonParseAndBroadcast('newBlockInfoEvent'),
             function() {
                 stompClient.send('/app/currentBlocks');
             });
@@ -242,9 +242,9 @@
                     stompClient.subscribe('/topic/initialInfo', onInitialInfoResult);
                     stompClient.subscribe('/topic/machineInfo', onMachineInfoResult);
                     stompClient.subscribe('/topic/blockchainInfo', onBlockchainInfoResult);
-                    stompClient.subscribe('/topic/newBlockFrom', onNewBlockFromResult);
-                    stompClient.subscribe('/topic/currentSystemLogs', onCurrentSystemLogsResult);
-                    stompClient.subscribe('/topic/currentBlocks', onCurrentBlocksResult);
+                    stompClient.subscribe('/topic/newBlockFrom', jsonParseAndBroadcast('newBlockFromEvent'));
+                    stompClient.subscribe('/topic/currentSystemLogs', jsonParseAndBroadcast('currentSystemLogs'));
+                    stompClient.subscribe('/topic/currentBlocks', jsonParseAndBroadcast('currentBlocksEvent'));
 
                     updateNetworkSubscription(isHomePageActive);
                     updateBlockSubscription(isHomePageActive);
@@ -260,18 +260,6 @@
                     disconnect();
                 }
             );
-        }
-
-        function onPeersListResult(data) {
-            var items = JSON.parse(data.body);
-
-            $scope.$broadcast('peersListEvent', items);
-        }
-
-        function onRpcUsageResult(data) {
-            var items = JSON.parse(data.body);
-
-            $scope.$broadcast('rpcUsageListEvent', items);
         }
 
         /**
@@ -309,28 +297,6 @@
             $scope.$broadcast('systemLogEvent', msg);
         }
 
-        function onNewBlockInfoResult(data) {
-            var item = JSON.parse(data.body);
-
-            $scope.$broadcast('newBlockInfoEvent', item);
-        }
-
-        function onNetworkInfoResult(data) {
-
-        }
-
-        function onCurrentBlocksResult(data) {
-            var items = JSON.parse(data.body);
-
-            $scope.$broadcast('currentBlocksEvent', items);
-        }
-
-        function onCurrentSystemLogsResult(data) {
-            var items = JSON.parse(data.body);
-
-            // send event to SystemLogCtrl
-            $scope.$broadcast('currentSystemLogs', items);
-        }
 
         function onMachineInfoResult(data) {
             var info = JSON.parse(data.body);
@@ -382,12 +348,6 @@
                 vm.data.lastReforkTime          = info.lastReforkTime;
                 vm.data.networkHashRate         = filesize(info.networkHashRate, simpleSuffixes) + "H/s";
             }, 10);
-        }
-
-        function onNewBlockFromResult(data) {
-            var item = JSON.parse(data.body);
-
-            $scope.$broadcast('newBlockFromEvent', item);
         }
 
         function disconnect() {

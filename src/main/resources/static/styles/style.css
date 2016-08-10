@@ -2844,3 +2844,13 @@ fieldset[disabled] .form-control {
     align-items: center;
 }
 
+
+/* Home page */
+.home-info-text {
+    font-size: 16px;
+}
+
+.home-info-row {
+    line-height: 36px;
+}
+

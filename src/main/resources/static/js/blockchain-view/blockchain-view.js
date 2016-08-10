@@ -1,9 +1,9 @@
 var BlockchainView = (function () {
 
     var GAP = 14;
-    var BLOCK_HEIGHT = 30;
+    var BLOCK_HEIGHT = 28;
     var NUMBERING_WIDTH = 120;
-    var BLANK_HASH = -1;
+    var MIN_BLOCK_WIDTH = 60;
     var MAX_BLOCK_WIDTH = 80;
 
     var unique = function(xs) {
@@ -341,11 +341,11 @@ var BlockchainView = (function () {
             .enter()
             .append('text')
             .attr('x', function(d) { return d.x + d.width / 2; })
-            .attr('y', function(d) { return d.y + 22; })
+            .attr('y', function(d) { return d.y + 20; })
             .text( function (d) { return d.text; })
             .attr('font-family', 'sans-serif')
             .attr('text-anchor', 'middle')
-            .attr('font-size', '20px')
+            .attr('font-size', '16px')
             .attr('fill', '##5E9CD3');
 
         // Left Block Numbers
@@ -355,11 +355,11 @@ var BlockchainView = (function () {
             .enter()
             .append('text')
             .attr('x', function(d) { return d.x + NUMBERING_WIDTH / 2; })
-            .attr('y', function(d) { return d.y + 22; })
+            .attr('y', function(d) { return d.y + 20; })
             .text( function (d) { return d.text; })
             .attr('font-family', 'sans-serif')
             .attr('text-anchor', 'middle')
-            .attr('font-size', '20px')
+            .attr('font-size', '16px')
             .attr('fill', '#C5E0B4');
 
         // Blue vertical line
@@ -378,7 +378,7 @@ var BlockchainView = (function () {
     function ChartComponent(element, config) {
 
         config = config || {};
-        var width = config.width || 600;
+        var width = config.width || 400;
         var height = config.height || 400;
 
         var svgContainer = d3.select(element)
@@ -402,23 +402,25 @@ var BlockchainView = (function () {
             var blockNumbers = prepareData(data);
 
             var numbersCount = blockNumbers.length;
-            var maxHeight = Math.max(BLOCK_HEIGHT * numbersCount + GAP * (numbersCount + 1), height);
+            var requiredHeight = Math.max(BLOCK_HEIGHT * numbersCount + GAP * (numbersCount + 1), height);
 
             var renderColumns = [];
             data.forEach(function(b) {
                 addBlock(renderColumns, b);
             });
 
+            var colCount = renderColumns.length;
+            var requiredWidth = Math.max(width, NUMBERING_WIDTH + MIN_BLOCK_WIDTH * colCount + GAP * (colCount + 1));
             //var renderColumns = addBlockViaSorting(data);
 
-            renderState(svgContainer, renderColumns, blockNumbers, width, maxHeight);
+            renderState(svgContainer, renderColumns, blockNumbers, requiredWidth, requiredHeight);
             return self;
         };
 
+        // not implemented
         self.setWidth = function(newWidth) {
             if (width != newWidth) {
                 width = newWidth;
-                renderState(svgContainer, renderColumns, blockNumbers, width, maxHeight);
             }
             return self;
         };

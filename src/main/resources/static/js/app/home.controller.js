@@ -9,6 +9,7 @@
 
     function HomeCtrl($scope, $timeout, scrollConfig) {
         $scope.scrollConfig = jQuery.extend(true, {}, scrollConfig);
+        $scope.scrollConfig.axis = 'xy';
 
         var chartData = [];
         var timeoutPromise = null;
@@ -56,6 +57,16 @@
         $scope.$on('currentBlocksEvent', function(event, items) {
             items.forEach(addBlock);
             redrawChartLater();
+        });
+        $scope.$on('networkInfoEvent', function(event, item) {
+            $timeout(function() {
+                $scope.activePeers = item.activePeers;
+                $scope.syncStatus = item.syncStatus;
+                $scope.ethPort = item.ethPort;
+                $scope.ethAccessible = item.ethAccessible;
+            }, 10);
+
+            console.log(item)
         });
 
         function resizeContainer() {
