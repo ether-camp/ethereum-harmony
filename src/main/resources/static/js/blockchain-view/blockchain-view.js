@@ -5,8 +5,6 @@ var BlockchainView = (function () {
     var BLOCK_HEIGHT = 28;
 
     var NUMBERING_WIDTH = 120;
-    var MIN_BLOCK_WIDTH = 60;
-    var MAX_BLOCK_WIDTH = 80;
 
     var MAX_BLOCK_COUNT = 50;
 
@@ -33,16 +31,6 @@ var BlockchainView = (function () {
     var renderColumns = [];
 
     var svgContainer = null;
-
-    var unique = function(xs) {
-        var seen = {};
-        return xs.filter(function(x) {
-            if (seen[x])
-                return;
-            seen[x] = true;
-            return x;
-        })
-    };
 
     var blockHashFun = function(b) {return b.blockHash};
 

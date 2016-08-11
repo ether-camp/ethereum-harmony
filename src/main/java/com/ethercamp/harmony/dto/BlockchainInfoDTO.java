@@ -25,4 +25,6 @@ public class BlockchainInfoDTO {
     private final Long lastReforkTime;
 
     private final Long networkHashRate;
+
+    private final Long gasPrice;
 }

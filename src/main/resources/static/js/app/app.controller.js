@@ -85,6 +85,17 @@
         }
     };
 
+
+    function formatBigDigital(value, decimals) {
+        if(value == 0) return '0 ';
+        var k = 1000;
+        var dm = decimals + 1 || 3;
+        var sizes = ['', 'K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
+        var i = Math.floor(Math.log(value) / Math.log(k));
+        return parseFloat((value / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    }
+
+
     // change default animation step time
     jQuery.fx.interval = 100;
     var c = 0;
@@ -354,6 +365,7 @@
                 vm.data.difficulty              = filesize(info.difficulty, simpleSuffixes);
                 vm.data.lastReforkTime          = info.lastReforkTime;
                 vm.data.networkHashRate         = filesize(info.networkHashRate, simpleSuffixes) + "H/s";
+                vm.data.gasPrice                = formatBigDigital(info.gasPrice) + 'Wei';
             }, 10);
         }
 

@@ -71,8 +71,7 @@ public class MachineInfoService implements ApplicationListener {
 
     private final AtomicReference<MachineInfoDTO> machineInfo = new AtomicReference<>(new MachineInfoDTO(0, 0l, 0l, 0l));
 
-    private final AtomicReference<BlockchainInfoDTO> blockchainInfo =
-            new AtomicReference<>(new BlockchainInfoDTO(0l, 0l, 0, 0l, 0l, 0l));
+    private final AtomicReference<BlockchainInfoDTO> blockchainInfo = new AtomicReference<>();
 
     private final AtomicReference<NetworkInfoDTO> networkInfo = new AtomicReference<>();
 
@@ -181,8 +180,9 @@ public class MachineInfoService implements ApplicationListener {
                         bestBlock.getTimestamp(),
                         bestBlock.getTransactionsList().size(),
                         bestBlock.getDifficultyBI().longValue(),
-                        0l,
-                        calculateHashRate()
+                        0l, // not implemented
+                        calculateHashRate(),
+                        ethereum.getGasPrice()
                 )
         );
 
@@ -321,7 +321,7 @@ public class MachineInfoService implements ApplicationListener {
         static {
             GENESIS_BLOCK_HASH_MAP.put("d4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3", "Live ETH");
             GENESIS_BLOCK_HASH_MAP.put("0cd786a2425d16f152c658316c423e6ce1181e15c3295826d7c9904cba9ce303", "Morden ETH");
-            GENESIS_BLOCK_HASH_MAP.put("0cd786a2425d16f152c658316c423e6ce1181e15c3295826d7c9904cba9ce303", "Test ETH");
+            GENESIS_BLOCK_HASH_MAP.put("???", "Test ETH");
         }
     }
 }
