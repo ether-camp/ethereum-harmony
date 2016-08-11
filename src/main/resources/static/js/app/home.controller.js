@@ -11,6 +11,7 @@
         $scope.scrollConfig = jQuery.extend(true, {}, scrollConfig);
         //$scope.scrollConfig.axis = 'xy';
         $scope.scrollConfig.scrollbarPosition = 'outside';
+        $scope.scrollConfig.scrollInertia = 200;
 
         $scope.activePeers = 0;
         $scope.syncStatus = 'n/a';
@@ -51,11 +52,13 @@
         function redrawChartLater() {
             if (!timeoutPromise) {
                 if (new Date().getTime() - 2000 > lastRenderingTime) {
-                    chart.setData(chartData);
+                    chart.addBlocks(chartData);
+                    chartData = [];
                     lastRenderingTime = new Date().getTime();
                 }
                 timeoutPromise = $timeout(function() {
-                    chart.setData(chartData);
+                    chart.addBlocks(chartData);
+                    chartData = [];
                     lastRenderingTime = new Date().getTime();
                     timeoutPromise = null;
                 }, 2000);

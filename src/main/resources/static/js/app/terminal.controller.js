@@ -200,7 +200,10 @@
                             }, 10);
                         },
                         //onCommandChange: onCommandChange,
-                        prompt: 'node> '
+                        prompt: 'node> ',
+                        onInit: function(term) {
+                            term.focus();
+                        }
                     });
 
             terminal.history = false;

@@ -1,10 +1,38 @@
 var BlockchainView = (function () {
 
     var GAP = 14;
+    var BLOCK_WIDTH = 80;
     var BLOCK_HEIGHT = 28;
+
     var NUMBERING_WIDTH = 120;
     var MIN_BLOCK_WIDTH = 60;
     var MAX_BLOCK_WIDTH = 80;
+
+    var MAX_BLOCK_COUNT = 50;
+
+    var blockStore = {};
+
+    var selfTodoRemove = null;
+
+    /**
+     * Number of rows to render.
+     * @type {Array}
+     */
+    var blockNumbers = [];
+    var minBlockNumber = 0;
+
+    /**
+     * List of blocks added from outside.
+     * @type {Array}
+     */
+    var rawData = [];
+    /**
+     * Grid (2 dimension array) of blocks to be rendered at that location.
+     * @type {Array}
+     */
+    var renderColumns = [];
+
+    var svgContainer = null;
 
     var unique = function(xs) {
         var seen = {};
@@ -18,28 +46,62 @@ var BlockchainView = (function () {
 
     var blockHashFun = function(b) {return b.blockHash};
 
+    function checkForRemove() {
+        if (rawData.length > MAX_BLOCK_COUNT) {
+            var blockForRemove = rawData.shift();
+            renderColumns.some(function(c) {
+                return c.some(function(b, i) {
+                    if (b && b.blockHash == blockForRemove.blockHash) {
+                        delete c[i];
+                        //console.log('Removed from grid ' + blockForRemove.blockHash);
+                        return true;
+                    }
+                    return false;
+                })
+            });
+            var isLineEmpty = renderColumns.every(function(c) {
+                return !c[0];
+            });
+            if (isLineEmpty) {
+                //console.log('Removing bottom layer');
+                renderColumns.forEach(function(c) {
+                    if (c.length > 0) {
+                        c.unshift();
+                    }
+                });
+            }
+        }
+    }
 
-    function prepareData(data) {
-        var blockStore = {};
-        var parentsMap = {};
-        var blockNumbers = [];
+    function prepareAndAddBlocks(newBlocks) {
+        newBlocks.forEach(function(b) {
+            if (!blockStore[b.blockHash]) {
+                blockStore[b.blockHash] = b;
 
-        data.forEach(function(b) {
-            parentsMap[b.blockHash] = true;
-            blockStore[b.blockHash] = b;
+                rawData.push(b);
+                checkForRemove();
+            } else {
+                console.log('Rejected duplicate block ' + b.blockHash);
+            }
+        });
+
+        blockNumbers = [];
+        rawData.forEach(function(b) {
             if (blockNumbers.indexOf(b.blockNumber) < 0) {
                 blockNumbers.push(b.blockNumber);
             }
         });
         blockNumbers.sort();
-        var minBlockNumber = blockNumbers[0];
-        data.forEach(function(b) {
+        minBlockNumber = blockNumbers[0];
+
+        rawData.forEach(function(b) {
+            b.isCanonical = false;
             b.index = b.blockNumber - minBlockNumber;
+            b.totalDifficulty = 0;
         });
 
-
         // calculate total difficulty per each leaf
-        data.forEach(function(b) {
+        rawData.forEach(function(b) {
             var parentBlock = blockStore[b.parentHash];
             if (parentBlock) {
                 b.totalDifficulty = b.difficulty + (parentBlock.totalDifficulty || 0);
@@ -48,10 +110,10 @@ var BlockchainView = (function () {
             }
         });
 
-        var canonicalLeaf = data.reduce(function(result, b) {
+        var canonicalLeaf = rawData.reduce(function(result, b) {
             return b.totalDifficulty > result.totalDifficulty ? b : result;
-        }, data[0]);
-        var canonicalColumn = data
+        }, rawData[0]);
+        var canonicalColumn = rawData
             .reverse()
             .reduce(function(column, b) {
                 if (b.blockHash == column[0].parentHash) {
@@ -59,14 +121,12 @@ var BlockchainView = (function () {
                 }
                 return column;
             }, [canonicalLeaf]);
-        data.reverse(); // back
+        rawData.reverse(); // back
         canonicalColumn.forEach(function(b) {
             b.isCanonical = true;
         });
 
         //console.log('Canonical chain ' + canonicalColumn.map(blockHashFun));
-
-        return blockNumbers;
     }
 
     function point(x, y) {
@@ -101,26 +161,45 @@ var BlockchainView = (function () {
     var markerLeftLineData      = markerLineData(0, -1);
     var markerRightLineData     = markerLineData(1, 1);
 
+    var sampleBlock              = {x: 0, y:0, width: BLOCK_WIDTH, height: BLOCK_HEIGHT};
+    var leftBracketData         = markerLeftLineData(sampleBlock);
+    var rightBracketData        = markerRightLineData(sampleBlock);
+
+    // Marking canonical
+    var lineFunction = d3.svg
+        .line()
+        .x(function(d) { return d.x; })
+        .y(function(d) { return d.y; })
+        .interpolate('linear');
+    var leftBracketLine = lineFunction(leftBracketData);
+    var rightBracketLine = lineFunction(rightBracketData);
+
+
     /**
-     * @param columns - state
+     * Place block to grid
      * @param block
      */
-    function addBlock(columns, block) {
+    function placeBlock(block) {
         //console.log('addBlock ' + block.blockHash);
+        function sortByIndex(array) {
+            array.sort(function(a,b) {return a.index - b.index;});
+        }
 
-        if (columns.length == 0) {
+        if (renderColumns.length == 0) {
             var newColumn = [];
             newColumn[block.index] = block;
             // assume the first block is canonical, and put it in the middle
-            columns.push([]);
-            columns.push(newColumn);
+            renderColumns.push([]);
+            renderColumns.push(newColumn);
             //console.log('Added initial column for block ' + block.blockHash);
         } else {
-            var putOverParent = columns.some(function(column) {
+            var putOverParent = renderColumns.some(function(column) {
                 return column.some(function(b) {
                     if (b.blockHash == block.parentHash) {
-                        if (!column[block.index]) {
-                            column[block.index] = block;
+                        var blockOverParent =  column.some(function(bb) {return bb.index == block.index});
+                        if (!blockOverParent) {
+                            column.push(block);
+                            sortByIndex(column);
                             //console.log('Put block over parent ' + block.blockHash);
                             return true;
                         }
@@ -130,9 +209,11 @@ var BlockchainView = (function () {
             });
             if (!putOverParent) {
 
-                var putInFreeSpace = columns.some(function(column) {
-                    if (!column[block.index]) {
-                        column[block.index] = block;
+                var putInFreeSpace = renderColumns.some(function(column) {
+                    var blockAtPlace =  column.some(function(bb) {return bb.index == block.index});
+                    if (!blockAtPlace) {
+                        column.push(block);
+                        sortByIndex(column);
                         //console.log('Added block to free space ' + block.blockHash);
                         return true;
                     }
@@ -142,122 +223,34 @@ var BlockchainView = (function () {
                 if (!putInFreeSpace) {
                     var newColumn = [];
                     newColumn[block.index] = block;
-                    columns.push(newColumn);
-                    //console.log('New column created to put block ' + block.blockHash);
+                    renderColumns.push(newColumn);
+                    console.log('New column created to put block ' + block.blockHash);
                 }
             }
         }
     }
-
-    /**
-     * @param columns - already added blocks placed in columns from root to leaf
-     * @param newColumn - new array of blocks to add, starts from root block till leaf
-     */
-    function addColumn(columns, newColumn) {
-        //console.log('Checking where to insert column ' + newColumn.map(function(b) {return b.blockHash}));
-
-        if (columns.length == 0) {
-            columns.push(newColumn);
-            console.log('Added first column ' + columns.length);
-        } else {
-            var insertedInColumns = columns.some(function(column) {
-                var isFreeColumn = newColumn.every(function(b) {
-                    console.log('Checking content of ' + b.index + ' ' + column[b.index]);
-                    return ((column.length < b.index) || (!column[b.index]));
-                    //&& ((column.length - 1 < b.index) || (!column[b.index]));
-                });
-
-                if (isFreeColumn) {
-                    console.log(column);
-                    console.log('Added column to existing column ' + columns.length);
-                    newColumn.forEach(function(b) {
-                        column[b.index] = b;
-                    });
-                    console.log(column);
-                }
-                return isFreeColumn;
-            });
-            if (!insertedInColumns) {
-                var colToAdd = [];
-                newColumn.forEach(function(b) {
-                    colToAdd[b.index] = b;
-                });
-                columns.push(colToAdd);
-                console.log('Added new column as no space left ' + columns.length);
-            }
-        }
-    }
-
-
-    function addBlockViaSorting(data) {
-        // find out hardest leaf
-        var sortedBlocks = data
-            .map(function(b) {return b;})
-            .sort(function(a,b) {
-                return a.totalDifficulty - b.totalDifficulty;
-            })
-            .reverse();
-        var reversedData = data.map(function(b) {return b;}).reverse();
-
-        var isCanonical = true;
-        var renderColumns = [];
-        while (sortedBlocks.length > 0) {
-            console.log('Blocks left ' + sortedBlocks.map(blockHashFun));
-            var leaf = sortedBlocks.shift();
-            console.log('Canonical leaf block ' + leaf.blockHash);
-            var col = reversedData.reduce(function(c, block) {
-                if (c[0].parentHash == block.blockHash) {
-                    c.unshift(block);
-                }
-                return c;
-            }, [leaf]);
-
-            col.forEach(function(b) {
-                if (sortedBlocks.indexOf(b) > -1) {
-                    sortedBlocks.splice(sortedBlocks.indexOf(b), 1);
-                    reversedData.splice(reversedData.indexOf(b), 1);
-                    console.log('Blocks left after remove ' + sortedBlocks.map(blockHashFun));
-                }
-            });
-
-            if (isCanonical) {
-                col.forEach(function(b) {
-                    b.isCanonical = true;
-                });
-            }
-            isCanonical = false;
-
-            addColumn(renderColumns, col);
-        }
-        return renderColumns;
-    }
-
 
     /**
      * @param renderColumns - current state
      */
-    function renderState(svgContainer, renderColumns, blockNumbers, width, height) {
+    function renderState(svgContainer, width, height) {
 
         //console.log('renderColumns ' + renderColumns.length);
 
-        var columnCount = renderColumns.length;
-        var blockWidth = Math.min(MAX_BLOCK_WIDTH, (width - NUMBERING_WIDTH - GAP * (columnCount + 1)) / columnCount);
+        //var blockWidth = Math.min(MAX_BLOCK_WIDTH, (width - NUMBERING_WIDTH - GAP * (columnCount + 1)) / columnCount);
         //console.log('Block width ' + blockWidth);
-
-        var blocks = [];
 
         renderColumns
             .forEach(function(column, c) {
                 column.forEach(function(block, n) {
-                    //console.log('Adding block for rendering ' + block);
-                    blocks.push({
-                        text:   '0x' + block.blockHash.substr(0, 4),
-                        x:      NUMBERING_WIDTH + GAP * (c + 1) + blockWidth * c,
-                        y:      height - GAP * (n + 1) - BLOCK_HEIGHT * (n + 1),
-                        width:  blockWidth,
-                        height: BLOCK_HEIGHT,
-                        isCanonical: block.isCanonical
-                    });
+                    if (block) {
+                        //console.log('Adding block for rendering ' + block);
+                        block.text      = '0x' + block.blockHash.substr(0, 4);
+                        block.x         = NUMBERING_WIDTH + GAP * (c + 1) + BLOCK_WIDTH * c;
+                        block.y         = height - GAP * (block.index + 1) - BLOCK_HEIGHT * (block.index + 1);
+                        block.width     = BLOCK_WIDTH;
+                        block.height    = BLOCK_HEIGHT;
+                    }
                 });
             });
 
@@ -265,7 +258,7 @@ var BlockchainView = (function () {
         var blockNumberObjects = blockNumbers
             .map(function(blockNumber, i) {
                 return {
-                    x:      GAP,
+                    x:      0,
                     y:      height - GAP * (i + 1) - BLOCK_HEIGHT * (i + 1),
                     width:  NUMBERING_WIDTH - 2 * GAP,
                     height: BLOCK_HEIGHT,
@@ -273,105 +266,164 @@ var BlockchainView = (function () {
                 };
             });
 
-        //console.log('blockNumberObjects');
-        //console.log(blockNumberObjects);
-
-        // Clear all
         svgContainer
             .attr('width', width)
-            .attr('height', height)
-            .selectAll('*')
-            .remove();
+            .attr('height', height);
+            //.selectAll('*')
+            //.remove();
 
-        var numberingContainer = svgContainer
-            .append('g')
-            .attr('id', 'numberingContainer');
-
-        var blockContainer = svgContainer
-            .append('g')
-            .attr('id', 'blockContainer');
+        var blockContainer = svgContainer.select('#blockContainer');
+        var numberingContainer = svgContainer.select('#numberingContainer');
+        var canonicalContainer = svgContainer.select('#canonicalContainer');
 
         // Blocks
-        blockContainer
-            .selectAll('rect')
-            .data(blocks)
+        var blockSelection = blockContainer
+            .selectAll('g')
+            .data(rawData, blockHashFun);
+
+        blockSelection
+            .exit()
+            .remove();
+
+        var blockGroupSelection = blockSelection
             .enter()
+            .append('g');
+
+        blockGroupSelection
+            .attr('opacity', 1)
+            .attr("transform", function(d) { return "translate(" + d.x + "," + (d.y - BLOCK_HEIGHT - GAP) + ")"});
+
+        blockGroupSelection
             .append('rect')
-            .attr('x', function (d) { return d.x; })
-            .attr('y', function (d) { return d.y; })
-            .attr('width', function (d) { return d.width; })
-            .attr('height', function (d) { return d.height; })
-            .style('fill', function (d) { return '#5E9CD3'; })
-            .style("stroke", '#41719C')
-            .style("stroke-width", 2);
+            .attr('x', 0)
+            .attr('y', 0)
+            .attr('width', BLOCK_WIDTH)
+            .attr('height', BLOCK_HEIGHT)
+            .style('fill', '#5E9CD3')
+            .style('stroke-opacity', 0)
+            .style('stroke', '#41719C')
+            .style('stroke-width', 2)
+            .on('click', function(d, i) {
+                //handle events here
+                //d - datum
+                //i - identifier or index
+                //this - the `<rect>` that was clicked
+                selfTodoRemove.addBlocks([{
+                    blockHash : Math.random().toString(),
+                    blockNumber : d.blockNumber,
+                    difficulty : d.difficulty + 1,
+                    parentHash : d.parentHash
+                }]);
+            })
+            .attr('opacity', 0)
+            .transition()
+            .duration(1000)
+            .attr('opacity', 1);
 
-        // Marking canonical
-        var lineFunction = d3.svg
-            .line()
-            .x(function(d) { return d.x; })
-            .y(function(d) { return d.y; })
-            .interpolate("linear");
-        blocks
-            .forEach(function(b) {
-                if (b.isCanonical) {
-                    var lLineData = markerLeftLineData(b);
-                    blockContainer
-                        .append("path")
-                        .attr("d", lineFunction(lLineData))
-                        .attr("stroke", "#FFD966")
-                        .attr("stroke-width", 3)
-                        .attr("fill", "none");
-
-                    var rLineData = markerRightLineData(b);
-                    blockContainer
-                        .append("path")
-                        .attr("d", lineFunction(rLineData))
-                        .attr("stroke", "#FFD966")
-                        .attr("stroke-width", 3)
-                        .attr("fill", "none");
-                }
-            });
-
-
-
-        // Block labels
-        blockContainer
-            .selectAll('text')
-            .data(blocks)
-            .enter()
+        blockGroupSelection
             .append('text')
-            .attr('x', function(d) { return d.x + d.width / 2; })
-            .attr('y', function(d) { return d.y + 20; })
+            .attr('x', BLOCK_WIDTH / 2)
+            .attr('y', 20)
             .text( function (d) { return d.text; })
             .attr('font-family', 'sans-serif')
             .attr('text-anchor', 'middle')
             .attr('font-size', '16px')
-            .attr('fill', '##5E9CD3');
+            .attr('fill', '##5E9CD3')
+            .attr('opacity', 0)
+            .transition()
+            .duration(1000)
+            .attr('opacity', 1);
 
-        // Left Block Numbers
-        numberingContainer
+        blockSelection
+            .transition()
+            .duration(1000)
+            .attr('opacity', 1)
+            .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"});
+
+        var canonicalSelection = canonicalContainer
+            .selectAll("g")
+            .data(
+                rawData.filter(function(d) { return d.isCanonical; }),
+                blockHashFun);
+
+        canonicalSelection
+            .exit()
+            .attr('opacity', 1)
+            .transition()
+            .duration(1000)
+            .attr('opacity', 0)
+            .remove();
+
+        var canonicalGroupSelection = canonicalSelection
+            .enter()
+            .append('g');
+
+        canonicalGroupSelection
+            .attr("transform", function(d) { return "translate(" + d.x + "," + (d.y - BLOCK_HEIGHT - GAP) + ")"})
+            .attr('opacity', 0);
+
+        canonicalGroupSelection
+            .append('path')
+            .attr('stroke', '#FFD966')
+            .attr('stroke-width', 3)
+            .attr('d', leftBracketLine)
+            .attr('fill', 'none');
+
+        canonicalGroupSelection
+            .append('path')
+            .attr('stroke', '#FFD966')
+            .attr('stroke-width', 3)
+            .attr('d', rightBracketLine)
+            .attr('fill', 'none');
+
+
+        canonicalSelection
+            .transition()
+            .duration(1000)
+            .attr('opacity', 1)
+            .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"});
+
+
+        // NUMBERS
+        var numberingSelection = numberingContainer
             .selectAll('text')
-            .data(blockNumberObjects)
+            .data(blockNumberObjects, function(d) { return d.text; });
+
+        numberingSelection
+            .exit()
+            .remove();
+
+        numberingSelection
             .enter()
             .append('text')
+            .attr('opacity', 0);
+
+        numberingSelection
+            .attr('y', function(d) { return d.y + 20 - BLOCK_HEIGHT - GAP; })
+            .attr('fill', '#C5E0B4')
+            .transition()
+            .duration(1000)
             .attr('x', function(d) { return d.x + NUMBERING_WIDTH / 2; })
             .attr('y', function(d) { return d.y + 20; })
             .text( function (d) { return d.text; })
             .attr('font-family', 'sans-serif')
             .attr('text-anchor', 'middle')
             .attr('font-size', '16px')
-            .attr('fill', '#C5E0B4');
+            .attr('fill', '#C5E0B4')
+            .attr('opacity', 1);
 
-        // Blue vertical line
+        // BLUE VERTICAL LINE
+        numberingContainer.select('#blueLine').remove();
         numberingContainer
-            .append("path")
-            .attr("d", lineFunction([
+            .append('path')
+            .attr('id', 'blueLine')
+            .attr('d', lineFunction([
                 point(NUMBERING_WIDTH, 0),
                 point(NUMBERING_WIDTH, height)
             ]))
-            .attr("stroke", "#41719C")
-            .attr("stroke-width", 2)
-            .attr("fill", "none");
+            .attr('stroke', '#41719C')
+            .attr('stroke-width', 2)
+            .attr('fill', 'none');
 
     }
 
@@ -381,47 +433,49 @@ var BlockchainView = (function () {
         var width = config.width || 400;
         var height = config.height || 400;
 
-        var svgContainer = d3.select(element)
+        svgContainer = d3.select(element)
             .append('svg');
+        svgContainer
+            .append('g')
+            .attr('id', 'blockContainer');
+        svgContainer
+            .append('g')
+            .attr('id', 'numberingContainer');
+        svgContainer
+            .append('g')
+            .attr('id', 'canonicalContainer');
 
-        var self = this;
+
+        var self = selfTodoRemove = this;
 
         /**
          * @data - component creates copy
          */
-        self.setData = function(data) {
+        self.addBlocks = function(data) {
             data = data || [];
 
             if (data.length == 0) {
                 return;
             }
+            console.log('Adding ' + data.length + ' new blocks');
 
             // deep clone
             data = jQuery.extend(true, [], data);
 
-            var blockNumbers = prepareData(data);
+            prepareAndAddBlocks(data);
 
             var numbersCount = blockNumbers.length;
             var requiredHeight = Math.max(BLOCK_HEIGHT * numbersCount + GAP * (numbersCount + 1), height);
 
-            var renderColumns = [];
             data.forEach(function(b) {
-                addBlock(renderColumns, b);
+                placeBlock(b);
             });
 
             var colCount = renderColumns.length;
-            var requiredWidth = Math.max(width, NUMBERING_WIDTH + MIN_BLOCK_WIDTH * colCount + GAP * (colCount + 1));
+            var requiredWidth = Math.max(width, NUMBERING_WIDTH + BLOCK_WIDTH * colCount + GAP * (colCount + 1));
             //var renderColumns = addBlockViaSorting(data);
 
-            renderState(svgContainer, renderColumns, blockNumbers, requiredWidth, requiredHeight);
-            return self;
-        };
-
-        // not implemented
-        self.setWidth = function(newWidth) {
-            if (width != newWidth) {
-                width = newWidth;
-            }
+            renderState(svgContainer, requiredWidth, requiredHeight);
             return self;
         };
 
