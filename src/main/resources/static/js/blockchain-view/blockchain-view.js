@@ -224,7 +224,7 @@ var BlockchainView = (function () {
                     var newColumn = [];
                     newColumn[block.index] = block;
                     renderColumns.push(newColumn);
-                    console.log('New column created to put block ' + block.blockHash);
+                    //console.log('New column created to put block ' + block.blockHash);
                 }
             }
         }
@@ -309,7 +309,7 @@ var BlockchainView = (function () {
                 //i - identifier or index
                 //this - the `<rect>` that was clicked
                 selfTodoRemove.addBlocks([{
-                    blockHash : Math.random().toString(),
+                    blockHash : 'R' + Math.random().toString(),
                     blockNumber : d.blockNumber,
                     difficulty : d.difficulty + 1,
                     parentHash : d.parentHash
@@ -344,7 +344,7 @@ var BlockchainView = (function () {
             .selectAll("g")
             .data(
                 rawData.filter(function(d) { return d.isCanonical; }),
-                blockHashFun);
+                function(d) { return d.index; });
 
         canonicalSelection
             .exit()
@@ -396,20 +396,20 @@ var BlockchainView = (function () {
         numberingSelection
             .enter()
             .append('text')
-            .attr('opacity', 0);
-
-        numberingSelection
-            .attr('y', function(d) { return d.y + 20 - BLOCK_HEIGHT - GAP; })
-            .attr('fill', '#C5E0B4')
-            .transition()
-            .duration(1000)
             .attr('x', function(d) { return d.x + NUMBERING_WIDTH / 2; })
-            .attr('y', function(d) { return d.y + 20; })
+            .attr('y', function(d) { return d.y + 20 - BLOCK_HEIGHT - GAP; })
             .text( function (d) { return d.text; })
             .attr('font-family', 'sans-serif')
             .attr('text-anchor', 'middle')
             .attr('font-size', '16px')
             .attr('fill', '#C5E0B4')
+            .attr('opacity', 0);
+
+        numberingSelection
+            .attr('fill', '#C5E0B4')
+            .transition()
+            .duration(1000)
+            .attr('y', function(d) { return d.y + 20; })
             .attr('opacity', 1);
 
         // BLUE VERTICAL LINE
