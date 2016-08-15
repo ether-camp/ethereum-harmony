@@ -260,6 +260,7 @@ var BlockchainView = (function () {
             //.selectAll('*')
             //.remove();
 
+        var lineContainer = svgContainer.select('#lineContainer');
         var blockContainer = svgContainer.select('#blockContainer');
         var numberingContainer = svgContainer.select('#numberingContainer');
         var canonicalContainer = svgContainer.select('#canonicalContainer');
@@ -303,6 +304,19 @@ var BlockchainView = (function () {
                     parentHash : d.parentHash
                 }]);
             })
+            //.on('mouseover', function(d, i) {
+            //    lineContainer
+            //        .append('path')
+            //        .attr('stroke', '#FFD966')
+            //        .attr('stroke-width', 3)
+            //        .attr('d', lineFunction(leftBracketData))
+            //        .attr('fill', 'none');
+            //})
+            //.on('mouseout', function(d, i) {
+            //    lineContainer
+            //        .selectAll('*')
+            //        .remove();
+            //})
             .attr('opacity', 0)
             .transition()
             .duration(1000)
@@ -423,6 +437,9 @@ var BlockchainView = (function () {
 
         svgContainer = d3.select(element)
             .append('svg');
+        svgContainer
+            .append('g')
+            .attr('id', 'lineContainer');
         svgContainer
             .append('g')
             .attr('id', 'blockContainer');

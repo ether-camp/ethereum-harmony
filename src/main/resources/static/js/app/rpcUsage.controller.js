@@ -61,12 +61,18 @@
                 }
                 synchronizeArrays(items, $scope.rpcItems, function(item, updatedItem) {
                     item.count = updatedItem.count;
-                    item.count = updatedItem.count;
+                    item.lastResult = updatedItem.lastResult;
                     item.curl = item.curl;
                     item.lastTime = updatedItem.lastTime > 0 ? moment(updatedItem.lastTime).fromNow() : '';
                 });
             }, 10);
         });
+
+        $scope.showLastResult = function(item) {
+            $timeout(function() {
+                item.isLastResultVisible = !item.isLastResultVisible;
+            }, 10);
+        };
 
         function onResize() {
             console.log("RpcUsage page resize");

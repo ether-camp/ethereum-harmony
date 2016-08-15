@@ -53,7 +53,7 @@
                     <div class="panel-footer" style="padding-top: 0;padding-bottom: 0">
                         <!-- Last Result -->
                         <div class="rpc-item-header" ng-show="item.lastResult != null">
-                            <a href="#" ng-click="showLastResult(item.methodName)">
+                            <a href="#" ng-click="showLastResult(item)">
                                 <div class="header-icon">
                                     <i class="pe page-header-icon pe-7s-plus"></i>
                                 </div>
@@ -62,7 +62,7 @@
                             </a>
                         </div>
 
-                        <div class="rpc-item-result-{{item.methodName}}" ng-show="item.lastResult != null">
+                        <div class="rpc-item-result-{{item.methodName}}" ng-show="item.lastResult != null && item.isLastResultVisible">
                             <pre class="panel panel-black-filled"
                                  style="margin-top: 0px; padding-top: 10px; margin-bottom: 10px;padding-bottom: 10px"
                             >{{item.lastResult}}</pre>
