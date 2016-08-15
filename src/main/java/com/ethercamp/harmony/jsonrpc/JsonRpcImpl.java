@@ -802,7 +802,7 @@ public class JsonRpcImpl implements JsonRpc {
 
             return s = new TransactionReceiptDTOExt(block, txInfo);
         } finally {
-            if (logger.isDebugEnabled()) logger.debug("eth_getTransactionReceipt(" + transactionHash + "): " + s);
+            if (log.isDebugEnabled()) log.debug("eth_getTransactionReceipt(" + transactionHash + "): " + s);
         }
     }
 
@@ -1038,7 +1038,7 @@ public class JsonRpcImpl implements JsonRpc {
             if (fr.topics != null) {
                 for (Object topic : fr.topics) {
                     if (topic == null) {
-                        logFilter.withTopic(null);
+                        logFilter.withTopic((byte[]) null);
                     } else if (topic instanceof String) {
                         logFilter.withTopic(new DataWord(StringHexToByteArray((String) topic)).getData());
                     } else if (topic instanceof String[]) {
