@@ -32,7 +32,7 @@ public interface JsonRpc {
     class CallArguments {
         public String from;
         public String to;
-        public String gasLimit;
+        public String gas;
         public String gasPrice;
         public String value;
         public String data; // compiledCode
@@ -43,7 +43,7 @@ public interface JsonRpc {
             return "CallArguments{" +
                     "from='" + from + '\'' +
                     ", to='" + to + '\'' +
-                    ", gasLimit='" + gasLimit + '\'' +
+                    ", gas='" + gas + '\'' +
                     ", gasPrice='" + gasPrice + '\'' +
                     ", value='" + value + '\'' +
                     ", data='" + data + '\'' +
@@ -90,7 +90,7 @@ public interface JsonRpc {
                     ", totalDifficulty='" + totalDifficulty + '\'' +
                     ", extraData='" + extraData + '\'' +
                     ", size='" + size + '\'' +
-                    ", gasLimit='" + gasLimit + '\'' +
+                    ", gas='" + gasLimit + '\'' +
                     ", gasUsed='" + gasUsed + '\'' +
                     ", timestamp='" + timestamp + '\'' +
                     ", transactions=" + Arrays.toString(transactions) +
@@ -230,6 +230,8 @@ public interface JsonRpc {
     TransactionResultDTO eth_getTransactionByBlockHashAndIndex(String blockHash, String index) throws Exception;
     TransactionResultDTO eth_getTransactionByBlockNumberAndIndex(String bnOrId, String index) throws Exception;
     TransactionReceiptDTO eth_getTransactionReceipt(String transactionHash) throws Exception;
+
+    TransactionReceiptDTOExt ethj_getTransactionReceipt(String transactionHash) throws Exception;
 
     BlockResult eth_getUncleByBlockHashAndIndex(String blockHash, String uncleIdx) throws Exception;
 
