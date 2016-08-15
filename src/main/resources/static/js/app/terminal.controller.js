@@ -240,10 +240,10 @@
                     .then(function(result) {
                         console.log('JSON-RPC result');
                         console.log(result);
-                        var stringResult = JSON.stringify(result);
+                        var stringResult = JSON.stringify(result, null, 2);
 
                         //term.echo("Result:");
-                        term.echo(stringResult);
+                        term.echo('[[;#96BC96;]' + stringResult + ']');
                         $('#terminal-container').mCustomScrollbar('scrollTo', 'bottom');
                     })
                     .catch(function(error) {
