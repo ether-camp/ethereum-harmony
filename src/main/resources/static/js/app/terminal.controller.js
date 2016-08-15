@@ -19,6 +19,12 @@
         });
     }
 
+    function isCommandIn(command, array) {
+        return array.some(function(item) {
+            return command.indexOf(item) == 0;
+        });
+    }
+
     function TerminalCtrl($scope, $timeout, jsonrpc, scrollConfig) {
         console.log('TerminalCtrl controller activated.');
 
@@ -199,6 +205,9 @@
                                 onCommandChange(terminal.get_command(), terminal);
                             }, 10);
                         },
+                        historyFilter: function(command) {
+                            return !isCommandIn(command, ['personal_unlockAccount', 'personal_importRawKey']);
+                        },
                         //onCommandChange: onCommandChange,
                         prompt: 'node> ',
                         onInit: function(term) {
@@ -240,11 +249,16 @@
                     .then(function(result) {
                         console.log('JSON-RPC result');
                         console.log(result);
-                        var stringResult = JSON.stringify(result, null, 2);
+                        var stringResult = JSON.stringify(result, null, 2).replace(/]/g, '&#93;');
 
                         //term.echo("Result:");
                         term.echo('[[;#96BC96;]' + stringResult + ']');
                         $('#terminal-container').mCustomScrollbar('scrollTo', 'bottom');
+
+                        if (isCommandIn(command, ['eth_sendTransactionArgs', 'eth_sendRawTransaction'])) {
+                            // request tx receipt
+                            onCommandEnter('ethj_getTransactionReceipt ' + result, term);
+                        }
                     })
                     .catch(function(error) {
                         console.log(error);

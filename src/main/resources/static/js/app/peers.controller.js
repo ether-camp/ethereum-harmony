@@ -177,14 +177,20 @@
                 angular.forEach(opts, function(value, key){
                     opts[key] = NOT_FILLED;
                 });
+
+                // show only active peers on map
                 angular.forEach(items, function(value, key){
-                    opts[value.country3Code] = FILLED;
+                    if (value.isActive) {
+                        opts[value.country3Code] = FILLED;
+                    }
                 });
 
                 // blink only when not first update
                 if (newPeers.length != items.length) {
                     angular.forEach(newPeers, function(value, key){
-                        opts[value.country3Code] = BLINKED;
+                        if (value.isActive) {
+                            opts[value.country3Code] = BLINKED;
+                        }
                     });
                 }
 
