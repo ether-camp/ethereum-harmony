@@ -2,8 +2,6 @@ package com.ethercamp.harmony.keystore;
 
 import org.ethereum.crypto.ECKey;
 
-import java.util.Optional;
-
 /**
  * Created by Stan Reshetnyk on 01.08.16.
  *
@@ -13,13 +11,13 @@ public interface Keystore {
 
     void removeKey(String address);
 
-    void storeKey(ECKey key, String password);
+    void storeKey(ECKey key, String password) throws RuntimeException;
 
-    void storeRawKeystore(String content, String address);
+    void storeRawKeystore(String content, String address) throws RuntimeException;
 
     String[] listStoredKeys();
 
-    ECKey loadStoredKey(String address, String password);
+    ECKey loadStoredKey(String address, String password) throws RuntimeException;
 
     boolean hasStoredKey(String address);
 }

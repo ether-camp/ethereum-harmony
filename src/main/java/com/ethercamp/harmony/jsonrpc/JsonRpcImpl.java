@@ -4,6 +4,7 @@ import com.ethercamp.harmony.api.EthereumApiImpl;
 import com.ethercamp.harmony.keystore.Keystore;
 import com.ethercamp.harmony.util.ErrorCodes;
 import com.ethercamp.harmony.util.HarmonyException;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.ethereum.config.SystemProperties;
 import org.ethereum.core.*;
@@ -1423,11 +1424,9 @@ public class JsonRpcImpl implements JsonRpc {
 //    }
 
     @Override
-    public String personal_newAccount(String password) {
+    public String personal_newAccount(@NonNull String password) {
         String s = null;
         try {
-
-
             // generate new private key
             ECKey key = new ECKey();
             Account account = importAccount(key, password);

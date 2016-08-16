@@ -4,7 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.ethereum.crypto.ECKey;
 import org.ethereum.net.swarm.Util;
 import org.spongycastle.util.encoders.Hex;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.File;

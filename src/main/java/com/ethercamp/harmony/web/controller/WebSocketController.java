@@ -3,7 +3,7 @@ package com.ethercamp.harmony.web.controller;
 import com.ethercamp.harmony.dto.BlockInfo;
 import com.ethercamp.harmony.dto.InitialInfoDTO;
 import com.ethercamp.harmony.dto.MachineInfoDTO;
-import com.ethercamp.harmony.service.MachineInfoService;
+import com.ethercamp.harmony.service.BlockchainInfoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.stereotype.Controller;
@@ -15,7 +15,7 @@ import java.util.Queue;
 public class WebSocketController {
 
     @Autowired
-    MachineInfoService machineInfoService;
+    BlockchainInfoService blockchainInfoService;
 
     /**
      * Websocket handlers for immediate result.
@@ -23,22 +23,22 @@ public class WebSocketController {
 
     @MessageMapping("/machineInfo")
     public MachineInfoDTO getMachineInfo() {
-        return machineInfoService.getMachineInfo();
+        return blockchainInfoService.getMachineInfo();
     }
 
     @MessageMapping("/initialInfo")
     public InitialInfoDTO getInitialInfo() {
-        return machineInfoService.getInitialInfo();
+        return blockchainInfoService.getInitialInfo();
     }
 
     @MessageMapping("/currentBlocks")
     public Queue<BlockInfo> getBlocks() {
-        return machineInfoService.getBlocks();
+        return blockchainInfoService.getBlocks();
     }
 
     @MessageMapping("/currentSystemLogs")
     public Queue<String> getSystemLogs() {
-        return machineInfoService.getSystemLogs();
+        return blockchainInfoService.getSystemLogs();
     }
 
     /**

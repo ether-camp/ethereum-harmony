@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j(topic = "harmony")
 @Service
-public class MachineInfoService implements ApplicationListener {
+public class BlockchainInfoService implements ApplicationListener {
 
     public static final int KEEP_LOG_ENTRIES = 1000;
     private static final int BLOCK_COUNT_FOR_HASH_RATE = 100;
@@ -56,9 +56,6 @@ public class MachineInfoService implements ApplicationListener {
 
     @Autowired
     private Ethereum ethereum;
-
-    @Autowired
-    private SyncManager syncManager;
 
     @Autowired
     private EthereumApiImpl ethereumApi;
@@ -180,7 +177,7 @@ public class MachineInfoService implements ApplicationListener {
 
         blockchainInfo.set(
                 new BlockchainInfoDTO(
-                        syncManager.getLastKnownBlockNumber(),
+                        ethereumApi.getLastKnownBlockNumber(),
                         bestBlock.getNumber(),
                         bestBlock.getTimestamp(),
                         bestBlock.getTransactionsList().size(),

@@ -40,9 +40,16 @@ var BlockchainView = (function () {
      */
     var renderColumns = [];
 
+    /**
+     * Block which user rolled over with mouse.
+     * @type {Block}
+     */
+    var mouseOverBlockHash = null;
+
     var svgContainer = null;
 
     var blockHashFun = function(b) {return b.blockHash};
+    var hashCompareFun = function(hash) { return function(b) {return b.blockHash == hash}};
 
     /**
      * Complex function for removing old blocks.
@@ -139,6 +146,7 @@ var BlockchainView = (function () {
     }
 
     /**
+     * Draw canonical bracket marker (left or right)
      * @param mW - parameter for left(0) or right(1) side bracket
      * @param mS - direction of bracket: to right(-1) or to left(1)
      * @returns {Function}
@@ -259,6 +267,14 @@ var BlockchainView = (function () {
                 });
             });
 
+        rawData.forEach(function(block) {
+            var parentBlock = blockStore[block.parentHash];
+            if (parentBlock) {
+                block.parentX = parentBlock.x;
+                block.parentY = parentBlock.y;
+            }
+            block.hasParent = parentBlock != null;
+        });
 
         var blockNumberObjects = blockNumbers
             .map(function(blockNumber, i) {
@@ -270,6 +286,7 @@ var BlockchainView = (function () {
                     text:   blockNumber
                 };
             });
+
 
         svgContainer
             .attr('width', width)
@@ -297,7 +314,15 @@ var BlockchainView = (function () {
 
         blockGroupSelection
             .attr('opacity', 1)
-            .attr("transform", function(d) { return "translate(" + d.x + "," + (d.y - BLOCK_HEIGHT - GAP) + ")"});
+            .attr("transform", function(d) { return "translate(" + d.x + "," + (d.y - BLOCK_HEIGHT - GAP) + ")"})
+            .on('mouseover', function(d, i) {
+                mouseOverBlockHash = d.blockHash;
+                drawParentLines(svgContainer, width, height);
+            })
+            .on('mouseout', function(d, i) {
+                mouseOverBlockHash = null;
+                drawParentLines(svgContainer, width, height);
+            });
 
         blockGroupSelection
             .append('rect')
@@ -321,19 +346,6 @@ var BlockchainView = (function () {
                 //    parentHash : d.parentHash
                 //}]);
             })
-            //.on('mouseover', function(d, i) {
-            //    lineContainer
-            //        .append('path')
-            //        .attr('stroke', '#FFD966')
-            //        .attr('stroke-width', 3)
-            //        .attr('d', lineFunction(leftBracketData))
-            //        .attr('fill', 'none');
-            //})
-            //.on('mouseout', function(d, i) {
-            //    lineContainer
-            //        .selectAll('*')
-            //        .remove();
-            //})
             .attr('opacity', 0)
             .transition()
             .duration(1000)
@@ -444,6 +456,59 @@ var BlockchainView = (function () {
             .attr('stroke-width', 2)
             .attr('fill', 'none');
 
+        drawParentLines(svgContainer, width, height);
+    }
+
+    function drawParentLines(svgContainer, width, height) {
+        var lineContainer = svgContainer.select('#lineContainer');
+        var mouseOverBlock = rawData.find(hashCompareFun(mouseOverBlockHash));
+        if (!mouseOverBlock) {
+            lineContainer
+                .selectAll('*')
+                .remove();
+            return;
+        }
+
+        var blockLinesObjects = rawData
+            .reverse()
+            .reduce(function(blocks, b) {
+                if (blocks[0].parentHash == b.blockHash) {
+                    blocks.unshift(b);
+                }
+                return blocks;
+            }, [mouseOverBlock]);
+        rawData.reverse();  // back
+
+        blockLinesObjects.shift();
+        //console.log(blockLinesObjects.map(blockHashFun));
+
+        var lineSelection = lineContainer
+            .selectAll('path')
+            .data(
+                blockLinesObjects
+                    .filter(function(d) {
+                        return d.hasParent;
+                    }),
+                blockHashFun);
+
+        lineSelection
+            .enter()
+            .append('path')
+            .attr('stroke', '#FFD966')
+            .attr('stroke-width', 1)
+            .attr('fill', 'none')
+            .style('stroke-dasharray', ('2, 2'));
+
+        lineSelection
+            .exit()
+            .remove();
+
+        lineSelection
+            .transition()
+            .duration(1000)
+            .attr('d', function(d) {
+                return lineFunction([point(d.x + BLOCK_WIDTH / 2, d.y + BLOCK_HEIGHT / 2), point(d.parentX + BLOCK_WIDTH / 2, d.parentY + BLOCK_HEIGHT / 2)]);
+            });
     }
 
     function ChartComponent(element, config) {
