@@ -88,37 +88,6 @@
                 });
         };
 
-        //$scope.onSignAndSend(
-        //    'cd2a3d9f938e13cd947ec05abc7fe734df8dd826',
-        //    '79b08ad8787060333663d19704909ee7b1903e58',
-        //    '0x300000',
-        //    '0x10000000000',
-        //    '0x7777',
-        //    '0x1',
-        //    '0x101F15');
-
-        //$scope.onSignAndSend(
-        //    'cd2a3d9f938e13cd947ec05abc7fe734df8dd826',
-        //    '79b08ad8787060333663d19704909ee7b1903e58',
-        //    3145728,
-        //    1099511627776,
-        //    40001,
-        //    '0x1',
-        //    1056546);
-
-        /*
-         'cd2a3d9f938e13cd947ec05abc7fe734df8dd826'
-         pkeyOrSeed:"cow"
-         value:"100000"
-         data:""
-         gasLimit:21000
-         gasPrice:20000000000
-         nonce:1056547
-
-         */
-
-
-
         var commandLinePendingUnlock = null;
 
         $scope.$on('$destroy', function() {
@@ -206,7 +175,8 @@
                             }, 10);
                         },
                         historyFilter: function(command) {
-                            return !isCommandIn(command, ['personal_unlockAccount', 'personal_importRawKey']);
+                            // exclude these commands as they include passwords
+                            return !isCommandIn(command, ['personal_unlockAccount', 'personal_importRawKey', 'personal_newAccount']);
                         },
                         //onCommandChange: onCommandChange,
                         prompt: 'node> ',

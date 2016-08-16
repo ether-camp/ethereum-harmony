@@ -8,8 +8,13 @@ var BlockchainView = (function () {
 
     var MAX_BLOCK_COUNT = 50;
 
+    /**
+     * Map of block hash to block object.
+     * @type {{String, Block}}
+     */
     var blockStore = {};
 
+    // for local debug
     var selfTodoRemove = null;
 
     /**
@@ -24,8 +29,13 @@ var BlockchainView = (function () {
      * @type {Array}
      */
     var rawData = [];
+
     /**
      * Grid (2 dimension array) of blocks to be rendered at that location.
+     * Indexing order, for example [[b00, b01],[b10, b11]] will be rendered:
+     * b01 b11
+     * b00 b10
+     * Array order is matter, but sub-array index doesn't. Block.index is used for proper location inside column.
      * @type {Array}
      */
     var renderColumns = [];
@@ -34,6 +44,9 @@ var BlockchainView = (function () {
 
     var blockHashFun = function(b) {return b.blockHash};
 
+    /**
+     * Complex function for removing old blocks.
+     */
     function checkForRemove() {
         if (rawData.length > MAX_BLOCK_COUNT) {
             var blockForRemove = rawData.shift();
@@ -41,6 +54,7 @@ var BlockchainView = (function () {
                 return c.some(function(b, i) {
                     if (b && b.blockHash == blockForRemove.blockHash) {
                         delete c[i];
+                        delete blockStore[blockForRemove.blockHash];
                         //console.log('Removed from grid ' + blockForRemove.blockHash);
                         return true;
                     }
@@ -61,6 +75,9 @@ var BlockchainView = (function () {
         }
     }
 
+    /**
+     * Complex function for adding new blocks.
+     */
     function prepareAndAddBlocks(newBlocks) {
         newBlocks.forEach(function(b) {
             if (!blockStore[b.blockHash]) {
@@ -297,12 +314,12 @@ var BlockchainView = (function () {
                 //d - datum
                 //i - identifier or index
                 //this - the `<rect>` that was clicked
-                selfTodoRemove.addBlocks([{
-                    blockHash : 'R' + Math.random().toString(),
-                    blockNumber : d.blockNumber,
-                    difficulty : d.difficulty + 1,
-                    parentHash : d.parentHash
-                }]);
+                //selfTodoRemove.addBlocks([{
+                //    blockHash : 'R' + Math.random().toString(),
+                //    blockNumber : d.blockNumber,
+                //    difficulty : d.difficulty + 1,
+                //    parentHash : d.parentHash
+                //}]);
             })
             //.on('mouseover', function(d, i) {
             //    lineContainer

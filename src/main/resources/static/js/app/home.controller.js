@@ -1,7 +1,7 @@
 /**
  * Render home page.
  *  - show blockchain tree chart;
- *
+ *  - show blockchain info
  */
 
 (function() {
@@ -77,14 +77,12 @@
         });
         $scope.$on('networkInfoEvent', function(event, item) {
             $timeout(function() {
-                console.log(item);
                 $scope.activePeers = item.activePeers;
                 $scope.syncStatus = syncStatuses[item.syncStatus] || syncStatuses[item.syncStatus] || 'n/a';
                 $scope.ethPort = item.ethPort;
                 $scope.ethAccessible = item.ethAccessible;
                 $scope.miners = item.miners;
-                $scope.isLongSync = $scope.syncStatus == 'LONG_SYNC';
-                console.log('$scope.syncStatus ' + $scope.syncStatus)
+                $scope.isLongSync = item.syncStatus == 'LONG_SYNC';
             }, 10);
         });
         $scope.$on('connectedEvent', function (event, item) {

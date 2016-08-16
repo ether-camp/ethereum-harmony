@@ -1426,6 +1426,8 @@ public class JsonRpcImpl implements JsonRpc {
     public String personal_newAccount(String password) {
         String s = null;
         try {
+
+
             // generate new private key
             ECKey key = new ECKey();
             Account account = importAccount(key, password);
@@ -1438,6 +1440,9 @@ public class JsonRpcImpl implements JsonRpc {
     public String personal_importRawKey(String keydata, String passphrase) {
         String s = null;
         try {
+            Objects.requireNonNull(keydata, "keydata is required");
+            Objects.requireNonNull(passphrase, "passphrase is required");
+
             Account account = importAccount(ECKey.fromPrivate(Hex.decode(keydata)), passphrase);
             return s = toJsonHex(account.getAddress());
         } finally {

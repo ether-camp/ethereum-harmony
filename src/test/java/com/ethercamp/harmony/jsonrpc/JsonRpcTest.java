@@ -76,16 +76,10 @@ public class JsonRpcTest {
         }
 
         @Bean
-        public FileSystemKeystore keystoreManager() {
+        public FileSystemKeystore keystoreManager() throws IOException {
             return new FileSystemKeystore() {
-                Path keystorePath = null;
-                {
-                    try {
-                        keystorePath = Files.createTempDirectory("keystore");
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
+                Path keystorePath = Files.createTempDirectory("keystore");
+
                 @Override
                 protected Path getKeyStoreLocation() {
                     return keystorePath;
