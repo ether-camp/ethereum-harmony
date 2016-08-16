@@ -96,7 +96,7 @@
     }
 
 
-    // change default animation step time
+    // change default animation step time to improve performance
     jQuery.fx.interval = 100;
     var c = 0;
 
@@ -160,6 +160,7 @@
             memoryFree: "",
             freeSpace: "",
 
+            highestBlockNumber: 0,
             lastBlockNumber: 0,
             lastBlockTimeMoment: "loading...",
             lastBlockTransactions: "N/A",
@@ -357,6 +358,7 @@
 
             $timeout(function() {
                 updateBlockCounter(info.lastBlockNumber);
+                vm.data.highestBlockNumber      = info.highestBlockNumber;
                 vm.data.lastBlockNumber         = info.lastBlockNumber;
                 vm.data.lastBlockTime           = info.lastBlockTime;
                 vm.data.lastBlockTimeMoment     = moment(info.lastBlockTime * 1000).fromNow();

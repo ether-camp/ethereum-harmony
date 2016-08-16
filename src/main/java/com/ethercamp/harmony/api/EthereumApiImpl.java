@@ -103,6 +103,7 @@ public class EthereumApiImpl {
             ethereum.addListener(new EthereumListenerAdapter() {
                 @Override
                 public void onSyncDone() {
+                    log.info("Sync done");
                     syncStatus = SyncStatus.SHORT_SYNC;
                 }
             });
@@ -147,7 +148,7 @@ public class EthereumApiImpl {
     }
 
     public long getBestBlockNumber(){
-        return blockchain.getBestBlock().getNumber();
+        return syncManager.getLastKnownBlockNumber();
     }
 
     /**

@@ -257,6 +257,7 @@
 
                         if (isCommandIn(command, ['eth_sendTransactionArgs', 'eth_sendRawTransaction'])) {
                             // request tx receipt
+                            term.echo('Requesting tx receipt via ethj_getTransactionReceipt');
                             onCommandEnter('ethj_getTransactionReceipt ' + result, term);
                         }
                     })

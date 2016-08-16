@@ -15,6 +15,7 @@ import org.ethereum.core.Block;
 import org.ethereum.core.TransactionReceipt;
 import org.ethereum.facade.Ethereum;
 import org.ethereum.listener.EthereumListenerAdapter;
+import org.ethereum.sync.SyncManager;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,6 +56,9 @@ public class MachineInfoService implements ApplicationListener {
 
     @Autowired
     private Ethereum ethereum;
+
+    @Autowired
+    private SyncManager syncManager;
 
     @Autowired
     private EthereumApiImpl ethereumApi;
@@ -176,6 +180,7 @@ public class MachineInfoService implements ApplicationListener {
 
         blockchainInfo.set(
                 new BlockchainInfoDTO(
+                        syncManager.getLastKnownBlockNumber(),
                         bestBlock.getNumber(),
                         bestBlock.getTimestamp(),
                         bestBlock.getTransactionsList().size(),

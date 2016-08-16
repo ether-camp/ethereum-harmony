@@ -18,6 +18,7 @@
         $scope.ethPort = 'n/a';
         $scope.ethAccessible = 'n/a';
         $scope.miners = [];
+        $scope.isLongSync = false;
 
         var syncStatuses = {
             'LONG_SYNC': 'Long sync',
@@ -76,11 +77,14 @@
         });
         $scope.$on('networkInfoEvent', function(event, item) {
             $timeout(function() {
+                console.log(item);
                 $scope.activePeers = item.activePeers;
-                $scope.syncStatus = syncStatuses[item.syncStatus] || item.syncStatus || 'n/a';
+                $scope.syncStatus = syncStatuses[item.syncStatus] || syncStatuses[item.syncStatus] || 'n/a';
                 $scope.ethPort = item.ethPort;
                 $scope.ethAccessible = item.ethAccessible;
                 $scope.miners = item.miners;
+                $scope.isLongSync = $scope.syncStatus == 'LONG_SYNC';
+                console.log('$scope.syncStatus ' + $scope.syncStatus)
             }, 10);
         });
         $scope.$on('connectedEvent', function (event, item) {

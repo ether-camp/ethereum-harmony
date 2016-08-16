@@ -10,6 +10,8 @@ import lombok.Value;
 @AllArgsConstructor
 public class BlockchainInfoDTO {
 
+    private final Long highestBlockNumber;
+
     private final Long lastBlockNumber;
 
     /**
