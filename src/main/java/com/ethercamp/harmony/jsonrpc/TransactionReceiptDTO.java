@@ -3,6 +3,7 @@ package com.ethercamp.harmony.jsonrpc;
 import org.ethereum.core.Block;
 import org.ethereum.core.TransactionInfo;
 import org.ethereum.core.TransactionReceipt;
+import org.ethereum.jsonrpc.*;
 import org.ethereum.util.ByteUtil;
 import org.ethereum.vm.LogInfo;
 
@@ -20,24 +21,26 @@ public class TransactionReceiptDTO {
     public long cumulativeGasUsed;   // The total amount of gas used when this transaction was executed in the block.
     public long gasUsed;             //The amount of gas used by this specific transaction alone.
     public String contractAddress; // The contract address created, if the transaction was a contract creation, otherwise  null .
-    public JsonRpc.LogFilterElement[] logs;         // Array of log objects, which this transaction generated.
+    public org.ethereum.jsonrpc.JsonRpc.LogFilterElement[] logs;         // Array of log objects, which this transaction generated.
 
     public  TransactionReceiptDTO(Block block, TransactionInfo txInfo){
         TransactionReceipt receipt = txInfo.getReceipt();
 
         transactionHash = toJsonHex(receipt.getTransaction().getHash());
         transactionIndex = txInfo.getIndex();
-        blockHash = toJsonHex(txInfo.getBlockHash());
-        blockNumber = block.getNumber();
         cumulativeGasUsed = ByteUtil.byteArrayToLong(receipt.getCumulativeGas());
         gasUsed = ByteUtil.byteArrayToLong(receipt.getGasUsed());
         if (receipt.getTransaction().getContractAddress() != null)
             contractAddress = toJsonHex(receipt.getTransaction().getContractAddress());
-        logs = new JsonRpc.LogFilterElement[receipt.getLogInfoList().size()];
-        for (int i = 0; i < logs.length; i++) {
-            LogInfo logInfo = receipt.getLogInfoList().get(i);
-            logs[i] = new JsonRpc.LogFilterElement(logInfo, block, txInfo.getIndex(),
-                    txInfo.getReceipt().getTransaction(), i);
+        logs = new org.ethereum.jsonrpc.JsonRpc.LogFilterElement[receipt.getLogInfoList().size()];
+        if (block != null) {
+            blockNumber = block.getNumber();
+            blockHash = toJsonHex(txInfo.getBlockHash());
+            for (int i = 0; i < logs.length; i++) {
+                LogInfo logInfo = receipt.getLogInfoList().get(i);
+                logs[i] = new org.ethereum.jsonrpc.JsonRpc.LogFilterElement(logInfo, block, txInfo.getIndex(),
+                        txInfo.getReceipt().getTransaction(), i);
+            }
         }
     }
 }
