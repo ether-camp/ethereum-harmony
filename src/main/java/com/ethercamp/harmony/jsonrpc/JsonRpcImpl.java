@@ -1,6 +1,7 @@
 package com.ethercamp.harmony.jsonrpc;
 
 import com.ethercamp.harmony.api.EthereumApiImpl;
+import com.ethercamp.harmony.api.data.ParsedBlock;
 import com.ethercamp.harmony.keystore.Keystore;
 import com.ethercamp.harmony.util.ErrorCodes;
 import com.ethercamp.harmony.util.HarmonyException;
@@ -193,6 +194,10 @@ public class JsonRpcImpl implements JsonRpc {
         return worldManager.getBlockchain().getBlockByHash(bhash);
     }
 
+    private ParsedBlock getParsedBlockByJSonHash(String blockHash) throws Exception {
+        return ethereumApi.getBlockByHash(blockHash);
+    }
+
     private Block getByJsonBlockId(String id) {
         if ("earliest".equalsIgnoreCase(id)) {
             return blockchain.getBlockByNumber(0);
@@ -339,8 +344,15 @@ public class JsonRpcImpl implements JsonRpc {
         return TypeConverter.toJsonHex(nonce);
     }
 
-    public String eth_getBlockTransactionCountByHash(String blockHash) throws Exception {
+    public String eth_getBlockTransactionCountByHash_Old(String blockHash) throws Exception {
         Block b = getBlockByJSonHash(blockHash);
+        if (b == null) return null;
+        long n = b.getTransactionsList().size();
+        return TypeConverter.toJsonHex(n);
+    }
+
+    public String eth_getBlockTransactionCountByHash(String blockHash) throws Exception {
+        ParsedBlock b = getParsedBlockByJSonHash(blockHash);
         if (b == null) return null;
         long n = b.getTransactionsList().size();
         return TypeConverter.toJsonHex(n);

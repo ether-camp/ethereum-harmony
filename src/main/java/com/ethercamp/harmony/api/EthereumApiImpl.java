@@ -1,6 +1,7 @@
 package com.ethercamp.harmony.api;
 
 import com.ethercamp.harmony.api.data.ParsedBlock;
+import com.ethercamp.harmony.api.data.ParsedTransaction;
 import com.ethercamp.harmony.api.data.SyncStatus;
 import com.ethercamp.harmony.jsonrpc.TypeConverter;
 import com.ethercamp.harmony.keystore.Keystore;
@@ -26,9 +27,18 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Supplier;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
+
 import static java.lang.Math.max;
 
 /**
+ * Possible candidate for stable Ethereum API
+ *
  * Created by Stan Reshetnyk on 03.08.16.
  */
 @Component
@@ -171,10 +181,6 @@ public class EthereumApiImpl {
         return blockMiner.isMining();
     }
 
-    public String eth_hashrate() {
-        return null;
-    }
-
     public long eth_gasPrice(){
         return eth.getGasPrice();
     }
@@ -193,6 +199,27 @@ public class EthereumApiImpl {
 
     public int getEthPort() {
         return config.listenPort();
+    }
+
+    public ParsedBlock getBlockByNumber(long blockNumber) {
+        Block block = worldManager.getBlockchain().getBlockByNumber(blockNumber);
+        return convert(block);
+    }
+
+    public ParsedBlock getBlockByHash(String blockHash) {
+        byte[] bhash = TypeConverter.StringHexToByteArray(blockHash);
+        Block block = worldManager.getBlockchain().getBlockByHash(bhash);
+        return convert(block);
+    }
+
+    // core is at Java1.7, later need to remove stream usage
+    private ParsedBlock convert(Block block) {
+        return ParsedBlock.valueOf(
+            block.getNumber(),
+            Collections.unmodifiableList(block.getTransactionsList()
+                    .stream()
+                    .map(t -> ParsedTransaction.valueOf())
+                    .collect(Collectors.toList())));
     }
 
 //    public String[] eth_accounts() {
@@ -305,5 +332,4 @@ public class EthereumApiImpl {
 //            if (log.isDebugEnabled()) log.debug("eth_getCode(" + address + ", " + blockId + "): " + s);
 //        }
 //    }
-
 }
