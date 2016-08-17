@@ -322,5 +322,4 @@ public interface EthereumApi {
     boolean personal_lockAccount(String address);
 
     String[] personal_listAccounts();
-    String[] listAvailableMethods();
 }

@@ -1,5 +1,6 @@
 package com.ethercamp.harmony.api;
 
+import com.ethercamp.harmony.api.data.ParsedBlock;
 import com.ethercamp.harmony.api.data.SyncStatus;
 import com.ethercamp.harmony.jsonrpc.TypeConverter;
 import com.ethercamp.harmony.keystore.Keystore;
@@ -148,7 +149,7 @@ public class EthereumApiImpl {
     }
 
     public long getBestBlockNumber(){
-        return syncManager.getLastKnownBlockNumber();
+        return blockchain.getBestBlock().getNumber();
     }
 
     /**
@@ -304,6 +305,5 @@ public class EthereumApiImpl {
 //            if (log.isDebugEnabled()) log.debug("eth_getCode(" + address + ", " + blockId + "): " + s);
 //        }
 //    }
-
 
 }

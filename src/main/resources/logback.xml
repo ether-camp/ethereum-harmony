@@ -26,7 +26,7 @@
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
 
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>INFO</level>
+            <level>DEBUG</level>
         </filter>
 
         <encoder>
@@ -34,9 +34,12 @@
         </encoder>
     </appender>
 
-    <root level="INFO">
-        <appender-ref ref="FILE"/>
+    <root level="DEBUG">
         <appender-ref ref="STDOUT"/>
+    </root>
+
+    <root level="ERROR">
+        <appender-ref ref="FILE"/>
     </root>
 
 
@@ -48,6 +51,8 @@
         <logger level="DEBUG" name="org.hibernate.SQL"/>
     -->
 
+    <logger level="DEBUG" name="harmony"/>
+    <logger level="DEBUG" name="jsonrpc"/>
     <logger level="INFO" name="org.springframework.web.servlet.DispatcherServlet"/>
     <logger level="DEBUG" name="com.ethercamp.harmony"/>
     <logger level="ERROR" name="blockchain"/>
@@ -65,13 +70,13 @@
     <logger level="DEBUG" name="pg-data-copier"/>
     <logger level="INFO" name="blocks-holder"/>
     <logger level="INFO" name="contract-data"/>
-    <logger level="DEBUG" name="stat"/>
+    <logger level="INFO" name="stat"/>
 
     <logger level="INFO" name="sync"/>
     <logger level="TRACE" name="notification"/>
     <logger level="ERROR" name="wallet"/>
-    <logger level="DEBUG" name="net"/>
-    <logger level="DEBUG" name="db"/>
+    <logger level="INFO" name="net"/>
+    <logger level="INFO" name="db"/>
     <logger level="ERROR" name="peerdiscovery"/>
     <logger level="ERROR" name="peermonitor"/>
     <logger level="ERROR" name="java.nio"/>

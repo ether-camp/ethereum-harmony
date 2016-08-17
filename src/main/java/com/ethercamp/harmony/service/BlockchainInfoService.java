@@ -243,15 +243,15 @@ public class BlockchainInfoService implements ApplicationListener {
     private long getFreeDiskSpace() {
         final File currentDir = new File(".");
         for (Path root : FileSystems.getDefault().getRootDirectories()) {
-            log.debug(root.toAbsolutePath() + " vs current " + currentDir.getAbsolutePath());
+//            log.debug(root.toAbsolutePath() + " vs current " + currentDir.getAbsolutePath());
             try {
                 final FileStore store = Files.getFileStore(root);
 
                 final boolean isCurrentDirBelongsToRoot = Paths.get(currentDir.getAbsolutePath()).startsWith(root.toAbsolutePath());
                 if (isCurrentDirBelongsToRoot) {
                     final long usableSpace = store.getUsableSpace();
-                    log.debug("Disk available:" + readableFileSize(usableSpace)
-                            + ", total:" + readableFileSize(store.getTotalSpace()));
+//                    log.debug("Disk available:" + readableFileSize(usableSpace)
+//                            + ", total:" + readableFileSize(store.getTotalSpace()));
                     return usableSpace;
                 }
             } catch (IOException e) {
@@ -303,17 +303,17 @@ public class BlockchainInfoService implements ApplicationListener {
         messagingAppender.start();
 
         // Attach appender to specific loggers
-        Arrays.asList("blockchain", "sync", "facade", "net", "general")
-                .stream()
-                .forEach(l -> {
-                    Logger logger = context.getLogger(l);
-                    logger.setLevel(Level.INFO);
-                    logger.addAppender(messagingAppender);
-                });
+//        Arrays.asList("blockchain", "sync", "facade", "net", "general")
+//                .stream()
+//                .forEach(l -> {
+//                    Logger logger = context.getLogger(l);
+//                    logger.setLevel(Level.INFO);
+//                    logger.addAppender(messagingAppender);
+//                });
 
         // way to subscribe to all loggers existing at the moment
-//        context.getLoggerList().stream()
-//                .forEach(l -> l.addAppender(messagingAppender));
+        context.getLoggerList().stream()
+                .forEach(l -> l.addAppender(messagingAppender));
     }
 
     public static class BlockchainConsts {

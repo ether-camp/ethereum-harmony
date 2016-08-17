@@ -19,7 +19,7 @@ import java.util.Random;
 import java.util.UUID;
 
 /**
- * Converts private key and password to json content and back.
+ * Converts private key and password to json content and vise versa.
  */
 @Component
 @Slf4j(topic = "keystore")

@@ -59,13 +59,13 @@ public class JsonRpcUsageService implements ApplicationListener {
         /**
          * Initialize empty stats for all methods.
          */
-        Arrays.stream(jsonRpc.listAvailableMethods())
+        Arrays.stream(jsonRpc.ethj_listAvailableMethods())
                 .forEach(line -> {
                     final String methodName = line.split(" ")[0];
                     String curlExample = curlExamples.get(methodName);
                     if (curlExample == null) {
                         curlExample = generateCurlExample(line) + " " + serverUrl;
-                        log.info("Generate curl example for JSON-RPC method: " + methodName);
+                        log.debug("Generate curl example for JSON-RPC method: " + methodName);
                     }
                     stats.put(methodName, new CallStats(methodName, 0l, null, curlExample));
                 });

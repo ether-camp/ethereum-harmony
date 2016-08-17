@@ -1,5 +1,8 @@
 package com.ethercamp.harmony.jsonrpc;
 
+import lombok.AllArgsConstructor;
+import lombok.ToString;
+import lombok.Value;
 import org.ethereum.core.Block;
 import org.ethereum.core.CallTransaction;
 import org.ethereum.core.Transaction;
@@ -14,19 +17,13 @@ import static com.ethercamp.harmony.jsonrpc.TypeConverter.toJsonHex;
  */
 public interface JsonRpc {
 
+    @Value
+    @AllArgsConstructor
+    @ToString
     class SyncingResult {
-        public String startingBlock;
-        public String currentBlock;
-        public String highestBlock;
-
-        @Override
-        public String toString() {
-            return "SyncingResult{" +
-                    "startingBlock='" + startingBlock + '\'' +
-                    ", currentBlock='" + currentBlock + '\'' +
-                    ", highestBlock='" + highestBlock + '\'' +
-                    '}';
-        }
+        private final String startingBlock;
+        private final String currentBlock;
+        private final String highestBlock;
     }
 
     class CallArguments {
@@ -200,7 +197,7 @@ public interface JsonRpc {
     SyncingResult eth_syncing();
     String eth_coinbase();
     boolean eth_mining();
-    String eth_hashrate();
+//    String eth_hashrate();
     String eth_gasPrice();
     String[] eth_accounts();
     String eth_blockNumber();
@@ -327,5 +324,5 @@ public interface JsonRpc {
     boolean personal_lockAccount(String address);
 
     String[] personal_listAccounts();
-    String[] listAvailableMethods();
+    String[] ethj_listAvailableMethods();
 }

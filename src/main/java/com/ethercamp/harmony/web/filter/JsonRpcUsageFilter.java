@@ -15,6 +15,10 @@ import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;
 import java.io.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Intercept JSON-RPC requests and updates usage stats.
@@ -27,6 +31,8 @@ import java.io.*;
 @WebFilter(urlPatterns = AppConst.JSON_RPC_PATH)
 public class JsonRpcUsageFilter implements Filter {
 
+    private static final List<String> EXCLUDE_LOGS = Arrays.asList("eth_getLogs", "eth_getFilterLogs",
+            "personal_newAccount", "personal_importRawKey", "personal_unlockAccount");
     @Autowired
     JsonRpcUsageService jsonRpcUsageService;
 
@@ -49,8 +55,11 @@ public class JsonRpcUsageFilter implements Filter {
 
                     final String body = IOUtils.toString(wrappedRequest.getReader());
 
+                    // read request for log later
                     final JsonNode json = mapper.readTree(body);
                     final String methodName = json.get("method").asText();
+                    final List<String> params = new ArrayList<>();
+                    json.get("params").forEach(n -> params.add(n.asText()));
 
                     wrappedRequest.resetInputStream();
 
@@ -63,9 +72,19 @@ public class JsonRpcUsageFilter implements Filter {
                         chain.doFilter(wrappedRequest, responseCopier);
                         responseCopier.flushBuffer();
                     } finally {
+                        // read response for stats and log
                         final byte[] copy = responseCopier.getCopy();
                         final String responseText = new String(copy, response.getCharacterEncoding());
                         jsonRpcUsageService.methodInvoked(methodName, responseText);
+
+                        if (log.isDebugEnabled()) {
+                            // passwords could logged here
+                            if (!EXCLUDE_LOGS.contains(methodName)) {
+                                log.debug(methodName + "(" + params.stream().collect(Collectors.joining(", ")) + "): " + responseText);
+                            } else {
+                                // logging is handled manually in service
+                            }
+                        }
                     }
                 } catch (IOException e) {
                     log.error("Error parsing JSON-RPC request", e);

@@ -98,7 +98,7 @@
          * Load method names for code completion if not already
          */
         if (terminalCompletionWords.length == 0) {
-            jsonrpc.request('listAvailableMethods', {})
+            jsonrpc.request('ethj_listAvailableMethods', {})
                 .then(function(result) {
                     //console.log(result);
                     console.log('Result methods count available:' + result.length);

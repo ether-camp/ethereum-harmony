@@ -494,7 +494,7 @@ var BlockchainView = (function () {
         lineSelection
             .enter()
             .append('path')
-            .attr('stroke', '#FFD966')
+            .attr('stroke', '#C5E0B4')
             .attr('stroke-width', 1)
             .attr('fill', 'none')
             .style('stroke-dasharray', ('2, 2'));
