@@ -19,8 +19,10 @@ import org.ethereum.jsontestsuite.model.BlockTck;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.io.IOException;
@@ -43,6 +45,7 @@ import java.io.IOException;
  */
 @SpringBootApplication
 @EnableScheduling
+@Import(DefaultConfig.class)
 public class TestApplication {
 
     /**
@@ -69,6 +72,10 @@ public class TestApplication {
 
         ConfigurableApplicationContext context =
                 SpringApplication.run(new Object[]{DefaultConfig.class, Application.class}, args);
+        processAfterContext(context);
+    }
+
+    public static void processAfterContext(ApplicationContext context) throws IOException {
         EthereumImpl ethereum = context.getBean(EthereumImpl.class);
         String json = JSONReader.loadJSONFromCommit("BlockchainTests/bcRPC_API_Test.json", "c58d3dce3f64f7ee1f711054fc464202bb0b7d64");
         BlockTestSuite testSuite = new BlockTestSuite(json);
