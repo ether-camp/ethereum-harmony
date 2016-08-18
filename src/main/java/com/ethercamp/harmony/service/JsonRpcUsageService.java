@@ -49,26 +49,29 @@ public class JsonRpcUsageService implements ApplicationListener {
          * Load conf file with curl examples per each JSON-RPC method.
          */
         Config config = ConfigFactory.load("json-rpc-help");
-        Map<String, String> curlExamples = config.getAnyRefList("doc.curlExamples").stream()
-                .map(e -> (HashMap<String, String>) e)
-                .collect(Collectors.toMap(
-                        e -> e.get("method"),
-                        e -> e.get("curl").replace("${host}", serverUrl)));
+        if (config.hasPath("doc.curlExamples")) {
+
+            Map<String, String> curlExamples = config.getAnyRefList("doc.curlExamples").stream()
+                    .map(e -> (HashMap<String, String>) e)
+                    .collect(Collectors.toMap(
+                            e -> e.get("method"),
+                            e -> e.get("curl").replace("${host}", serverUrl)));
 
 
-        /**
-         * Initialize empty stats for all methods.
-         */
-        Arrays.stream(jsonRpc.ethj_listAvailableMethods())
-                .forEach(line -> {
-                    final String methodName = line.split(" ")[0];
-                    String curlExample = curlExamples.get(methodName);
-                    if (curlExample == null) {
-                        curlExample = generateCurlExample(line) + " " + serverUrl;
-                        log.debug("Generate curl example for JSON-RPC method: " + methodName);
-                    }
-                    stats.put(methodName, new CallStats(methodName, 0l, null, curlExample));
-                });
+            /**
+             * Initialize empty stats for all methods.
+             */
+            Arrays.stream(jsonRpc.ethj_listAvailableMethods())
+                    .forEach(line -> {
+                        final String methodName = line.split(" ")[0];
+                        String curlExample = curlExamples.get(methodName);
+                        if (curlExample == null) {
+                            curlExample = generateCurlExample(line) + " " + serverUrl;
+                            log.debug("Generate curl example for JSON-RPC method: " + methodName);
+                        }
+                        stats.put(methodName, new CallStats(methodName, 0l, null, curlExample));
+                    });
+        }
     }
 
     private String generateCurlExample(String line) {

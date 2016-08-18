@@ -209,7 +209,10 @@ public class EthereumApiImpl {
     public ParsedBlock getBlockByHash(String blockHash) {
         byte[] bhash = TypeConverter.StringHexToByteArray(blockHash);
         Block block = worldManager.getBlockchain().getBlockByHash(bhash);
-        return convert(block);
+        if (block != null) {
+            return convert(block);
+        }
+        return null;
     }
 
     // core is at Java1.7, later need to remove stream usage

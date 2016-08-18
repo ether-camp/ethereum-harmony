@@ -175,20 +175,24 @@ public class PeersService {
      */
     private void createGeoDatabase() {
         final String[] countries = Locale.getISOCountries();
-        final String dbFilePath = env.getProperty("maxmind.file");
+        final Optional<String> dbFilePath = Optional.ofNullable(env.getProperty("maxmind.file"));
 
         for (String country : countries) {
             Locale locale = new Locale("", country);
             localeMap.put(locale.getISO3Country().toUpperCase(), locale);
         }
-        try {
-            lookupService = Optional.of(new LookupService(
-                    dbFilePath,
-                    LookupService.GEOIP_MEMORY_CACHE | LookupService.GEOIP_CHECK_CACHE));
-        } catch (IOException e) {
-            log.error("Please download file and put to " + dbFilePath);
-            log.error("Wasn't able to create maxmind location service. Country information will not be available.", e);
-        }
+        lookupService = dbFilePath
+                .flatMap(path -> {
+                    try {
+                        return Optional.ofNullable(new LookupService(
+                                path,
+                                LookupService.GEOIP_MEMORY_CACHE | LookupService.GEOIP_CHECK_CACHE));
+                    } catch(IOException e) {
+                        log.error("Please download file and put to " + dbFilePath);
+                        log.error("Wasn't able to create maxmind location service. Country information will not be available.");
+                        return Optional.empty();
+                    }
+                });
     }
 
     private String iso2CountryCodeToIso3CountryCode(String iso2CountryCode){

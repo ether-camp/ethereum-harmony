@@ -77,10 +77,10 @@ public class JsonRpcUsageFilter implements Filter {
                         final String responseText = new String(copy, response.getCharacterEncoding());
                         jsonRpcUsageService.methodInvoked(methodName, responseText);
 
-                        if (log.isDebugEnabled()) {
-                            // passwords could logged here
+                        if (log.isInfoEnabled()) {
+                            // passwords could be sent here
                             if (!EXCLUDE_LOGS.contains(methodName)) {
-                                log.debug(methodName + "(" + params.stream().collect(Collectors.joining(", ")) + "): " + responseText);
+                                log.info(methodName + "(" + params.stream().collect(Collectors.joining(", ")) + "): " + responseText);
                             } else {
                                 // logging is handled manually in service
                             }

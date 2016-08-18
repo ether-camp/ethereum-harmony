@@ -846,7 +846,7 @@ public class JsonRpcImpl implements JsonRpc {
         if (fr.topics != null) {
             for (Object topic : fr.topics) {
                 if (topic == null) {
-                    logFilter.withTopic((byte[]) null);
+                    logFilter.withTopic((byte[][]) null);
                 } else if (topic instanceof String) {
                     logFilter.withTopic(new DataWord(StringHexToByteArray((String) topic)).getData());
                 } else if (topic instanceof String[]) {
@@ -899,22 +899,22 @@ public class JsonRpcImpl implements JsonRpc {
     }
 
     @Override
-    public boolean eth_uninstallFilter(String filterId) {
-        if (filterId == null) return false;
-        return installedFilters.remove(StringHexToBigInteger(filterId).intValue()) != null;
+    public boolean eth_uninstallFilter(String id) {
+        if (id == null) return false;
+        return installedFilters.remove(StringHexToBigInteger(id).intValue()) != null;
     }
 
     @Override
-    public Object[] eth_getFilterChanges(String filterId) {
-        Filter filter = installedFilters.get(StringHexToBigInteger(filterId).intValue());
+    public Object[] eth_getFilterChanges(String id) {
+        Filter filter = installedFilters.get(StringHexToBigInteger(id).intValue());
         if (filter == null) return null;
         return filter.poll();
     }
 
     @Override
-    public Object[] eth_getFilterLogs(String filterId) {
+    public Object[] eth_getFilterLogs(String id) {
         log.debug("eth_getFilterLogs ...");
-        return eth_getFilterChanges(filterId);
+        return eth_getFilterChanges(id);
     }
 
     @Override

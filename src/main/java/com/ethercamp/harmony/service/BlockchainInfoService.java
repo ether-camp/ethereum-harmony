@@ -313,7 +313,12 @@ public class BlockchainInfoService implements ApplicationListener {
 
         // way to subscribe to all loggers existing at the moment
         context.getLoggerList().stream()
-                .forEach(l -> l.addAppender(messagingAppender));
+                .forEach(l -> {
+                    if (l.getLevel() != null && Level.DEBUG.isGreaterOrEqual(l.getLevel())) {
+                        l.setLevel(Level.INFO);
+                    }
+                    l.addAppender(messagingAppender);
+                });
     }
 
     public static class BlockchainConsts {
