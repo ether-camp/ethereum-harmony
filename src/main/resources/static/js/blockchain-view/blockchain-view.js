@@ -575,3 +575,6 @@ var BlockchainView = (function () {
         }
     }
 })();
+
+
+exports.BlockchainView = BlockchainView;

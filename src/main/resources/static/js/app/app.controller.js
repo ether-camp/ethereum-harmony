@@ -1,7 +1,20 @@
-(function() {
-    'use strict';
+var $ = require('jquery'),
+    angular = require('angular'),
+    SockJS = require('sockjs-client'),
+    ngRoute = require('angular-route');
 
-    var mainApp = angular.module('HarmonyApp', ['ngRoute', 'angular-jsonrpc-client', 'ngScrollbars']);
+
+    var mainApp = angular.module('HarmonyApp', [
+        'ngRoute',
+        'angular-jsonrpc-client'
+        //'ngScrollbars'
+    ]);
+
+    require('./home.controller.js');
+    require('./peers.controller.js');
+    require('./rpcUsage.controller.js');
+    require('./terminal.controller.js');
+    require('./systemLog.controller.js');
 
     mainApp.controller('AppCtrl', AppCtrl);
 
@@ -385,4 +398,4 @@
 
         connect();
     }
-})();
+

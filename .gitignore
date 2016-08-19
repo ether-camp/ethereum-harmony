@@ -9,3 +9,4 @@ logs
 build
 database*
 unsaved-data
+node_modules

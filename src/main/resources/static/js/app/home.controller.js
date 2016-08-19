@@ -1,13 +1,15 @@
+var BlockchainView = require('js/blockchain-view/blockchain-view.js').BlockchainView;
+
 /**
  * Render home page.
  *  - show blockchain tree chart;
  *  - show blockchain info
  */
 
-(function() {
     'use strict';
 
     function HomeCtrl($scope, $timeout, scrollConfig) {
+        console.log('HomeCtrl activated');
         $scope.scrollConfig = jQuery.extend(true, {}, scrollConfig);
         //$scope.scrollConfig.axis = 'xy';
         $scope.scrollConfig.scrollbarPosition = 'outside';
@@ -109,6 +111,8 @@
         $scope.$on('windowResizeEvent', resizeContainer);
     }
 
+
+
     angular.module('HarmonyApp')
         .controller('HomeCtrl', ['$scope', '$timeout', 'scrollConfig', HomeCtrl])
         .filter('range', function() {
@@ -119,4 +123,5 @@
                 return val;
             };
         });
-})();
+
+exports.HomeCtrl = HomeCtrl;
