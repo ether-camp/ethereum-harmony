@@ -156,7 +156,8 @@ public class BlockchainInfoService implements ApplicationListener {
                     System.currentTimeMillis(),
                     ethereumApi.getNodeId(),
                     port,
-                    isPrivateNetwork
+                    isPrivateNetwork,
+                    env.getProperty("portCheckerUrl")
             ));
         }
     }

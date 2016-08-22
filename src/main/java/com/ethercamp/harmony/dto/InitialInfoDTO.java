@@ -8,7 +8,6 @@ import lombok.Value;
  * Created by Stan Reshetnyk on 13.07.16.
  */
 @Value
-@Builder
 @AllArgsConstructor
 public class InitialInfoDTO {
 
@@ -27,4 +26,6 @@ public class InitialInfoDTO {
     private final Integer rpcPort;
 
     private boolean privateNetwork;
+
+    private final String portCheckerUrl;
 }

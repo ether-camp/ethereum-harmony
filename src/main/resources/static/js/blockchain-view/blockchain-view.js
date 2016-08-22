@@ -103,7 +103,9 @@ var BlockchainView = (function () {
                 blockNumbers.push(b.blockNumber);
             }
         });
-        blockNumbers.sort();
+        // default sort, looks sort values as strings
+        // force number sorting
+        blockNumbers.sort(function(a,b) {return a - b;});
         minBlockNumber = blockNumbers[0];
 
         rawData.forEach(function(b) {
