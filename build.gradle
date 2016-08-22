@@ -104,3 +104,16 @@ task runTest (type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
     jvmArgs = [] + '-Dethereumj.conf.res=test.conf'
 }
+
+task runPrivate (type: JavaExec) {
+    main = "com.ethercamp.harmony.Application"
+    classpath = sourceSets.main.runtimeClasspath
+    jvmArgs = ['-DisPrivateNetwork=true', '-Dethereumj.conf.res=private.conf']
+
+}
+
+task runPrivateMac (type: JavaExec) {
+    main = "com.ethercamp.harmony.Application"
+    classpath = sourceSets.main.runtimeClasspath
+    jvmArgs = [] + '-DisPrivateNetwork=true' + ('-Dethereumj.conf.res=' + System.getProperty("user.dir") + '/src/main/resources/' + 'private.conf');
+}

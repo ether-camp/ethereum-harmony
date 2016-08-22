@@ -15,7 +15,7 @@
         setHeight: 200,
         scrollInertia: 0,
         // having this will cause container to scroll down whenever Cmd or Ctrl pressed
-        //keyboard: { enable: false },
+        keyboard: { enable: false },
         scrollButtons: { enable: false }
     });
 
@@ -77,11 +77,11 @@
     var stompClient = null;
     var simpleSuffixes = {
         suffixes: {
-            B: "",
-            KB: "K",
-            MB: "M",
-            GB: "G",
-            TB: "T"
+            B: '',
+            KB: 'K',
+            MB: 'M',
+            GB: 'G',
+            TB: 'T'
         }
     };
 
@@ -98,7 +98,6 @@
 
     // change default animation step time to improve performance
     jQuery.fx.interval = 100;
-    var c = 0;
 
     function updateBlockCounter(value) {
         var blockCounter = $('#blockCounter');
@@ -156,24 +155,25 @@
             currentPage: "/",
 
             cpuUsage: 0,
-            memoryOccupied: "",
-            memoryFree: "",
-            freeSpace: "",
+            memoryOccupied: '',
+            memoryFree: '',
+            freeSpace: '',
 
             highestBlockNumber: 0,
             lastBlockNumber: 0,
             lastBlockTimeMoment: "loading...",
             lastBlockTransactions: "N/A",
-            difficulty: "N/A",
-            networkHashRate: "N/A",
+            difficulty:         'N/A',
+            networkHashRate:    'N/A',
 
-            appVersion: "n/a",
-            ethereumJVersion: "n/a",
-            networkName: 'n/a',
-            genesisHash: 'n/a',
-            serverStartTime: 'n/a',
-            nodeId: 'n/a',
-            rpcPort: 'n/a'
+            appVersion:         'n/a',
+            ethereumJVersion:   'n/a',
+            networkName:        'n/a',
+            genesisHash:        'n/a',
+            serverStartTime:    'n/a',
+            nodeId:             'n/a',
+            rpcPort:            'n/a',
+            isPrivateNetwork:   false
         };
 
         function jsonParseAndBroadcast(event) {
@@ -251,7 +251,7 @@
                 function(frame) {
                     setConnected(true);
                     if (connectionLostOnce) {
-                        showToastr("Connection established", "");
+                        showToastr('Connection established', '');
                     }
 
                     console.log('Connected');
@@ -302,7 +302,7 @@
                             topicStorage[topic].unsubscribe();
                             topicStorage[topic] = null;
                         }
-                        console.log("Changed subscription to topic:" + topic + " " + doSubscribe);
+                        console.log('Changed subscription to topic:' + topic + ' ' + doSubscribe);
                     }
                 }
             };
@@ -329,7 +329,6 @@
                 if (info.memoryTotal != 0) {
                     memoryPercentage = Math.round(100 * (info.memoryTotal - info.memoryFree) / info.memoryTotal);
                 }
-
                 updateProgressBar('#memoryUsageProgress', memoryPercentage);
                 updateProgressBar('#cpuUsageProgress', info.cpuUsage);
             }, 10);
@@ -343,13 +342,14 @@
                 vm.data.ethereumJVersion = info.ethereumJVersion;
 
                 vm.data.networkName = info.networkName;
+                vm.data.privateNetwork = info.privateNetwork;
                 vm.data.genesisHash = info.genesisHash ? '0x' + info.genesisHash.substr(0, 6) : 'n/a';
                 vm.data.serverStartTime = moment(info.serverStartTime).format('DD-MMM-YYYY, HH:mm');
                 vm.data.nodeId = info.nodeId ? '0x' + info.nodeId.substr(0, 6) : 'n/a';
                 vm.data.rpcPort = info.rpcPort;
             }, 10);
 
-            console.log("App version " + info.appVersion);
+            console.log('App version ' + info.appVersion + ', info.privateNetwork: ' + info.privateNetwork);
             stompClient.unsubscribe('/topic/initialInfo');
         }
 
@@ -366,20 +366,20 @@
                 vm.data.lastBlockTransactions   = info.lastBlockTransactions;
                 vm.data.difficulty              = filesize(info.difficulty, simpleSuffixes);
                 vm.data.lastReforkTime          = info.lastReforkTime;
-                vm.data.networkHashRate         = filesize(info.networkHashRate, simpleSuffixes) + "H/s";
+                vm.data.networkHashRate         = filesize(info.networkHashRate, simpleSuffixes) + 'H/s';
                 vm.data.gasPrice                = formatBigDigital(info.gasPrice) + 'Wei';
             }, 10);
         }
 
         function disconnect() {
             connectionLostOnce = true;
-            showToastr("Connection Lost", "Reconnecting...");
+            showToastr('Connection Lost', 'Reconnecting...');
 
             if (stompClient != null) {
                 stompClient.disconnect();
             }
             setConnected(false);
-            console.log("Disconnected. Retry ...");
+            console.log('Disconnected. Retry ...');
             setTimeout(connect, 5000);
         }
 

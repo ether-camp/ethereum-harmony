@@ -25,4 +25,6 @@ public class InitialInfoDTO {
     private final String nodeId;
 
     private final Integer rpcPort;
+
+    private boolean privateNetwork;
 }

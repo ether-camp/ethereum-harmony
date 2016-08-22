@@ -15,6 +15,7 @@ import org.ethereum.core.Block;
 import org.ethereum.core.TransactionReceipt;
 import org.ethereum.facade.Ethereum;
 import org.ethereum.listener.EthereumListenerAdapter;
+import org.ethereum.mine.MinerListener;
 import org.ethereum.sync.SyncManager;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
@@ -36,6 +37,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.LongStream;
 
 /**
  * Created by Stan Reshetnyk on 11.07.16.
@@ -95,28 +98,42 @@ public class BlockchainInfoService implements ApplicationListener {
         ethereum.addListener(new EthereumListenerAdapter() {
             @Override
             public void onBlock(Block block, List<TransactionReceipt> receipts) {
-                lastBlocksForHashRate.add(block);
-
-                if (lastBlocksForHashRate.size() > BLOCK_COUNT_FOR_HASH_RATE) {
-                    lastBlocksForHashRate.poll();
-                }
-                if (lastBlocksForClient.size() > KEEP_BLOCKS_FOR_CLIENT) {
-                    lastBlocksForClient.poll();
-                }
-
-                BlockInfo blockInfo = new BlockInfo(
-                        block.getNumber(),
-                        Hex.toHexString(block.getHash()),
-                        Hex.toHexString(block.getParentHash()),
-                        block.getDifficultyBI().longValue()
-                );
-                lastBlocksForClient.add(blockInfo);
-                clientMessageService.sendToTopic("/topic/newBlockInfo", blockInfo);
+                addBlock(block);
             }
         });
 
 
         createLogAppenderForMessaging();
+
+
+        final long lastBlock = ethereumApi.getBestBlockNumber();
+        final long startImportBlock = Math.max(0, lastBlock - Math.max(BLOCK_COUNT_FOR_HASH_RATE, KEEP_BLOCKS_FOR_CLIENT));
+
+        LongStream.rangeClosed(startImportBlock, lastBlock)
+                .forEach(i -> {
+                    log.info("Imported block " + i);
+                    addBlock(ethereumApi.getBlock(i));
+                });
+    }
+
+    private void addBlock(Block block) {
+        lastBlocksForHashRate.add(block);
+
+        if (lastBlocksForHashRate.size() > BLOCK_COUNT_FOR_HASH_RATE) {
+            lastBlocksForHashRate.poll();
+        }
+        if (lastBlocksForClient.size() > KEEP_BLOCKS_FOR_CLIENT) {
+            lastBlocksForClient.poll();
+        }
+
+        BlockInfo blockInfo = new BlockInfo(
+                block.getNumber(),
+                Hex.toHexString(block.getHash()),
+                Hex.toHexString(block.getParentHash()),
+                block.getDifficultyBI().longValue()
+        );
+        lastBlocksForClient.add(blockInfo);
+        clientMessageService.sendToTopic("/topic/newBlockInfo", blockInfo);
     }
 
     @Override
@@ -124,9 +141,10 @@ public class BlockchainInfoService implements ApplicationListener {
         if (event instanceof EmbeddedServletContainerInitializedEvent) {
             final int port = ((EmbeddedServletContainerInitializedEvent) event).getEmbeddedServletContainer().getPort();
 
+            final boolean isPrivateNetwork = env.getProperty("isPrivateNetwork", "false").equalsIgnoreCase("true");
             final Optional<String> blockHash = Optional.ofNullable(ethereumApi.getBlock(0l))
                     .map(block -> Hex.toHexString(block.getHash()));
-            final String networkName = blockHash
+            final String networkName = isPrivateNetwork ? "Private Miner Network" : blockHash
                     .map(hash -> BlockchainConsts.GENESIS_BLOCK_HASH_MAP.getOrDefault(hash, "Unknown network"))
                     .orElse("Undefined blockchain");
 
@@ -137,7 +155,8 @@ public class BlockchainInfoService implements ApplicationListener {
                     blockHash.orElse(null),
                     System.currentTimeMillis(),
                     ethereumApi.getNodeId(),
-                    port
+                    port,
+                    isPrivateNetwork
             ));
         }
     }
@@ -232,7 +251,11 @@ public class BlockchainInfoService implements ApplicationListener {
         final long difficulty = bestBlock.getDifficultyBI().longValue();
 
         final long sumTimestamps = blocks.stream().mapToLong(b -> b.getTimestamp()).sum();
-        return difficulty / (sumTimestamps / blocks.size() / 1000);
+        if (sumTimestamps > 0) {
+            return difficulty / (sumTimestamps / blocks.size() / 1000);
+        } else {
+            return 0l;
+        }
     }
 
     /**
@@ -328,7 +351,9 @@ public class BlockchainInfoService implements ApplicationListener {
         static {
             GENESIS_BLOCK_HASH_MAP.put("d4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3", "Live ETH");
             GENESIS_BLOCK_HASH_MAP.put("0cd786a2425d16f152c658316c423e6ce1181e15c3295826d7c9904cba9ce303", "Morden ETH");
-            GENESIS_BLOCK_HASH_MAP.put("???", "Test ETH");
+
+            // not static as user can put changes into genesis, which cause hash to change
+            // GENESIS_BLOCK_HASH_MAP.put("???", "Private Miner Network");
         }
     }
 }
