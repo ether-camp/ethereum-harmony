@@ -7,7 +7,7 @@
 (function() {
     'use strict';
 
-    function HomeCtrl($scope, $timeout, $http, scrollConfig) {
+    function HomeCtrl($scope, $timeout, $http, $q, scrollConfig) {
         $scope.scrollConfig = jQuery.extend(true, {}, scrollConfig);
         //$scope.scrollConfig.axis = 'xy';
         $scope.scrollConfig.scrollbarPosition = 'outside';
@@ -19,6 +19,7 @@
         $scope.ethAccessible = 'n/a';
         $scope.miners = [];
         $scope.isLongSync = false;
+        $scope.publicIp = ' ';
 
         var syncStatuses = {
             'LONG_SYNC': 'Long sync',
@@ -130,64 +131,72 @@
              */
 
             var isPortCheckingProgress = false;
+            var originColor = $('.port-test-result').eq(0).css('color');
 
-            function testPortFun(protocol, portFun, elem) {
-                var resultElem =  elem.parent()
-                    .find($('.port-test-result'));
-                var addressElem =  elem.parent()
-                    .find($('.port-test-address'));
-                var originColor = resultElem.css('color');
+            $('#testPortsLink').click(function() {
+                if (isPortCheckingProgress) {
+                    console.log('Test is already in progress');
+                    return false;
+                }
+                isPortCheckingProgress = true;
 
-                function markResult(success, address, isError) {
+                var elem = $('#testPortsLink');
+                //elem.animateBlinking(500);
+
+                function markResult(elem, success, address, isError) {
                     elem.stop(true, false);
                     elem.fadeIn(1);
                     if (isError) {
-                        resultElem
-                            .text('service issue')
+                        elem.text('service issue')
                     } else {
-                        resultElem
+                        elem
                             .text(success ? 'v' : 'x')
                             .css('color', success ? 'green' : 'red');
-                        addressElem.text(address + ' - ');
+                        $scope.vm.data.publicIp = address;
                     }
+                }
+
+                var ports = [$scope.ethPort, $scope.vm.data.rpcPort];
+                var promises = ports
+                    .map(function(port, i) {
+                        var url = $scope.vm.data.portCheckerUrl + '/checkPort';
+                        var data = { port: port, protocol: 'tcp' };
+
+                        if (!(parseInt(port) > 0)) {
+                            console.log('Not valid port ' + port);
+                            return $q.resolve(true);
+                        }
+
+                        var resultElem = $('.port-test-result').eq(i);
+                        resultElem.animateBlinking(500);
+                        resultElem
+                            .text('?')
+                            .css('color', originColor);
+
+                        return $http({
+                            url: url,
+                            method: 'POST',
+                            data: data
+                        }).then(
+                            function (response) {
+                                console.log(response);
+                                var result = response && response.data && response.data.result;
+                                markResult(resultElem, result, response.data ? response.data.address : null, false);
+                                return response;
+                            },
+                            function (error) {
+                                console.log(error);
+                                markResult(resultElem, false, null, true);
+                                return error;
+                            });
+                    });
+                $q.all(promises).then(function() {
                     isPortCheckingProgress = false;
-                }
-
-                return function() {
-                    if (isPortCheckingProgress) {
-                        console.log('Test is already in progress');
-                        return false;
-                    }
-                    isPortCheckingProgress = true;
-
-                    var url = $scope.vm.data.portCheckerUrl + '/checkPort';
-                    // force TCP check regardless UDP was requested
-                    var data = { port: portFun(), protocol: protocol };
-
-                    resultElem
-                        .text('?')
-                        .css('color', originColor);
-                    addressElem.text('');
-                    elem.animateBlinking(500);
-                    $http({
-                        url: url,
-                        method: 'POST',
-                        data: data
-                    }).then(
-                        function (response) {
-                            console.log(response);
-                            var result = response && response.data && response.data.result;
-                            markResult(result, response.data ? response.data.address : null, false);
-                        },
-                        function (error) {
-                            console.log(error);
-                            markResult(false, null, true);
-                        });
-                }
-            }
-
-            $('#tcpTestLink').click(testPortFun('tcp', function() { return $scope.vm.data.rpcPort; }, $('#tcpTestLink')));
-            $('#udpTestLink').click(testPortFun('tcp', function() { return $scope.ethPort} , $('#udpTestLink')));
+                    elem.stop(true, false);
+                    elem.fadeOut(100);
+                    elem.fadeIn(100);
+                });
+            });
 
             resizeContainer();
         });
@@ -195,7 +204,7 @@
     }
 
     angular.module('HarmonyApp')
-        .controller('HomeCtrl', ['$scope', '$timeout', '$http', 'scrollConfig', HomeCtrl])
+        .controller('HomeCtrl', ['$scope', '$timeout', '$http', '$q', 'scrollConfig', HomeCtrl])
         .filter('range', function() {
             return function(val, range) {
                 range = parseInt(range);

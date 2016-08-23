@@ -85,13 +85,22 @@
 
                         <div class="home-info-row">
                             <div class="col-sm-4">
+                                Public IP:
+                            </div>
+                            <div class="col-sm-4">
+                                {{vm.data.publicIp}}
+                            </div>
+                            <div class="col-sm-4">
+                                <a id="testPortsLink" href="#">Test ports</a>
+                            </div>
+                        </div>
+
+                        <div class="home-info-row">
+                            <div class="col-sm-4">
                                 Eth port:
                             </div>
-                            <div class="col-sm-2">
-                                {{ethPort}}
-                            </div>
-                            <div class="col-sm-6" data-toggle="tooltip" title="Test if your TCP port {{vm.data.rpcPort}} is accessible for incoming connections from internet">
-                                <a id="udpTestLink" href="#">Port test</a> <span class="font-sans-serif">[<span class="port-test-address"/><span class="port-test-result">?</span>]</span>
+                            <div class="col-sm-8">
+                                {{ethPort}}   <span class="font-sans-serif" data-toggle="tooltip" title="Test result if your TCP port {{ethPort}} is accessible for incoming connections from internet">[<span class="port-test-result">?</span>]</span>
                             </div>
                         </div>
 
@@ -99,11 +108,8 @@
                             <div class="col-sm-4">
                                 JsonRPC port:
                             </div>
-                            <div class="col-sm-2">
-                                {{vm.data.rpcPort}}
-                            </div>
-                            <div class="col-sm-6" data-toggle="tooltip" title="Test if your TCP port {{vm.data.rpcPort}} is accessible for incoming connections from internet">
-                                <a id="tcpTestLink" href="#">Port test</a> <span class="font-sans-serif">[<span class="port-test-address"/><span class="port-test-result">?</span>]</span>
+                            <div class="col-sm-8">
+                                {{vm.data.rpcPort}}   <span class="font-sans-serif" data-toggle="tooltip" title="Test result if your TCP port {{vm.data.rpcPort}} is accessible for incoming connections from internet">[<span class="port-test-result">?</span>]</span>
                             </div>
                         </div>
 

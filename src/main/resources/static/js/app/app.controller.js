@@ -146,9 +146,9 @@
         toastr.warning('<strong>' + topMessage + '</strong> <br/><small>' + bottomMessage + '</small>');
     }
 
-    AppCtrl.$inject = ['$scope', '$timeout', '$route', '$location', '$window'];
+    AppCtrl.$inject = ['$scope', '$timeout', '$http', '$window'];
 
-    function AppCtrl ($scope, $timeout, $route, $location, $window) {
+    function AppCtrl ($scope, $timeout, $http, $window) {
         var vm = this;
         vm.isConnected = false;
         vm.data = {
@@ -348,6 +348,14 @@
                 vm.data.nodeId = info.nodeId ? '0x' + info.nodeId.substr(0, 6) : 'n/a';
                 vm.data.rpcPort = info.rpcPort;
                 vm.data.portCheckerUrl = info.portCheckerUrl;
+
+                $http({
+                    url: vm.data.portCheckerUrl + '/checkIp',
+                    method: 'GET',
+                    transformResponse: [function (r) { return r; }]
+                }).then(function(response) {
+                    vm.data.publicIp = response.data;
+                });
             }, 10);
 
             console.log('App version ' + info.appVersion + ', info.privateNetwork: ' + info.privateNetwork);
