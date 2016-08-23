@@ -134,14 +134,22 @@
             function testPortFun(protocol, portFun, elem) {
                 var resultElem =  elem.parent()
                     .find($('.port-test-result'));
+                var addressElem =  elem.parent()
+                    .find($('.port-test-address'));
                 var originColor = resultElem.css('color');
 
-                function markResult(success) {
+                function markResult(success, address, isError) {
                     elem.stop(true, false);
                     elem.fadeIn(1);
-                    resultElem
-                        .text(success ? 'v' : 'x')
-                        .css('color', success ? 'green' : 'red');
+                    if (isError) {
+                        resultElem
+                            .text('service issue')
+                    } else {
+                        resultElem
+                            .text(success ? 'v' : 'x')
+                            .css('color', success ? 'green' : 'red');
+                        addressElem.text(address + ' - ');
+                    }
                     isPortCheckingProgress = false;
                 }
 
@@ -159,6 +167,7 @@
                     resultElem
                         .text('?')
                         .css('color', originColor);
+                    addressElem.text('');
                     elem.animateBlinking(500);
                     $http({
                         url: url,
@@ -167,11 +176,12 @@
                     }).then(
                         function (response) {
                             console.log(response);
-                            markResult(response && response.data && response.data.result);
+                            var result = response && response.data && response.data.result;
+                            markResult(result, response.data ? response.data.address : null, false);
                         },
                         function (error) {
                             console.log(error);
-                            markResult(false);
+                            markResult(false, null, true);
                         });
                 }
             }
