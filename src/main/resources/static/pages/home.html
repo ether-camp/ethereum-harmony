@@ -87,11 +87,11 @@
                             <div class="col-sm-4">
                                 Eth port:
                             </div>
-                            <div class="col-sm-4">
+                            <div class="col-sm-2">
                                 {{ethPort}}
                             </div>
-                            <div class="col-sm-4">
-                                <a href="#">Punch test</a>
+                            <div class="col-sm-6" data-toggle="tooltip" title="Test if your UDP port {{vm.data.rpcPort}} is accessible for incoming connections from internet">
+                                <a id="udpTestLink" href="#">Port test</a> [<span class="port-test-result">?</span>]
                             </div>
                         </div>
 
@@ -99,11 +99,11 @@
                             <div class="col-sm-4">
                                 JsonRPC port:
                             </div>
-                            <div class="col-sm-4">
+                            <div class="col-sm-2">
                                 {{vm.data.rpcPort}}
                             </div>
-                            <div class="col-sm-4">
-                                <a href="#">Punch test</a>
+                            <div class="col-sm-6" data-toggle="tooltip" title="Test if your TCP port {{vm.data.rpcPort}} is accessible for incoming connections from internet">
+                                <a id="tcpTestLink" href="#">Port test</a> [<span class="port-test-result">?</span>]
                             </div>
                         </div>
 

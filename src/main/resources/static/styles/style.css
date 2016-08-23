@@ -2881,3 +2881,7 @@ fieldset[disabled] .form-control {
 .height-100p {
     height: 100%;
 }
+
+.port-test-result {
+    font-family: sans-serif;
+}

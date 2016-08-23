@@ -347,6 +347,7 @@
                 vm.data.serverStartTime = moment(info.serverStartTime).format('DD-MMM-YYYY, HH:mm');
                 vm.data.nodeId = info.nodeId ? '0x' + info.nodeId.substr(0, 6) : 'n/a';
                 vm.data.rpcPort = info.rpcPort;
+                vm.data.portCheckerUrl = info.portCheckerUrl;
             }, 10);
 
             console.log('App version ' + info.appVersion + ', info.privateNetwork: ' + info.privateNetwork);

@@ -111,7 +111,7 @@ public class BlockchainInfoService implements ApplicationListener {
 
         LongStream.rangeClosed(startImportBlock, lastBlock)
                 .forEach(i -> {
-                    log.info("Imported block " + i);
+                    log.debug("Imported block " + i);
                     addBlock(ethereumApi.getBlock(i));
                 });
     }

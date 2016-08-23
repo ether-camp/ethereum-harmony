@@ -7,7 +7,7 @@
 (function() {
     'use strict';
 
-    function HomeCtrl($scope, $timeout, scrollConfig) {
+    function HomeCtrl($scope, $timeout, $http, scrollConfig) {
         $scope.scrollConfig = jQuery.extend(true, {}, scrollConfig);
         //$scope.scrollConfig.axis = 'xy';
         $scope.scrollConfig.scrollbarPosition = 'outside';
@@ -90,6 +90,7 @@
             chartData = [];
         });
 
+
         function resizeContainer() {
             console.log('Home page resize');
             [{id:'miners-scroll-container', axis:'y'}, {id:'chart-scroll-container', axis:'xy'}].forEach(function(item) {
@@ -105,12 +106,54 @@
                 }, 10);
             });
         }
-        $(window).ready(resizeContainer);
+
+        $.fn.animateBlinking = function(duration) {
+            this.fadeIn(duration).fadeOut(duration).fadeIn(duration).fadeOut(duration).fadeIn(duration);
+        };
+
+        $(window).ready(function() {
+
+            function testPortFun(protocol, portFun, elem) {
+                function markResult(success) {
+                    elem.stop(true, true);
+                    elem.fadeIn(1);
+                    elem.parent()
+                        .find($('.port-test-result'))
+                        .text(success ? 'v' : 'x')
+                        .css('color', success ? 'green' : 'red');
+                }
+
+                return function() {
+                    var url = $scope.vm.data.portCheckerUrl + '/checkPort';
+                    var data = {port: portFun(), protocol: protocol};
+
+                    elem.animateBlinking(500);
+                    $http({
+                        url: url,
+                        method: 'POST',
+                        data: data
+                    }).then(
+                        function (response) {
+                            console.log(response);
+                            markResult(response && response.data && response.data.result);
+                        },
+                        function (error) { // optional
+                            console.log(error);
+                            markResult(false);
+                        });
+                }
+            }
+
+            $('#tcpTestLink').click(testPortFun('tcp', function() { return $scope.vm.data.rpcPort + 0; }, $('#tcpTestLink')));
+            $('#udpTestLink').click(testPortFun('udp', function() { return $scope.ethPort} , $('#udpTestLink')));
+
+            resizeContainer();
+        });
         $scope.$on('windowResizeEvent', resizeContainer);
     }
 
     angular.module('HarmonyApp')
-        .controller('HomeCtrl', ['$scope', '$timeout', 'scrollConfig', HomeCtrl])
+        .controller('HomeCtrl', ['$scope', '$timeout', '$http', 'scrollConfig', HomeCtrl])
         .filter('range', function() {
             return function(val, range) {
                 range = parseInt(range);
