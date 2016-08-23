@@ -2883,5 +2883,9 @@ fieldset[disabled] .form-control {
 }
 
 .port-test-result {
+
+}
+
+.font-sans-serif {
     font-family: sans-serif;
 }

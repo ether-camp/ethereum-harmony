@@ -107,26 +107,58 @@
             });
         }
 
+        // loop fadeOut / fadeIn animation
+        // can be stopped with elem.stop(true, false)
         $.fn.animateBlinking = function(duration) {
-            this.fadeIn(duration).fadeOut(duration).fadeIn(duration).fadeOut(duration).fadeIn(duration);
+            function doAnimation(elem) {
+                console.log('Start doAnimation')
+                elem.fadeIn(duration).fadeOut(duration, function() {
+                    doAnimation(elem);
+                });
+            }
+            doAnimation(this);
         };
 
         $(window).ready(function() {
 
+            /**
+             * Logic bellows handles "Test port" link click:
+             *  - start infinite link blinking and reset result indicator;
+             *  - request 3rd party server to scan this server TCP port, by sending POST;
+             *  - stop blinking on respond and indicate result in UI
+             *  (jQuery, jQuery-animate, angular-http)
+             */
+
+            var isPortCheckingProgress = false;
+
             function testPortFun(protocol, portFun, elem) {
+                var resultElem =  elem.parent()
+                    .find($('.port-test-result'));
+                var originColor = resultElem.css('color');
+
                 function markResult(success) {
-                    elem.stop(true, true);
+                    elem.stop(true, false);
                     elem.fadeIn(1);
-                    elem.parent()
-                        .find($('.port-test-result'))
+                    resultElem
                         .text(success ? 'v' : 'x')
                         .css('color', success ? 'green' : 'red');
+                    isPortCheckingProgress = false;
                 }
 
                 return function() {
-                    var url = $scope.vm.data.portCheckerUrl + '/checkPort';
-                    var data = {port: portFun(), protocol: protocol};
+                    if (isPortCheckingProgress) {
+                        console.log('Test is already in progress');
+                        return false;
+                    }
+                    isPortCheckingProgress = true;
 
+                    var url = $scope.vm.data.portCheckerUrl + '/checkPort';
+                    // force TCP check regardless UDP was requested
+                    var data = { port: portFun(), protocol: protocol };
+
+                    resultElem
+                        .text('?')
+                        .css('color', originColor);
                     elem.animateBlinking(500);
                     $http({
                         url: url,
@@ -137,15 +169,15 @@
                             console.log(response);
                             markResult(response && response.data && response.data.result);
                         },
-                        function (error) { // optional
+                        function (error) {
                             console.log(error);
                             markResult(false);
                         });
                 }
             }
 
-            $('#tcpTestLink').click(testPortFun('tcp', function() { return $scope.vm.data.rpcPort + 0; }, $('#tcpTestLink')));
-            $('#udpTestLink').click(testPortFun('udp', function() { return $scope.ethPort} , $('#udpTestLink')));
+            $('#tcpTestLink').click(testPortFun('tcp', function() { return $scope.vm.data.rpcPort; }, $('#tcpTestLink')));
+            $('#udpTestLink').click(testPortFun('tcp', function() { return $scope.ethPort} , $('#udpTestLink')));
 
             resizeContainer();
         });
