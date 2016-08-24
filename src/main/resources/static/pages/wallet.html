@@ -8,7 +8,7 @@
                 <div class="view-header">
 
                     <div class="pull-right text-right" style="line-height: 14px">
-                        <h3>{{totalAmount}} ETH</h3>
+                        <h3>{{totalAmountString}} ETHER</h3>
                         <p>${{totalAmountUSD}}</p>
                     </div>
 
@@ -35,6 +35,10 @@
                          My Wallet Addresses
                     </div>
 
+                    <div class="panel-heading">
+                        <a href="#" class="btn btn-w-md btn-primary">Add new address</a>
+                    </div>
+
                     <table class="table">
                         <thead>
                         </thead>
@@ -51,7 +55,7 @@
                                     {{item.amount}}
                                 </td>
                                 <td>
-                                   <a href="#">Send</a>
+                                   <a href="#" ng-click="onSendClick(item)">Send</a>
                                 </td>
                             </tr>
                         </tbody>
@@ -72,5 +76,43 @@
         </div>
 
     </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="sendAmountModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">Send transaction</h4>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="form-group">
+                            <label>From address</label>
+                            <input class="form-control" placeholder="{{txData.fromAddress}}" readonly type="text">
+                        </div>
+                        <div class="form-group">
+                            <label>To address</label>
+                            <input class="form-control" placeholder="{{txData.toAddress}}" type="text">
+                        </div>
+                        <div class="form-group">
+                            <label>Ether amount</label>
+                            <input class="form-control" placeholder="{{txData.amount}}" type="text">
+                        </div>
+                        <div class="form-group">
+                            <label>Private key or seed phrase</label>
+                            <textarea id="pkeyInput" class="form-control" rows="3" placeholder="" autocomplete="off"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" ng-click="onSignAndSend()">Sign and send</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </section>
 <!-- End main content-->
+
+

@@ -1713,11 +1713,11 @@ sup {
 .modal-content .modal-header {
     border-color: #3d404c;
     background-color: #1d1f24;
-    padding: 40px 20px;
+    /*padding: 40px 20px;*/
 }
 
 .modal-content .modal-body {
-    padding: 40px;
+    /*padding: 40px;*/
 }
 
 .modal-content .modal-footer {
@@ -2889,3 +2889,4 @@ fieldset[disabled] .form-control {
 .font-sans-serif {
     font-family: sans-serif;
 }
+

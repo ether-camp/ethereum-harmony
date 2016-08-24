@@ -258,10 +258,7 @@
             //    function(frame) {
             //        setConnected(true);
 
-            $stomp.connect('/websocket', {}, function() {
-                console.log('Dis1');
-                disconnect();
-            })
+            $stomp.connect('/websocket', {}, disconnect)
                 .then(function (frame) {
                     setConnected(true);
                     if (connectionLostOnce) {
@@ -289,8 +286,9 @@
                     $stomp.send('/app/initialInfo');
                 },
                 function(error) {
-                    //console.log('Dis2')
-                    //disconnect();
+                    // failed connect handler
+                    // not called when connection dropped at some point of time
+                    // prefer another disconnect handler
                 }
             );
         }
