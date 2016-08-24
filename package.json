@@ -46,10 +46,11 @@
     "filesize": "^3.3.0",
     "font-awesome": "^4.6.3",
     "jquery": "^2.2.4",
+    "jquery-mousewheel": "^3.1.13",
     "jquery.terminal": "^0.10.12",
     "malihu-custom-scrollbar-plugin": "^3.1.5",
     "moment": "^2.14.1",
-    "pace": "^0.0.4",
+    "pace": "0.0.4",
     "sockjs-client": "^1.1.1",
     "toastr": "^2.1.2",
     "underscore": "^1.8.3"

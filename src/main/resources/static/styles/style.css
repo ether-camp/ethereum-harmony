@@ -540,9 +540,9 @@ fieldset[disabled] .btn-danger.focus {
     text-decoration: none;
 }
 
-.content > div {
-    opacity: 0;
-}
+/*.content > div {*/
+    /*opacity: 0;*/
+/*}*/
 
 .pace {
     -webkit-pointer-events: none;

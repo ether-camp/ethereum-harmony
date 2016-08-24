@@ -1,4 +1,8 @@
+require('expose?d3!d3');
 var BlockchainView = require('js/blockchain-view/blockchain-view.js').BlockchainView;
+//require('jquery-mousewheel');
+//require('malihu-custom-scrollbar-plugin');
+
 
 /**
  * Render home page.
@@ -96,6 +100,7 @@ var BlockchainView = require('js/blockchain-view/blockchain-view.js').Blockchain
             console.log('Home page resize');
             [{id:'miners-scroll-container', axis:'y'}, {id:'chart-scroll-container', axis:'xy'}].forEach(function(item) {
                 var scrollContainer = document.getElementById(item.id);
+                console.log('scrollContainer ' + scrollContainer + ' ' + item.id);
                 var rect = scrollContainer.getBoundingClientRect();
                 var newHeight = $(window).height() - rect.top - 20;
                 //$(scrollContainer).css('maxHeight', newHeight + 'px');
@@ -107,8 +112,10 @@ var BlockchainView = require('js/blockchain-view/blockchain-view.js').Blockchain
                 }, 10);
             });
         }
-        $(window).ready(resizeContainer);
-        $scope.$on('windowResizeEvent', resizeContainer);
+        $(window).ready(function() {
+            //$scope.$on('windowResizeEvent', resizeContainer);
+            resizeContainer();
+        });
     }
 
 

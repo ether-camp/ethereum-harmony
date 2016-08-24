@@ -2,7 +2,8 @@
  * Allow use terminal component to call JSON-RPC methods.
  */
 
-(function() {
+require('jquery.terminal');
+
     'use strict';
 
     var CONTAINER_ID = 'terminal-container';
@@ -351,4 +352,3 @@
                 return filtered;
             };
         });
-})();

@@ -4,11 +4,12 @@ require('font-awesome/css/font-awesome.css');
 
 
 /* STYLES */
+require('bootstrap/dist/css/bootstrap.css');
+
 require('styles/pe-icons/pe-icon-7-stroke.css');
 require('styles/pe-icons/helper.css');
 require('styles/stroke-icons/style.css');
 require('styles/style.css');
-require('bootstrap/dist/css/bootstrap.css');
 //require('bootstrap/dist/js/bootstrap.min.js');
 
 
@@ -17,11 +18,10 @@ require('expose?$!expose?jQuery!jquery');
 
 require('angular');
 require('angular-animate');
+require('pace');
 
 //require("bootstrap-webpack");
 //require("bootstrap-webpack/dist/css/bootstrap.min.css");
-
-
 
 //require('expose?bootstrap!bootstrap');
 //require('bootstrap');
@@ -35,7 +35,7 @@ require('js/lib/luna.js');
 require('expose?filesize!filesize');
 require('expose?moment!moment');
 require('expose?toastr!toastr');
-require('expose?d3!d3');
+
 
 //require('ng-scrollbars');
 

@@ -4,8 +4,9 @@
  *  - show world map of where peers are located;
  *
  */
+require('expose?d3!d3');
+var Datamap = require('datamaps');
 
-(function() {
     'use strict';
 
     var FILLED = { fillKey: "filled" };
@@ -255,4 +256,3 @@
 
     angular.module('HarmonyApp')
         .controller('PeersCtrl', ['$scope', '$timeout', 'scrollConfig', PeersCtrl]);
-})();
