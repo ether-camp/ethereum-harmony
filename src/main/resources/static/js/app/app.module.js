@@ -1,1 +1,0 @@
-angular.module('HarmonyApp', ['ngAnimate', 'ui.bootstrap']);

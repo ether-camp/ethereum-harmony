@@ -1,0 +1,76 @@
+
+<!-- Main content-->
+<section class="content">
+    <div class="container-fluid">
+
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="view-header">
+
+                    <div class="pull-right text-right" style="line-height: 14px">
+                        <h3>{{totalAmount}} ETH</h3>
+                        <p>${{totalAmountUSD}}</p>
+                    </div>
+
+                    <div class="header-icon">
+                        <i class="pe page-header-icon pe-7s-wallet"></i>
+                    </div>
+                    <div class="header-title">
+                        <h3 class="m-b-xs">Wallet</h3>
+                        <small>
+                            Allows to receive and send ETH
+                        </small>
+                    </div>
+                </div>
+                <hr>
+            </div>
+        </div>
+
+        <div class="row">
+
+            <div class="col-lg-8">
+                <div class="panel panel-filled">
+
+                    <div class="panel-heading">
+                         My Wallet Addresses
+                    </div>
+
+                    <table class="table">
+                        <thead>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="item in addresses"
+                                >
+                                <td>
+                                    {{item.name}}
+                                </td>
+                                <td>
+                                   {{item.publicAddress}}
+                                </td>
+                                <td>
+                                    {{item.amount}}
+                                </td>
+                                <td>
+                                   <a href="#">Send</a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="panel panel-filled">
+                    <div class="panel-heading">
+                        Last transactions
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="col-lg-4 height-100p">
+
+            </div>
+        </div>
+
+    </div>
+</section>
+<!-- End main content-->

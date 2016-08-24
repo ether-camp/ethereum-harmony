@@ -1,7 +1,7 @@
 (function() {
     'use strict';
 
-    var mainApp = angular.module('HarmonyApp', ['ngRoute', 'angular-jsonrpc-client', 'ngScrollbars']);
+    var mainApp = angular.module('HarmonyApp', ['ngRoute', 'angular-jsonrpc-client', 'ngStomp']);
 
     mainApp.controller('AppCtrl', AppCtrl);
 
@@ -19,7 +19,7 @@
         scrollButtons: { enable: false }
     });
 
-    var url = '/rpc';
+    var JSON_RPC_URL = '/rpc';
 
 
     /**
@@ -51,13 +51,18 @@
             .when('/peers', {
                 templateUrl : 'pages/peers.html',
                 controller  : 'PeersCtrl'
+            })
+
+            .when('/wallet', {
+                templateUrl : 'pages/wallet.html',
+                controller  : 'WalletCtrl'
             });
 
         $locationProvider.html5Mode(true);
 
         console.info(jsonrpcConfigProvider);
         jsonrpcConfigProvider.set({
-            url: url,
+            url: JSON_RPC_URL,
             returnHttpPromise: false
         });
     });
@@ -74,7 +79,6 @@
     var topicStorage = {};
 
     var connectionLostOnce = false;
-    var stompClient = null;
     var simpleSuffixes = {
         suffixes: {
             B: ' ',
@@ -146,9 +150,9 @@
         toastr.warning('<strong>' + topMessage + '</strong> <br/><small>' + bottomMessage + '</small>');
     }
 
-    AppCtrl.$inject = ['$scope', '$timeout', '$http', '$window'];
+    AppCtrl.$inject = ['$scope', '$timeout', '$http', '$window', '$stomp'];
 
-    function AppCtrl ($scope, $timeout, $http, $window) {
+    function AppCtrl ($scope, $timeout, $http, $window, $stomp) {
         var vm = this;
         vm.isConnected = false;
         vm.data = {
@@ -178,19 +182,19 @@
 
         function jsonParseAndBroadcast(event) {
             return function(data) {
-                $scope.$broadcast(event, JSON.parse(data.body));
+                $scope.$broadcast(event, (data));
             }
         }
 
         var updateLogSubscription       = updateSubscriptionFun('/topic/systemLog', onSystemLogResult,
             function() {
-                stompClient.send('/app/currentSystemLogs');
+                $stomp.send('/app/currentSystemLogs');
             });
         var updatePeersSubscription     = updateSubscriptionFun('/topic/peers', jsonParseAndBroadcast('peersListEvent'));
         var updateRpcSubscription       = updateSubscriptionFun('/topic/rpcUsage', jsonParseAndBroadcast('rpcUsageListEvent'));
         var updateBlockSubscription     = updateSubscriptionFun('/topic/newBlockInfo', jsonParseAndBroadcast('newBlockInfoEvent'),
             function() {
-                stompClient.send('/app/currentBlocks');
+                $stomp.send('/app/currentBlocks');
             });
         var updateNetworkSubscription       = updateSubscriptionFun('/topic/networkInfo', jsonParseAndBroadcast('networkInfoEvent'));
 
@@ -241,14 +245,24 @@
 
         function connect() {
             console.log("Attempting to connect");
+            $stomp.setDebug(function (args) {
+                //$log.debug(args)
+            });
 
-            var socket = new SockJS('/websocket');
-            stompClient = Stomp.over(socket);
-            // disable network data traces from Stomp library
-            stompClient.debug = null;
-            stompClient.connect(
-                {},
-                function(frame) {
+            //var socket = new SockJS('/websocket');
+            //$stomp = Stomp.over(socket);
+            //// disable network data traces from Stomp library
+            //$stomp.debug = null;
+            //$stomp.connect(
+            //    {},
+            //    function(frame) {
+            //        setConnected(true);
+
+            $stomp.connect('/websocket', {}, function() {
+                console.log('Dis1');
+                disconnect();
+            })
+                .then(function (frame) {
                     setConnected(true);
                     if (connectionLostOnce) {
                         showToastr('Connection established', '');
@@ -257,12 +271,12 @@
                     console.log('Connected');
 
                     // subscribe for updates
-                    stompClient.subscribe('/topic/initialInfo', onInitialInfoResult);
-                    stompClient.subscribe('/topic/machineInfo', onMachineInfoResult);
-                    stompClient.subscribe('/topic/blockchainInfo', onBlockchainInfoResult);
-                    stompClient.subscribe('/topic/newBlockFrom', jsonParseAndBroadcast('newBlockFromEvent'));
-                    stompClient.subscribe('/topic/currentSystemLogs', jsonParseAndBroadcast('currentSystemLogs'));
-                    stompClient.subscribe('/topic/currentBlocks', jsonParseAndBroadcast('currentBlocksEvent'));
+                    $stomp.subscribe('/topic/initialInfo', onInitialInfoResult);
+                    $stomp.subscribe('/topic/machineInfo', onMachineInfoResult);
+                    $stomp.subscribe('/topic/blockchainInfo', onBlockchainInfoResult);
+                    $stomp.subscribe('/topic/newBlockFrom', jsonParseAndBroadcast('newBlockFromEvent'));
+                    $stomp.subscribe('/topic/currentSystemLogs', jsonParseAndBroadcast('currentSystemLogs'));
+                    $stomp.subscribe('/topic/currentBlocks', jsonParseAndBroadcast('currentBlocksEvent'));
 
                     updateNetworkSubscription(isHomePageActive);
                     updateBlockSubscription(isHomePageActive);
@@ -271,11 +285,12 @@
                     updateRpcSubscription(isRpcPageActive);
 
                     // get immediate result
-                    stompClient.send('/app/machineInfo');
-                    stompClient.send('/app/initialInfo');
+                    $stomp.send('/app/machineInfo');
+                    $stomp.send('/app/initialInfo');
                 },
                 function(error) {
-                    disconnect();
+                    //console.log('Dis2')
+                    //disconnect();
                 }
             );
         }
@@ -297,7 +312,7 @@
                     if (doSubscribe != subscribed ) {
                         if (doSubscribe) {
                             initFun && initFun();
-                            topicStorage[topic] = stompClient.subscribe(topic, handler);
+                            topicStorage[topic] = $stomp.subscribe(topic, handler);
                         } else {
                             topicStorage[topic].unsubscribe();
                             topicStorage[topic] = null;
@@ -309,7 +324,7 @@
         }
 
         function onSystemLogResult(data) {
-            var msg = data.body;
+            var msg = data;
 
             // send event to SystemLogCtrl
             $scope.$broadcast('systemLogEvent', msg);
@@ -317,7 +332,7 @@
 
 
         function onMachineInfoResult(data) {
-            var info = JSON.parse(data.body);
+            var info = (data);
 
             $timeout(function() {
                 vm.data.cpuUsage        = info.cpuUsage;
@@ -335,7 +350,7 @@
         }
 
         function onInitialInfoResult(data) {
-            var info = JSON.parse(data.body);
+            var info = (data);
 
             $timeout(function() {
                 vm.data.appVersion = info.appVersion;
@@ -359,11 +374,11 @@
             }, 10);
 
             console.log('App version ' + info.appVersion + ', info.privateNetwork: ' + info.privateNetwork);
-            stompClient.unsubscribe('/topic/initialInfo');
+            $stomp.unsubscribe('/topic/initialInfo');
         }
 
         function onBlockchainInfoResult(data) {
-            var info = JSON.parse(data.body);
+            var info = (data);
 
             $timeout(function() {
                 updateBlockCounter(info.lastBlockNumber);
@@ -384,8 +399,8 @@
             connectionLostOnce = true;
             showToastr('Connection Lost', 'Reconnecting...');
 
-            if (stompClient != null) {
-                stompClient.disconnect();
+            if ($stomp != null) {
+                $stomp.disconnect();
             }
             setConnected(false);
             console.log('Disconnected. Retry ...');
