@@ -77,7 +77,7 @@
     var stompClient = null;
     var simpleSuffixes = {
         suffixes: {
-            B: '',
+            B: ' ',
             KB: 'K',
             MB: 'M',
             GB: 'G',
