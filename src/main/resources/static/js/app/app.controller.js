@@ -177,7 +177,9 @@
             serverStartTime:    'n/a',
             nodeId:             'n/a',
             rpcPort:            'n/a',
-            isPrivateNetwork:   false
+            isPrivateNetwork:   false,
+
+            publicIp:           ' '
         };
 
         function jsonParseAndBroadcast(event) {
@@ -362,13 +364,13 @@
                 vm.data.rpcPort = info.rpcPort;
                 vm.data.portCheckerUrl = info.portCheckerUrl;
 
-                $http({
-                    url: vm.data.portCheckerUrl + '/checkIp',
-                    method: 'GET',
-                    transformResponse: [function (r) { return r; }]
-                }).then(function(response) {
-                    vm.data.publicIp = response.data;
-                });
+                //$http({
+                //    url: vm.data.portCheckerUrl + '/checkIp',
+                //    method: 'GET',
+                //    transformResponse: [function (r) { return r; }]
+                //}).then(function(response) {
+                //    vm.data.publicIp = response.data;
+                //});
             }, 10);
 
             console.log('App version ' + info.appVersion + ', info.privateNetwork: ' + info.privateNetwork);

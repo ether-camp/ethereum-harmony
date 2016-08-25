@@ -44,7 +44,7 @@
     }
 
 
-    function WalletCtrl($scope, $timeout, $stomp, $http, jsonrpc, scrollConfig) {
+    function WalletCtrl($scope, $timeout, $stomp, $http, jsonrpc, $q, scrollConfig) {
         $scope.scrollConfig = jQuery.extend(true, {}, scrollConfig);
 
         $scope.totalAmount = 0;
@@ -66,49 +66,64 @@
             var privateKey = $('#pkeyInput').val();
             var txData = $scope.txData;
 
-            //console.log('onSignAndSend');
-            //console.log(privateKey);
-            //console.log(txData);
+            console.log('Before sign and send');
+            console.log(txData);
 
-            RlpBuilder
-                .balanceTransfer(remove0x(txData.toAddress))    // to address
-                .from(remove0x(txData.fromAddress))
-                .secretKey(privateKey)
-                .gasLimit(txData.gasLimit)
-                .gasPrice(txData.gasPrice)
-                .value(txData.value, defaultCurrency)
-                .nonce(txData.nonce)
-                //.invokeData(data)
-                .withData(txData.data)
-                .format()
-                .done(function (rlp) {
-                    console.log('Signed transaction');
-                    console.log(rlp);
+            $q.all([
+                jsonrpc.request('eth_gasPrice', []),
+                jsonrpc.request('eth_getTransactionCount', ['0x' + txData.fromAddress, 'latest'])
+            ])
+                .then(function(results) {
+                    console.log(results);
 
-                    jsonrpc.request('eth_sendRawTransaction', [rlp])
-                        .then(function(result) {
-                            //console.log(result);
-                            console.log('eth_sendRawTransaction result:' + result);
-                            terminal.echo(result);
-                            $('#signWithKeyModal').modal('hide');
+                    var gasPrice = results[0];
+                    var nonce = results[1];
+                    var gasLimit = '0x9f759';
+
+                    return;
+                    RlpBuilder
+                        .balanceTransfer(remove0x(txData.toAddress))    // to address
+                        .from(remove0x(txData.fromAddress))
+                        .secretKey(privateKey)
+                        .gasLimit(gasLimit)
+                        .gasPrice(gasPrice)
+                        .value(txData.value * 1000, defaultCurrency)
+                        .nonce(nonce)
+                        //.invokeData(data)
+                        .withData('0x0')
+                        .format()
+                        .done(function (rlp) {
+                            console.log('Signed transaction');
+                            console.log(rlp);
+
+                            jsonrpc.request('eth_sendRawTransaction', [rlp])
+                                .then(function(result) {
+                                    //console.log(result);
+                                    console.log('eth_sendRawTransaction result:' + result);
+                                    terminal.echo(result);
+                                    $('#signWithKeyModal').modal('hide');
+                                })
+                                .catch(function(error) {
+                                    console.log('Error sending raw transaction');
+                                    console.log(error);
+                                    showErrorToastr('ERROR', 'Wasn\'t to send signed raw transaction.\n' + error);
+                                });
                         })
-                        .catch(function(error) {
-                            console.log('Error sending raw transaction');
-                            console.log(error);
-                            showErrorToastr('ERROR', 'Wasn\'t to send signed raw transaction.\n' + error);
+                        .fail(function(error) {
+                            console.log('Error signing tx ' + error);
+                            showErrorToastr('ERROR', 'Wasn\'t able to sign transaction.\n' + error);
+                            //$balanceDlg.find('input[name="key"]').addClass('error').focus();
+                        })
+                        .always(function () {
+                            // Hide progress indicator
+                            //$progressIndicator.fadeOut(function () {
+                            //    $(this).remove();
+                            //});
                         });
-                })
-                .fail(function(error) {
-                    console.log('Error signing tx ' + error);
-                    showErrorToastr('ERROR', 'Wasn\'t able to sign transaction.\n' + error);
-                    //$balanceDlg.find('input[name="key"]').addClass('error').focus();
-                })
-                .always(function () {
-                    // Hide progress indicator
-                    //$progressIndicator.fadeOut(function () {
-                    //    $(this).remove();
-                    //});
                 });
+
+
+
         };
 
         // load initial data
@@ -158,6 +173,6 @@
     }
 
     angular.module('HarmonyApp')
-        .controller('WalletCtrl', ['$scope', '$timeout', '$stomp', '$http', 'jsonrpc', 'scrollConfig', WalletCtrl])
+        .controller('WalletCtrl', ['$scope', '$timeout', '$stomp', '$http', 'jsonrpc', '$q', 'scrollConfig', WalletCtrl])
 
 })();
