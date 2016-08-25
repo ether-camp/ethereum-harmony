@@ -43,10 +43,18 @@ var RlpBuilder = (function() {
         return isAbs ? Math.abs(value) : value;
     };
 
+    function remove0x(value) {
+        if (value && value.indexOf('0x') == 0) {
+            return value.substr(2);
+        } else {
+            return value;
+        }
+    }
+
     var TxRlpFormatter = function (toAddress, dummy) {
 
         this.data = {
-            to: toAddress.replace('0x', ''),
+            to: remove0x(toAddress),
             data: '',
             dummy: dummy
         };
@@ -73,41 +81,19 @@ var RlpBuilder = (function() {
             if (self.data.sender && self.data.sender !== self.data.from) {
                 console.log(self.data.sender);
                 console.log(self.data.from);
-                return dfd.reject('Signature is invalid, please check this one.').promise();
+                return dfd.reject('Signature and sender address doesn\'t match.').promise();
             }
 
             var txData = _.pick(self.data, 'data', 'value', 'gasLimit', 'pkey', 'to', 'gasPrice', 'nonce');
 
             var dfds = [];
-            if (true) {
-                //txData.nonce = self.data.nonce;
-                //txData.gasPrice = self.data.gasPrice;
-                console.log(txData);
-            } else if (self.dummy) {
-                dfds.push($.Deferred().resolve().done(function () {
-                    _.extend(txData, {
-                        nonce: -1,
-                        gasPrice: 0
-                    })
-                }));
-            } else {
-                dfds.push(workspace.state.getAccountNonce(self.data.from).done(function (nonce) {
-                    txData.nonce = nonce;
-                }));
-                dfds.push(workspace.state.getGasPrice().done(function (gasPrice) {
-                    txData.gasPrice = gasPrice;
-                }));
-            }
+            console.log(txData);
 
-            $.when.apply($, dfds).done(function () {
-                txData.pkey = '0x' + txData.pkey;
-                console.log('txData before create tx');
-                console.log(txData);
-                var rlp = EthUtil.createTx(txData);
-                dfd.resolve(rlp.replace('0x', ''));
-            }).fail(function () {
-                dfd.reject();
-            });
+            txData.pkey = '0x' + txData.pkey;
+            console.log('txData before create tx');
+            console.log(txData);
+            var rlp = EthUtil.createTx(txData);
+            dfd.resolve(remove0x(rlp));
 
             return dfd.promise();
         }
@@ -117,15 +103,15 @@ var RlpBuilder = (function() {
         }
 
         function setPrivateKey(pkey) {
-            self.data.pkey = pkey.replace('0x', '');
-            self.data.from = EthUtil.toAddress('0x' + self.data.pkey).replace('0x', '');
-            console.log("set pkey:" + self.data.pkey);
-            console.log("set from:" + self.data.from);
+            self.data.pkey = remove0x(pkey);
+            self.data.from = remove0x(EthUtil.toAddress('0x' + self.data.pkey));
+            //console.log("set pkey:" + self.data.pkey);
+            //console.log("set from:" + self.data.from);
             return self;
         }
 
         function setSecretKey(pkeyOrSeed) {
-            if (_.size(pkeyOrSeed.replace('0x', '')) == 64 && Utils.Hex.isHexString(pkeyOrSeed)) {
+            if (_.size(remove0x(pkeyOrSeed)) == 64 && Utils.Hex.isHexString(pkeyOrSeed)) {
                 return setPrivateKey(pkeyOrSeed);
             } else {
                 return setSeedPhrase(pkeyOrSeed);
@@ -158,7 +144,7 @@ var RlpBuilder = (function() {
         }
 
         function setInvokeData(methodAbi, methodArgs) {
-            self.data.data = new SolidityFunction({}, methodAbi, self.data.to).toPayload(methodArgs).data.replace('0x', '');
+            self.data.data = remove0x(new SolidityFunction({}, methodAbi, self.data.to).toPayload(methodArgs).data);
             return self;
         }
 

@@ -311,7 +311,7 @@
         }
 
         function remove0x(value) {
-            if (value && value.indexOf('0x' == 0)) {
+            if (value && value.indexOf('0x') == 0) {
                 return value.substr(2);
             } else {
                 return value;

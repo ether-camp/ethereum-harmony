@@ -24,7 +24,7 @@
     }
 
     function remove0x(value) {
-        if (value && value.indexOf('0x' == 0)) {
+        if (value && value.indexOf('0x') == 0) {
             return value.substr(2);
         } else {
             return value;
@@ -51,22 +51,24 @@
         $scope.totalAmountString = 0;
         $scope.totalAmountUSD = 'n/a';
         $scope.addresses = [];
+        $scope.txData = {};
 
         $scope.onSendClick = function(address) {
             console.log('onSendClick');
             $scope.txData = {
                 fromAddress: address.publicAddress,
-                toAddress: 'da000c02f99e78b454427c3407cf906938747f58',
-                amount: 0
+                toAddress: '79b08ad8787060333663d19704909ee7b1903e58',
+                amount: 0.22
             };
             $('#sendAmountModal').modal({});
         };
 
         $scope.onSignAndSend = function() {
             var privateKey = $('#pkeyInput').val();
+            var amount = $scope.txData.amount * Math.pow(10, 18);
             var txData = $scope.txData;
 
-            console.log('Before sign and send');
+            console.log('Before sign and send amount:' + amount);
             console.log(txData);
 
             $q.all([
@@ -76,97 +78,94 @@
                 .then(function(results) {
                     console.log(results);
 
-                    var gasPrice = results[0];
-                    var nonce = results[1];
-                    var gasLimit = '0x9f759';
+                    var gasPrice = parseInt(remove0x(results[0]), 16);
+                    var nonce = parseInt(remove0x(results[1]), 16);
+                    var gasLimit =  21000;
 
-                    return;
-                    RlpBuilder
-                        .balanceTransfer(remove0x(txData.toAddress))    // to address
+                    return RlpBuilder
+                        .balanceTransfer(remove0x(txData.toAddress))
                         .from(remove0x(txData.fromAddress))
                         .secretKey(privateKey)
                         .gasLimit(gasLimit)
                         .gasPrice(gasPrice)
-                        .value(txData.value * 1000, defaultCurrency)
+                        .value(amount, defaultCurrency)
                         .nonce(nonce)
-                        //.invokeData(data)
-                        .withData('0x0')
-                        .format()
-                        .done(function (rlp) {
-                            console.log('Signed transaction');
-                            console.log(rlp);
+                        .withData('')
+                        .format();
+                })
+                .then(function (rlp) {
+                    console.log('Signed transaction');
+                    console.log(rlp);
 
-                            jsonrpc.request('eth_sendRawTransaction', [rlp])
-                                .then(function(result) {
-                                    //console.log(result);
-                                    console.log('eth_sendRawTransaction result:' + result);
-                                    terminal.echo(result);
-                                    $('#signWithKeyModal').modal('hide');
-                                })
-                                .catch(function(error) {
-                                    console.log('Error sending raw transaction');
-                                    console.log(error);
-                                    showErrorToastr('ERROR', 'Wasn\'t to send signed raw transaction.\n' + error);
-                                });
-                        })
-                        .fail(function(error) {
-                            console.log('Error signing tx ' + error);
-                            showErrorToastr('ERROR', 'Wasn\'t able to sign transaction.\n' + error);
-                            //$balanceDlg.find('input[name="key"]').addClass('error').focus();
-                        })
-                        .always(function () {
-                            // Hide progress indicator
-                            //$progressIndicator.fadeOut(function () {
-                            //    $(this).remove();
-                            //});
-                        });
+                    return jsonrpc.request('eth_sendRawTransaction', [rlp]);
+                        //.catch(function(error) {
+                        //    console.log('Error sending raw transaction');
+                        //    console.log(error);
+                        //    showErrorToastr('ERROR', 'Wasn\'t to send signed raw transaction.\n' + error);
+                        //});
+                })
+                .then(function(txHash) {
+                    console.log('eth_sendRawTransaction result:' + txHash);
+
+                    $('#sendAmountModal').modal('hide');
+                    // load updated state
+                    $stomp.send('/app/getWalletInfo');
+
+                    return jsonrpc.request('ethj_getTransactionReceipt', [txHash]);
+                })
+                .then(function(txReceipt) {
+                    console.log('ethj_getTransactionReceipt result');
+                    console.log(txReceipt);
+
+                    var errorMessage = txReceipt ? txReceipt.error : 'Unknown error during load transaction receipt.';
+                    if (errorMessage) {
+                        showErrorToastr(errorMessage);
+                    }
+                })
+
+                .catch(function(error) {
+                    console.log('Error signing tx ' + error);
+                    showErrorToastr('ERROR', 'Wasn\'t able to sign or send transaction.\n' + error);
+                    //$balanceDlg.find('input[name="key"]').addClass('error').focus();
                 });
-
-
-
         };
-
-        // load initial data
-        if ($scope.vm.data.isConnected) {
-            onSocketConnected();
-        }
-        $scope.$on('connectedEvent', onSocketConnected);
-
 
         function resizeContainer() {
             console.log('Wallet page resize');
         }
 
-        function onSocketConnected(event, item) {
-            $stomp.subscribe('/topic/getWalletInfo', function(info) {
-                console.log(info);
+        $scope.$on('walletInfoEvent', function(event, data) {
+            console.log('walletInfoEvent');
+            console.log(data);
 
-                $timeout(function() {
-                    $scope.totalAmount = info.totalAmount;
-                    $scope.totalAmountString = numberWithCommas(info.totalAmount / ETH_BASE);
-                    info.addresses.forEach(function(a) {
-                        a.amount = numberWithCommas(a.amount / ETH_BASE);
-                    });
-                    $scope.addresses = info.addresses;
-                }, 10);
+            $timeout(function() {
+                $scope.totalAmount = data.totalAmount;
+                $scope.totalAmountString = numberWithCommas(data.totalAmount / ETH_BASE);
+                data.addresses.forEach(function(a) {
+                    a.amount = numberWithCommas(a.amount / ETH_BASE);
+                });
+                $scope.addresses = data.addresses;
+            }, 10);
 
-                $http({
-                    method: 'GET',
-                    url: 'https://coinmarketcap-nexuist.rhcloud.com/api/eth'
-                }).then(function(result) {
-                    try {
-                        var price = result.data.price.usd;
-                        $scope.totalAmountUSD = numberWithCommas((info.totalAmount / ETH_BASE) * price);
-                    } catch (e) {
+            $http({
+                method: 'GET',
+                url: 'https://coinmarketcap-nexuist.rhcloud.com/api/eth'
+            }).then(function(result) {
+                try {
+                    var price = result.data.price.usd;
+                    $scope.totalAmountUSD = numberWithCommas((data.totalAmount / ETH_BASE) * price);
+                } catch (e) {
 
-                    }
-                })
-            });
-            $stomp.send('/app/getWalletInfo');
-        }
+                }
+            })
+        });
 
 
         $(window).ready(function() {
+            // force cleaning pkey value when modal closed
+            $('#sendAmountModal').on('hidden.bs.modal', function () {
+                $('#pkeyInput').val('');
+            })
             resizeContainer();
         });
         $scope.$on('windowResizeEvent', resizeContainer);

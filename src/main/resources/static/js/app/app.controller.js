@@ -71,11 +71,6 @@
      * App Controller
      */
 
-    var isLogPageActive = false;        // TODO move to related controller
-    var isPeersPageActive = false;      // TODO move to related controller
-    var isRpcPageActive = false;        // TODO move to related controller
-    var isHomePageActive = false;        // TODO move to related controller
-
     var topicStorage = {};
 
     var connectionLostOnce = false;
@@ -198,8 +193,11 @@
             function() {
                 $stomp.send('/app/currentBlocks');
             });
-        var updateNetworkSubscription       = updateSubscriptionFun('/topic/networkInfo', jsonParseAndBroadcast('networkInfoEvent'));
-
+        var updateNetworkSubscription    = updateSubscriptionFun('/topic/networkInfo', jsonParseAndBroadcast('networkInfoEvent'));
+        var updateWalletSubscription     = updateSubscriptionFun('/topic/getWalletInfo', jsonParseAndBroadcast('walletInfoEvent'),
+            function() {
+                $stomp.send('/app/getWalletInfo');
+            });
 
         /**
          * Listen for page changes and subscribe to 'systemLog' topic only when we stay on that page.
@@ -211,17 +209,8 @@
             vm.data.currentPage = path;
 
             // #1 Change subscription
-            isHomePageActive = path == '/';
-            isLogPageActive = path == '/systemLog';
-            isPeersPageActive = path == '/peers';
-            isRpcPageActive = path == '/rpcUsage';
-
             var isLongPageActive = path == '/???';
-            updateNetworkSubscription(isHomePageActive);
-            updateBlockSubscription(isHomePageActive);
-            updateLogSubscription(isLogPageActive);
-            updatePeersSubscription(isPeersPageActive);
-            updateRpcSubscription(isRpcPageActive);
+            updatePageSubscriptions();
 
             // #2 Change body scroll behavior depending on selected page
             $('body').css('overflow', isLongPageActive ? 'auto' : 'hidden');
@@ -243,6 +232,16 @@
             vm.isConnected = value;
             console.log("Connected status " + value);
             $scope.$broadcast('connectedEvent');
+        }
+
+        function updatePageSubscriptions() {
+            var path = vm.data.currentPage;
+            updateNetworkSubscription(path == '/');
+            updateBlockSubscription(path == '/');
+            updateLogSubscription(path == '/systemLog');
+            updatePeersSubscription(path == '/peers');
+            updateRpcSubscription(path == '/rpcUsage');
+            updateWalletSubscription(path == '/wallet');
         }
 
         function connect() {
@@ -277,11 +276,7 @@
                     $stomp.subscribe('/topic/currentSystemLogs', jsonParseAndBroadcast('currentSystemLogs'));
                     $stomp.subscribe('/topic/currentBlocks', jsonParseAndBroadcast('currentBlocksEvent'));
 
-                    updateNetworkSubscription(isHomePageActive);
-                    updateBlockSubscription(isHomePageActive);
-                    updateLogSubscription(isLogPageActive);
-                    updatePeersSubscription(isPeersPageActive);
-                    updateRpcSubscription(isRpcPageActive);
+                    updatePageSubscriptions();
 
                     // get immediate result
                     $stomp.send('/app/machineInfo');

@@ -93,11 +93,11 @@
                         </div>
                         <div class="form-group">
                             <label>To address</label>
-                            <input class="form-control" placeholder="{{txData.toAddress}}" type="text">
+                            <input class="form-control" ng-model="txData.toAddress" type="text">
                         </div>
                         <div class="form-group">
                             <label>Ether amount</label>
-                            <input class="form-control" placeholder="{{txData.amount}}" type="text">
+                            <input id="amountInput" class="form-control" ng-model="txData.amount" type="text">
                         </div>
                         <div class="form-group">
                             <label>Private key or seed phrase</label>
