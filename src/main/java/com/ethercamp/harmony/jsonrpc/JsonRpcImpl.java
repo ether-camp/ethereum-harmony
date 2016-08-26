@@ -229,11 +229,16 @@ public class JsonRpcImpl implements JsonRpc {
         }
     }
 
-    protected Account getAccountFromKeystore(String address) throws Exception {
+    /**
+     * @param address
+     * @return unlocked account with private key ready for signing tx
+     * @throws RuntimeException if account not unlocked or not found in keystore
+     */
+    protected Account getAccountFromKeystore(String address) throws RuntimeException {
         if (address.indexOf("0x") == 0) {
             address = address.substring(2);
         }
-        Account account = unlockedAccounts.get(new ByteArrayWrapper(StringHexToByteArray(address)));
+        final Account account = unlockedAccounts.get(new ByteArrayWrapper(StringHexToByteArray(address)));
         if (account != null) {
             return account;
         }

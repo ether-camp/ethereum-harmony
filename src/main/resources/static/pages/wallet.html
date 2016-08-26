@@ -110,7 +110,14 @@
                             <input id="amountInput" class="form-control" ng-model="txData.amount" type="text">
                         </div>
                         <div class="form-group">
-                            <label>Private key or seed phrase</label>
+                            <label>
+                                <input type="radio" ng-model="txData.useKeystoreKey"ng-value="true" >
+                                Keystore password
+                            </label>
+                            <label>
+                                <input type="radio" ng-model="txData.useKeystoreKey" ng-value="false">
+                                Private key or seed phrase
+                            </label>
                             <textarea id="pkeyInput" class="form-control" rows="3" placeholder="" autocomplete="off"></textarea>
                         </div>
                     </form>

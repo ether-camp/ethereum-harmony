@@ -24,11 +24,11 @@
     }
 
     function remove0x(value) {
-        if (value && value.indexOf('0x') == 0) {
-            return value.substr(2);
-        } else {
-            return value;
-        }
+        return (value && value.indexOf('0x') == 0) ? value.substr(2) : value;
+    }
+
+    function add0x(value) {
+        return '0x' + remove0x(value);
     }
 
     function showErrorToastr(topMessage, bottomMessage) {
@@ -56,12 +56,13 @@
         $scope.importAddressData = {};
         $scope.newAddressData = {};
 
-        $scope.onSendClick = function(address) {
+        $scope.onSendClick = function(item) {
             console.log('onSendClick');
             $scope.txData = {
-                fromAddress: address.publicAddress,
-                toAddress: '',
-                amount: 0
+                fromAddress:    item.publicAddress,
+                toAddress:      '',
+                amount:         0,
+                useKeystoreKey: item.hasKeystoreKey
             };
             $('#sendAmountModal').modal({});
         };
@@ -102,8 +103,8 @@
         };
 
         $scope.onSignAndSend = function() {
-            var privateKey = $('#pkeyInput').val();
-            var amount = $scope.txData.amount * Math.pow(10, 18);
+            var secret = $('#pkeyInput').val();
+            var amount = parseFloat($scope.txData.amount) * Math.pow(10, 18);
             var txData = $scope.txData;
 
             console.log('Before sign and send amount:' + amount);
@@ -111,7 +112,7 @@
 
             $q.all([
                 jsonrpc.request('eth_gasPrice', []),
-                jsonrpc.request('eth_getTransactionCount', ['0x' + txData.fromAddress, 'latest'])
+                jsonrpc.request('eth_getTransactionCount', [add0x(txData.fromAddress), 'latest'])
             ])
                 .then(function(results) {
                     console.log(results);
@@ -120,27 +121,48 @@
                     var nonce = parseInt(remove0x(results[1]), 16);
                     var gasLimit =  21000;
 
-                    return RlpBuilder
-                        .balanceTransfer(remove0x(txData.toAddress))
-                        .from(remove0x(txData.fromAddress))
-                        .secretKey(privateKey)
-                        .gasLimit(gasLimit)
-                        .gasPrice(gasPrice)
-                        .value(amount, defaultCurrency)
-                        .nonce(nonce)
-                        .withData('')
-                        .format();
-                })
-                .then(function (rlp) {
-                    console.log('Signed transaction');
-                    console.log(rlp);
+                    console.log('txData.useKeystoreKey ' + txData.useKeystoreKey)
+                    if (txData.useKeystoreKey) {
+                        console.log('try to unlock account with ' + [add0x(txData.fromAddress), secret, null]);
+                        return jsonrpc.request('personal_unlockAccount', [add0x(txData.fromAddress), secret, null])
+                            .then(function(result) {
+                                console.log('Account unlocked ' + result);
 
-                    return jsonrpc.request('eth_sendRawTransaction', [rlp]);
-                        //.catch(function(error) {
-                        //    console.log('Error sending raw transaction');
-                        //    console.log(error);
-                        //    showErrorToastr('ERROR', 'Wasn\'t to send signed raw transaction.\n' + error);
-                        //});
+                                return jsonrpc.request('eth_sendTransactionArgs', [
+                                    add0x(txData.fromAddress),
+                                    add0x(txData.toAddress),
+                                    add0x(gasLimit.toString(16)),
+                                    add0x(gasPrice.toString(16)),
+                                    add0x(amount.toString(16)),
+                                    add0x(''),
+                                    add0x(nonce.toString(16))
+                                ]);
+                            })
+                    } else {
+                        return RlpBuilder
+                            .balanceTransfer(remove0x(txData.toAddress))
+                            .from(remove0x(txData.fromAddress))
+                            .secretKey(secret)
+                            .gasLimit(gasLimit)
+                            .gasPrice(gasPrice)
+                            .value(amount, defaultCurrency)
+                            .nonce(nonce)
+                            .withData('')
+                            .format()
+
+                            .then(function (rlp) {
+                                console.log('Signed transaction');
+                                console.log(rlp);
+
+                                return jsonrpc.request('eth_sendRawTransaction', [rlp]);
+                                //.catch(function(error) {
+                                //    console.log('Error sending raw transaction');
+                                //    console.log(error);
+                                //    showErrorToastr('ERROR', 'Wasn\'t to send signed raw transaction.\n' + error);
+                                //});
+                            });
+                    }
+
                 })
                 .then(function(txHash) {
                     console.log('eth_sendRawTransaction result:' + txHash);
@@ -160,12 +182,19 @@
                         showErrorToastr(errorMessage);
                     }
                 })
-
                 .catch(function(error) {
-                    console.log('Error signing tx ' + error);
-                    showErrorToastr('ERROR', 'Wasn\'t able to sign or send transaction.\n' + error);
-                    //$balanceDlg.find('input[name="key"]').addClass('error').focus();
-                });
+                    console.log('Error signing tx');
+                    console.log(error);
+                    showErrorToastr('ERROR', 'Problem with transfer.\n' + error);
+                })
+                //.always(function() {
+                //    if (txData.useKeystoreKey) {
+                //        jsonrpc.request('personal_lockAccount', [add0x(txData.fromAddress)]);
+                //    }
+                //})
+                //.catch(function(e) {
+                //    console.log('Problem locking key at the end')
+                //});
         };
 
         function resizeContainer() {
