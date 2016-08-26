@@ -128,7 +128,7 @@ public class EthereumApiImpl {
     }
 
     public String web3_sha3(String data) throws Exception {
-        byte[] result = HashUtil.sha3(TypeConverter.StringHexToByteArray(data));
+        byte[] result = HashUtil.sha3(data.getBytes());
         return TypeConverter.toJsonHex(result);
     }
 

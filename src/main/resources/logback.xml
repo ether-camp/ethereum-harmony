@@ -51,6 +51,7 @@
         <logger level="DEBUG" name="org.hibernate.SQL"/>
     -->
 
+    <logger level="DEBUG" name="wallet"/>
     <logger level="DEBUG" name="harmony"/>
     <logger level="DEBUG" name="jsonrpc"/>
     <logger level="INFO" name="org.springframework.web.servlet.DispatcherServlet"/>

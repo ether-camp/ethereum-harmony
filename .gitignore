@@ -9,3 +9,5 @@ logs
 build
 database*
 unsaved-data
+
+walletstore

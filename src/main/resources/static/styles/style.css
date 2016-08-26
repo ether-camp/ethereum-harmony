@@ -2887,6 +2887,6 @@ fieldset[disabled] .form-control {
 }
 
 .font-sans-serif {
-    font-family: sans-serif;
+    font-family: sans-serif, monospace;
 }
 

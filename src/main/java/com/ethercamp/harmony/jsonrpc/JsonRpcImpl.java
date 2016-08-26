@@ -257,7 +257,7 @@ public class JsonRpcImpl implements JsonRpc {
         return ethereumApi.web3_clientVersion();
     }
 
-    public String  web3_sha3(String data) throws Exception {
+    public String web3_sha3(String data) throws Exception {
         return ethereumApi.web3_sha3(data);
     }
 

@@ -53,14 +53,52 @@
         $scope.addresses = [];
         $scope.txData = {};
 
+        $scope.importAddressData = {};
+        $scope.newAddressData = {};
+
         $scope.onSendClick = function(address) {
             console.log('onSendClick');
             $scope.txData = {
                 fromAddress: address.publicAddress,
-                toAddress: '79b08ad8787060333663d19704909ee7b1903e58',
-                amount: 0.22
+                toAddress: '',
+                amount: 0
             };
             $('#sendAmountModal').modal({});
+        };
+
+        $scope.onRemoveClick = function(item) {
+            console.log('onRemoveClick');
+
+            $stomp.send('/app/removeAddress', {
+                value:      item.publicAddress
+            });
+        };
+
+        $scope.onNewAddress = function() {
+            console.log('onNewAddress');
+
+            $scope.newAddressData = {
+                password:   '',
+                name:       ''
+            };
+            $('#newAddressModal').modal({});
+        };
+
+        $scope.onImportAddress = function() {
+            console.log('onImportAddress');
+
+            $scope.importAddressData = {
+                address:    '',
+                name:       ''
+            };
+            $('#importAddressModal').modal({});
+        };
+
+        $scope.onImportAddressConfirmed = function() {
+            console.log('onImportAddressConfirmed');
+            $stomp.send('/app/importAddress', $scope.importAddressData);
+
+            $('#importAddressModal').modal('hide');
         };
 
         $scope.onSignAndSend = function() {
@@ -165,7 +203,13 @@
             // force cleaning pkey value when modal closed
             $('#sendAmountModal').on('hidden.bs.modal', function () {
                 $('#pkeyInput').val('');
-            })
+            });
+
+            // Every time a modal is shown, if it has an autofocus element, focus on it.
+            $('.modal').on('shown.bs.modal', function() {
+                $(this).find('[autofocus]').focus();
+            });
+
             resizeContainer();
         });
         $scope.$on('windowResizeEvent', resizeContainer);

@@ -145,6 +145,20 @@
         toastr.warning('<strong>' + topMessage + '</strong> <br/><small>' + bottomMessage + '</small>');
     }
 
+    /**
+     * Show success top right bubble
+     */
+    function showSuccessToastr(topMessage, bottomMessage) {
+        toastr.options = {
+            "positionClass": "toast-top-right",
+            "closeButton": true,
+            "progressBar": true,
+            "showEasing": "swing",
+            "timeOut": "4000"
+        };
+        toastr.success('<strong>' + topMessage + '</strong> <br/><small>' + bottomMessage + '</small>');
+    }
+
     AppCtrl.$inject = ['$scope', '$timeout', '$http', '$window', '$stomp'];
 
     function AppCtrl ($scope, $timeout, $http, $window, $stomp) {
@@ -275,6 +289,7 @@
                     $stomp.subscribe('/topic/newBlockFrom', jsonParseAndBroadcast('newBlockFromEvent'));
                     $stomp.subscribe('/topic/currentSystemLogs', jsonParseAndBroadcast('currentSystemLogs'));
                     $stomp.subscribe('/topic/currentBlocks', jsonParseAndBroadcast('currentBlocksEvent'));
+                    $stomp.subscribe('/topic/confirmTransaction', onConfirmedTransaction);
 
                     updatePageSubscriptions();
 
@@ -388,6 +403,15 @@
                 vm.data.networkHashRate         = filesize(info.networkHashRate, simpleSuffixes) + 'H/s';
                 vm.data.gasPrice                = formatBigDigital(info.gasPrice) + 'Wei';
             }, 10);
+        }
+
+        function onConfirmedTransaction(data) {
+            console.log('onConfirmedTransaction');
+            console.log(data);
+
+            var sendMessage = data.sending ? 'SENT' : 'RECEIVED';
+            var amountMessage = data.amount / Math.pow(10, 18);
+            showSuccessToastr('Transaction included in block', 'Successfully ' + sendMessage + ' ' + amountMessage + ' ETH');
         }
 
         function disconnect() {
