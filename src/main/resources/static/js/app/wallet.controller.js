@@ -70,9 +70,11 @@
         $scope.onRemoveClick = function(item) {
             console.log('onRemoveClick');
 
-            $stomp.send('/app/removeAddress', {
-                value:      item.publicAddress
-            });
+            if (confirm("Delete address with its keystore file?")) {
+                $stomp.send('/app/removeAddress', {
+                    value:      item.publicAddress
+                });
+            }
         };
 
         $scope.onNewAddress = function() {
