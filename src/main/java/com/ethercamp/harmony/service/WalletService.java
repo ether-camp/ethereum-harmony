@@ -51,9 +51,12 @@ public class WalletService {
     @PostConstruct
     public void init() {
         addresses.clear();
-        fileSystemWalletStore.fromStore().stream().forEach(a -> addresses.put(a, "Loaded"));
+        fileSystemWalletStore.fromStore().stream()
+                .forEach(a -> {
+                    addresses.put(a, "Loaded");
+                });
 
-        addresses.put("cd2a3d9f938e13cd947ec05abc7fe734df8dd826", "Default");
+//        addresses.put("cd2a3d9f938e13cd947ec05abc7fe734df8dd826", "Default");
 
         ethereum.addListener(new EthereumListenerAdapter() {
             @Override
@@ -95,7 +98,7 @@ public class WalletService {
                 .map(e -> {
                     byte[] address = Hex.decode(e.getKey());
                     BigInteger balance = repository.getBalance(address).divide(BASE_OFFSET);
-                    return new WalletAddressDTO(e.getValue(), e.getKey(), balance.longValue());
+                    return new WalletAddressDTO(e.getValue(), e.getKey(), balance.longValue(), true);
                 })
                 .collect(Collectors.toList());
 

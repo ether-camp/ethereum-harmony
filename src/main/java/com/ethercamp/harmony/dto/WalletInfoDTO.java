@@ -3,7 +3,6 @@ package com.ethercamp.harmony.dto;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
