@@ -19,5 +19,10 @@ public interface Keystore {
 
     ECKey loadStoredKey(String address, String password) throws RuntimeException;
 
+    /**
+     * Check if keystore has file with key for passed address.
+     * @param address - 40 chars
+     * @return
+     */
     boolean hasStoredKey(String address);
 }

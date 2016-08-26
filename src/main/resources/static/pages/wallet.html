@@ -41,30 +41,35 @@
                         <a href="#" ng-click="onImportAddress()" class="btn btn-w-md btn-primary">Import address</a>
                     </div>
 
-                    <table class="table">
-                        <thead>
-                        </thead>
-                        <tbody>
-                            <tr ng-repeat="item in addresses"
-                                >
-                                <td>
-                                    {{item.name}}
-                                </td>
-                                <td>
-                                    <div class="font-sans-serif">{{item.publicAddress}}</div>
-                                </td>
-                                <td>
-                                    {{item.amount}}
-                                </td>
-                                <td>
-                                   <a href="#" ng-click="onSendClick(item)">Send</a>
-                                </td>
-                                <td>
-                                    <a href="#" ng-click="onRemoveClick(item)">Remove</a>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <div class="table-responsive" id="address-scroll-container">
+                        <table class="table">
+                            <thead>
+                            </thead>
+                            <tbody>
+                                <tr ng-repeat="item in addresses"
+                                    >
+                                    <td>
+                                        <span class="pe-7s-key" ng-hide="!item.hasKeystoreKey"></span>
+                                    </td>
+                                    <td>
+                                        {{item.name}}
+                                    </td>
+                                    <td>
+                                        <div class="font-sans-serif">{{item.publicAddress}}</div>
+                                    </td>
+                                    <td>
+                                        {{item.amount}}
+                                    </td>
+                                    <td>
+                                       <a href="#" ng-click="onSendClick(item)">Send</a>
+                                    </td>
+                                    <td>
+                                        <a href="#" ng-click="onRemoveClick(item)">Remove</a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
                 <div class="panel panel-filled">

@@ -2,14 +2,18 @@ package com.ethercamp.harmony.service.wallet;
 
 import lombok.extern.slf4j.Slf4j;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.type.TypeReference;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -22,12 +26,10 @@ public class FileSystemWalletStore {
 
     private static String FILE_NAME = "wallet.json";
 
-    public void toStore(List<String> addresses) {
+    public void toStore(List<WalletAddressItem> addresses) {
         try {
-            final WalletItem walletItem = new WalletItem();
-            walletItem.addresses.addAll(addresses);
             ObjectMapper mapper = new ObjectMapper();
-            final String content = mapper.writeValueAsString(walletItem);
+            final String content = mapper.writeValueAsString(addresses);
 
             getKeyStoreLocation().toFile().mkdirs();
             Files.write(getKeyStoreLocation().resolve(FILE_NAME), Arrays.asList(content));
@@ -37,7 +39,7 @@ public class FileSystemWalletStore {
         }
     }
 
-    public List<String> fromStore() {
+    public List<WalletAddressItem> fromStore() {
         final ObjectMapper mapper = new ObjectMapper();
 
         try {
@@ -47,8 +49,11 @@ public class FileSystemWalletStore {
                     .stream()
                     .collect(Collectors.joining(""));
 
-            return mapper.readValue(content, WalletItem.class).addresses;
-        } catch (Exception e) {
+            return mapper.readValue(content, new TypeReference<List<WalletAddressItem>>() {
+            });
+        } catch (NoSuchFileException e) {
+            return Collections.EMPTY_LIST;
+        } catch (IOException e) {
             throw new RuntimeException("Problem loading data. Message: " + e.getMessage(), e);
         }
     }

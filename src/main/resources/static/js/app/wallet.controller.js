@@ -170,6 +170,15 @@
 
         function resizeContainer() {
             console.log('Wallet page resize');
+
+            var scrollContainer = document.getElementById("address-scroll-container");
+            var rect = scrollContainer.getBoundingClientRect();
+            var newHeight = $(window).height() - rect.top - 30;
+            //$(scrollContainer).css('maxHeight', newHeight + 'px');
+            $timeout(function() {
+                $scope.scrollConfig.setHeight = newHeight;
+                $(scrollContainer).mCustomScrollbar($scope.scrollConfig);
+            }, 10);
         }
 
         $scope.$on('walletInfoEvent', function(event, data) {

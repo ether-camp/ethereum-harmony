@@ -8,5 +8,5 @@ import java.util.List;
  */
 public class WalletItem {
 
-    public List<String> addresses = new ArrayList<>();
+    public List<WalletAddressItem> addresses = new ArrayList<>();
 }

@@ -5,6 +5,7 @@ import com.ethercamp.harmony.dto.WalletConfirmTransactionDTO;
 import com.ethercamp.harmony.dto.WalletInfoDTO;
 import com.ethercamp.harmony.keystore.Keystore;
 import com.ethercamp.harmony.service.wallet.FileSystemWalletStore;
+import com.ethercamp.harmony.service.wallet.WalletAddressItem;
 import lombok.extern.slf4j.Slf4j;
 import org.ethereum.core.*;
 import org.ethereum.crypto.ECKey;
@@ -19,7 +20,9 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
 import java.math.BigInteger;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Created by Stan Reshetnyk on 24.08.16.
@@ -51,18 +54,27 @@ public class WalletService {
     @PostConstruct
     public void init() {
         addresses.clear();
-        fileSystemWalletStore.fromStore().stream()
-                .forEach(a -> {
-                    addresses.put(a, "Loaded");
-                });
 
-//        addresses.put("cd2a3d9f938e13cd947ec05abc7fe734df8dd826", "Default");
+        AtomicInteger index = new AtomicInteger();
+        Arrays.asList(keystore.listStoredKeys())
+                .forEach(a -> addresses.put(remove0x(a), "Account " + index.incrementAndGet()));
+
+        fileSystemWalletStore.fromStore().stream()
+                .forEach(a -> addresses.put(a.address, a.name));
 
         ethereum.addListener(new EthereumListenerAdapter() {
             @Override
             public void onBlock(BlockSummary blockSummary) {
                 final Set<ByteArrayWrapper> subscribed = addresses.keySet().stream()
-                        .map(a -> new ByteArrayWrapper(Hex.decode(a)))
+                        .map(a -> remove0x(a))
+                        .flatMap(a -> {
+                            try {
+                                return Stream.of(new ByteArrayWrapper(Hex.decode(a)));
+                            } catch (Exception e) {
+                                log.error("Problem getting bytes representation from " + a);
+                                return Stream.empty();
+                            }
+                        })
                         .collect(Collectors.toSet());
 
                 final List<Transaction> confirmedTransactions = blockSummary.getReceipts().stream()
@@ -93,12 +105,28 @@ public class WalletService {
         });
     }
 
+    private String remove0x(String input) {
+        if (input != null && input.startsWith("0x")) {
+            return input.substring(2);
+        }
+        return input;
+    }
+
     public WalletInfoDTO getWalletInfo() {
         List<WalletAddressDTO> list = addresses.entrySet().stream()
-                .map(e -> {
-                    byte[] address = Hex.decode(e.getKey());
-                    BigInteger balance = repository.getBalance(address).divide(BASE_OFFSET);
-                    return new WalletAddressDTO(e.getValue(), e.getKey(), balance.longValue(), true);
+                .flatMap(e -> {
+                    try {
+                        byte[] address = Hex.decode(e.getKey());
+                        BigInteger balance = repository.getBalance(address).divide(BASE_OFFSET);
+                        return Stream.of(new WalletAddressDTO(
+                                e.getValue(),
+                                e.getKey(),
+                                balance.longValue(),
+                                keystore.hasStoredKey(e.getKey())));
+                    } catch (Exception exception) {
+                        log.error("Error in making wallet address", exception);
+                        return Stream.empty();
+                    }
                 })
                 .collect(Collectors.toList());
 
@@ -154,6 +182,7 @@ public class WalletService {
 
     public void removeAddress(String address) {
         addresses.remove(address);
+        keystore.removeKey(address);
 
         flushWalletToDisk();
 
@@ -169,6 +198,8 @@ public class WalletService {
     }
 
     private void flushWalletToDisk() {
-        fileSystemWalletStore.toStore(addresses.keySet().stream().collect(Collectors.toList()));
+        fileSystemWalletStore.toStore(addresses.entrySet().stream()
+                .map(e -> new WalletAddressItem(e.getKey(), e.getValue()))
+                .collect(Collectors.toList()));
     }
 }
