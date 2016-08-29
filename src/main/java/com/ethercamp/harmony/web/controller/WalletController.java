@@ -23,7 +23,7 @@ public class WalletController {
 
     @MessageMapping("/newAddress")
     public String newAddress(NewAddressDTO data) {
-        return walletService.newAddress(data.getName(), data.getPassword());
+        return walletService.newAddress(data.getName(), data.getSecret());
     }
 
     @MessageMapping("/importAddress")
@@ -63,7 +63,7 @@ public class WalletController {
     @Data
     public static class NewAddressDTO {
 
-        private String password;
+        private String secret;
 
         private String name;
     }

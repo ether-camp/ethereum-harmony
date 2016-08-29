@@ -5,6 +5,8 @@
 (function() {
     'use strict';
 
+    var TX_FEE = 0.00042;
+
     function showErrorToastr(topMessage, bottomMessage) {
         toastr.clear()
         toastr.options = {
@@ -17,17 +19,24 @@
         toastr.error('<strong>' + topMessage + '</strong> <br/><small>' + bottomMessage + '</small>');
     }
 
+
     function SendAmountCtrl($scope, item, $element, $stomp, close, jsonrpc, $q) {
         $scope.txData = {
             fromAddress:    item.publicAddress,
             toAddress:      '',
-            amount:         0,
+            amount:         '',
+            availableAmount: Math.max(0, Math.round(10000000 * (item.amount - TX_FEE)) / 10000000),
             useKeystoreKey: item.hasKeystoreKey,
+            hasKeystoreKey: item.hasKeystoreKey,
             secret:         ''
         };
 
         var add0x = Utils.Hex.add0x;
         var remove0x = Utils.Hex.remove0x;
+
+        $scope.onSendAll = function () {
+            $scope.txData.amount = $scope.txData.availableAmount;
+        };
 
         $scope.onSignAndSend = function() {
             $scope.$broadcast('show-errors-check-validity');
@@ -162,6 +171,34 @@
 
     angular.module('HarmonyApp')
         .controller('ImportAddressCtrl', ['$scope', '$stomp', '$element', 'close', ImportAddressCtrl]);
+
+
+    function NewAddressCtrl($scope, $stomp, $element, close) {
+        $scope.newAddressData = {
+            address:    '',
+            secret:     ''
+        };
+
+        $scope.onNewAddressConfirmed = function() {
+            console.log('onImportAddressConfirmed');
+
+            $scope.$broadcast('show-errors-check-validity');
+
+            if (!$scope.form.$valid) {
+                showErrorToastr('FORM VALIDATION', 'Please correct form inputted data.');
+                return;
+            }
+
+            $stomp.send('/app/newAddress', $scope.newAddressData);
+
+            $element.modal('hide');
+            close(null, 500);
+        };
+    }
+
+    angular.module('HarmonyApp')
+        .controller('NewAddressCtrl', ['$scope', '$stomp', '$element', 'close', NewAddressCtrl]);
+
 
     angular.module('HarmonyApp')
         .directive('showErrors', function() {

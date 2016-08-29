@@ -35,9 +35,6 @@
         $scope.totalAmountUSD = 'n/a';
         $scope.addresses = [];
 
-        $scope.importAddressData = {};
-        $scope.newAddressData = {};
-
         $scope.onSendClick = function(item) {
             console.log('onSendClick');
             ModalService.showModal({
@@ -62,11 +59,12 @@
         $scope.onNewAddress = function() {
             console.log('onNewAddress');
 
-            $scope.newAddressData = {
-                password:   '',
-                name:       ''
-            };
-            $('#newAddressModal').modal({});
+            ModalService.showModal({
+                templateUrl:    "pages/popups/newAddress.html",
+                controller:     "NewAddressCtrl"
+            }).then(function(modal) {
+                modal.element.modal();
+            });
         };
 
         $scope.onImportAddress = function() {
@@ -101,7 +99,8 @@
                 $scope.totalAmount = data.totalAmount;
                 $scope.totalAmountString = numberWithCommas(data.totalAmount / ETH_BASE);
                 data.addresses.forEach(function(a) {
-                    a.amount = numberWithCommas(a.amount / ETH_BASE);
+                    a.amount = a.amount / ETH_BASE;
+                    a.amountString = numberWithCommas(a.amount);
                 });
                 $scope.addresses = data.addresses;
             }, 10);
