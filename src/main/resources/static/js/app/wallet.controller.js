@@ -34,7 +34,6 @@
         $scope.totalAmountString = 0;
         $scope.totalAmountUSD = 'n/a';
         $scope.addresses = [];
-        $scope.txData = {};
 
         $scope.importAddressData = {};
         $scope.newAddressData = {};
@@ -45,15 +44,9 @@
                 templateUrl:    "pages/popups/sendAmount.html",
                 controller:     "SendAmountCtrl",
                 inputs:         {item: item}
-            })
-                .then(function(modal) {
-
-                    modal.element.modal();
-                    modal.close.then(function(result) {
-                        $scope.message = result ? "You said Yes" : "You said No";
-                    });
-                    console.log('SendAmount constructed');
-                });
+            }).then(function(modal) {
+                modal.element.modal();
+            });
         };
 
         $scope.onRemoveClick = function(item) {
@@ -79,20 +72,13 @@
         $scope.onImportAddress = function() {
             console.log('onImportAddress');
 
-            $scope.importAddressData = {
-                address:    '',
-                name:       ''
-            };
-            $('#importAddressModal').modal({});
+            ModalService.showModal({
+                templateUrl:    "pages/popups/importAddress.html",
+                controller:     "ImportAddressCtrl"
+            }).then(function(modal) {
+                modal.element.modal();
+            });
         };
-
-        $scope.onImportAddressConfirmed = function() {
-            console.log('onImportAddressConfirmed');
-            $stomp.send('/app/importAddress', $scope.importAddressData);
-
-            $('#importAddressModal').modal('hide');
-        };
-
 
         function resizeContainer() {
             console.log('Wallet page resize');
@@ -137,9 +123,9 @@
 
         $(window).ready(function() {
             // Every time a modal is shown, if it has an autofocus element, focus on it.
-            $('.modal').on('shown.bs.modal', function() {
-                $(this).find('[autofocus]').focus();
-            });
+            //$('.modal').on('shown.bs.modal', function() {
+            //    $(this).find('[autofocus]').focus();
+            //});
 
             resizeContainer();
         });

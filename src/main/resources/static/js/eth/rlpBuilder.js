@@ -12,6 +12,10 @@ var Utils = (function() {
         return /^(0x)?[\da-f]+$/i.test(string);
     }
 
+    function isHexAddress(string) {
+        return /^(0x)?[\da-f]{40}$/i.test(string);
+    }
+
     function padHexString(h) {
         if (typeof h === 'string' && h.length % 2 !== 0) {
             h = '0' + h;
@@ -38,7 +42,8 @@ var Utils = (function() {
             padHexString:   padHexString,
             toHexString:    toHexString,
             add0x:          add0x,
-            remove0x:       remove0x
+            remove0x:       remove0x,
+            isHexAddress:   isHexAddress
         }
     }
 })();

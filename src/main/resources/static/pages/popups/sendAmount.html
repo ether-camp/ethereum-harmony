@@ -6,29 +6,48 @@
                 <h4 class="modal-title" id="myModalLabel">Send amount</h4>
             </div>
             <div class="modal-body">
-                <form>
+                <form name="form" novalidate>
                     <div class="form-group">
                         <label>From address</label>
                         <input class="form-control" placeholder="{{txData.fromAddress}}" readonly type="text">
                     </div>
-                    <div class="form-group">
+                    <div class="form-group" show-errors>
                         <label>To address</label>
-                        <input class="form-control" ng-model="txData.toAddress" type="text" autofocus>
+                        <input name="toAddress" class="form-control" ng-model="txData.toAddress"
+                               ethaddress
+                               auto111focus
+                               type="text" required>
+                        <div ng-show="form.$submitted || form.toAddress.$touched">
+                            <div ng-show="form.toAddress.$error.required">Address is required</div>
+                            <div ng-show="form.toAddress.$error.ethaddress">Address format is invalid</div>
+                        </div>
+
                     </div>
-                    <div class="form-group">
-                        <label>Ether amount</label>
-                        <input id="amountInput" class="form-control" ng-model="txData.amount" type="text">
+                    <div class="form-group" show-errors>
+                        <label>ETH amount</label>
+                        <input name="amount" class="form-control" ng-model="txData.amount" type="text" required>
+
+                        <div ng-show="form.$submitted || form.amount.$touched">
+                            <div ng-show="form.amount.$error.required">Amount is invalid</div>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>
-                            <input type="radio" ng-model="txData.useKeystoreKey"ng-value="true" >
+                            <input type="radio" ng-model="txData.useKeystoreKey" ng-value="true" >
                             Keystore password
                         </label>
                         <label>
                             <input type="radio" ng-model="txData.useKeystoreKey" ng-value="false">
                             Private key or seed phrase
                         </label>
-                        <textarea class="form-control" rows="3" ng-model="txData.secret" placeholder="secret" autocomplete="off"></textarea>
+                    </div>
+                    <div class="form-group" show-errors>
+                        <textarea name="secret" class="form-control" rows="3" ng-model="txData.secret" placeholder="secret" autocomplete="off"
+                                  required></textarea>
+
+                        <div ng-show="form.$submitted || form.secret.$touched">
+                            <div ng-show="form.secret.$error.required">Secret is required</div>
+                        </div>
                     </div>
                 </form>
             </div>

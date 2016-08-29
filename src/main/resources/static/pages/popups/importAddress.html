@@ -6,14 +6,26 @@
                 <h4 class="modal-title">Import address</h4>
             </div>
             <div class="modal-body">
-                <form>
-                    <div class="form-group">
+                <form name="form" novalidate>
+                    <div class="form-group" show-errors>
                         <label>Name</label>
-                        <input class="form-control" ng-model="importAddressData.name" name="uName" required="" type="text" autofocus>
+                        <input class="form-control" ng-model="importAddressData.name" name="nameInput"
+                               required="" type="text" auto111focus>
+
+                        <div ng-show="form.$submitted || form.nameInput.$touched">
+                            <div ng-show="form.nameInput.$error.required">Name is required</div>
+                        </div>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group" show-errors>
                         <label>Address</label>
-                        <input class="form-control" ng-model="importAddressData.address" name="uAddress" required="" type="text">
+                        <input class="form-control" ng-model="importAddressData.address"
+                               ethaddress
+                               name="address" required="" type="text">
+
+                        <div ng-show="form.$submitted || form.address.$touched">
+                            <div ng-show="form.address.$error.required">Address is required</div>
+                            <div ng-show="form.address.$error.ethaddress">Address format is invalid</div>
+                        </div>
                     </div>
                 </form>
             </div>
