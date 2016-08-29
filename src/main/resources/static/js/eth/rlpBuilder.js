@@ -23,11 +23,22 @@ var Utils = (function() {
         return padHexString((new BigNumber(value)).toString(16));
     }
 
+    function add0x(value) {
+        return '0x' + remove0x(value);
+    }
+
+    function remove0x(value) {
+        return (value && value.indexOf('0x') == 0) ? value.substr(2) : value;
+    }
+
+
     return {
         Hex: {
-            isHexString: isHexString,
-            padHexString: padHexString,
-            toHexString: toHexString
+            isHexString:    isHexString,
+            padHexString:   padHexString,
+            toHexString:    toHexString,
+            add0x:          add0x,
+            remove0x:       remove0x
         }
     }
 })();
@@ -35,6 +46,9 @@ var Utils = (function() {
 
 
 var RlpBuilder = (function() {
+
+    var remove0x = Utils.Hex.remove0x;
+
     function defaultInt(value, defaultValue, isAbs) {
         value || (value = defaultValue);
         _.isString(value) && (value = parseInt(value, 10));
@@ -42,14 +56,6 @@ var RlpBuilder = (function() {
 
         return isAbs ? Math.abs(value) : value;
     };
-
-    function remove0x(value) {
-        if (value && value.indexOf('0x') == 0) {
-            return value.substr(2);
-        } else {
-            return value;
-        }
-    }
 
     var TxRlpFormatter = function (toAddress, dummy) {
 
@@ -118,12 +124,8 @@ var RlpBuilder = (function() {
             }
         }
 
-        function setValue(value, denomination) {
+        function setValue(value) {
             value = defaultInt(value, 0);
-            if (value && denomination !== 'wei') {
-                value = currency.convert(value, denomination, 'wei').toNumber();
-            }
-
             self.data.value = value;
             return self;
         }

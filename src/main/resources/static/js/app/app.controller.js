@@ -1,7 +1,13 @@
 (function() {
     'use strict';
 
-    var mainApp = angular.module('HarmonyApp', ['ngRoute', 'angular-jsonrpc-client', 'ngStomp']);
+    // Angular modules definition
+    var mainApp = angular.module('HarmonyApp', [
+        'ngRoute',                      // sub page navigation
+        'angular-jsonrpc-client',       // json-rpc communication
+        'ngStomp',                      // websocket communication
+        'angularModalService'           // for showing modal popups
+    ]);
 
     mainApp.controller('AppCtrl', AppCtrl);
 
@@ -60,7 +66,6 @@
 
         $locationProvider.html5Mode(true);
 
-        console.info(jsonrpcConfigProvider);
         jsonrpcConfigProvider.set({
             url: JSON_RPC_URL,
             returnHttpPromise: false
@@ -306,7 +311,7 @@
         }
 
         /**
-         * Generate function to manage subscription state.
+         * Generate function to manage websocket topic subscription state.
          *
          * @param topic - topic to subscribe to
          * @param handler - handler for subscribed topic

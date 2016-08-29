@@ -148,7 +148,7 @@ public class KeystoreFormat {
             return part;
         }
 
-        throw new RuntimeException("error while loading the private key from the keystore. Most probably a wrong passphrase");
+        throw new RuntimeException("Most probably a wrong passphrase");
     }
 
     private byte[] checkMacScrypt(KeystoreItem keystore, String password) throws Exception {
@@ -165,7 +165,7 @@ public class KeystoreFormat {
             return part;
         }
 
-        throw new RuntimeException("error while loading the private key from the keystore. Most probably a wrong passphrase");
+        throw new RuntimeException("Most probably a wrong passphrase");
     }
 
     private byte[] concat(byte[] a, byte[] b) {

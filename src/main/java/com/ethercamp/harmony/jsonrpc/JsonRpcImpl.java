@@ -1245,7 +1245,7 @@ public class JsonRpcImpl implements JsonRpc {
         } else {
             // we can return false or send description message with exception
             // prefer exception for now
-            throw new RuntimeException("No key was found in keystore for account:" + address);
+            throw new RuntimeException("No key was found in keystore for account: " + address);
         }
     }
 

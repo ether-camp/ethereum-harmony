@@ -63,47 +63,59 @@ public class WalletService {
                 .forEach(a -> addresses.put(a.address, a.name));
 
         ethereum.addListener(new EthereumListenerAdapter() {
+//            @Override
+//            public void onPendingTransactionsReceived(List<Transaction> list) {
+//                checkForChangesInWallet(list);
+//            }
+
             @Override
             public void onBlock(BlockSummary blockSummary) {
-                final Set<ByteArrayWrapper> subscribed = addresses.keySet().stream()
-                        .map(a -> remove0x(a))
-                        .flatMap(a -> {
-                            try {
-                                return Stream.of(new ByteArrayWrapper(Hex.decode(a)));
-                            } catch (Exception e) {
-                                log.error("Problem getting bytes representation from " + a);
-                                return Stream.empty();
-                            }
-                        })
-                        .collect(Collectors.toSet());
-
-                final List<Transaction> confirmedTransactions = blockSummary.getReceipts().stream()
+                checkForChangesInWallet(blockSummary
+                        .getReceipts().stream()
                         .map(receipt -> receipt.getTransaction())
-                        .filter(transaction ->
-                                setContains(subscribed, transaction.getReceiveAddress())
-                                    || setContains(subscribed, transaction.getSender()))
-                        .collect(Collectors.toList());
-
-                if (!confirmedTransactions.isEmpty()) {
-                    // update wallet if transactions are related to wallet addresses
-                    clientMessageService.sendToTopic("/topic/getWalletInfo", getWalletInfo());
-                }
-
-                confirmedTransactions.forEach(transaction -> {
-                    final String hash = toHexString(transaction.getHash());
-                    final BigInteger amount = ByteUtil.bytesToBigInteger(transaction.getValue());
-                    final boolean sending = setContains(subscribed, transaction.getSender());
-                    log.info("Notify confirmed transaction sending:" + sending + ", amount:" + amount);
-
-                    clientMessageService.sendToTopic("/topic/confirmTransaction", new WalletConfirmTransactionDTO(
-                            hash,
-                            amount,
-                            sending
-                    ));
-                });
+                        .collect(Collectors.toList()));
             }
         });
     }
+
+    private void checkForChangesInWallet(List<Transaction> transactions) {
+        final Set<ByteArrayWrapper> subscribed = addresses.keySet().stream()
+                .map(a -> remove0x(a))
+                .flatMap(a -> {
+                    try {
+                        return Stream.of(new ByteArrayWrapper(Hex.decode(a)));
+                    } catch (Exception e) {
+                        log.error("Problem getting bytes representation from " + a);
+                        return Stream.empty();
+                    }
+                })
+                .collect(Collectors.toSet());
+
+        final List<Transaction> confirmedTransactions = transactions.stream()
+                .filter(transaction ->
+                        setContains(subscribed, transaction.getReceiveAddress())
+                            || setContains(subscribed, transaction.getSender()))
+                .collect(Collectors.toList());
+
+        if (!confirmedTransactions.isEmpty()) {
+            // update wallet if transactions are related to wallet addresses
+            clientMessageService.sendToTopic("/topic/getWalletInfo", getWalletInfo());
+        }
+
+        confirmedTransactions.forEach(transaction -> {
+            final String hash = toHexString(transaction.getHash());
+            final BigInteger amount = ByteUtil.bytesToBigInteger(transaction.getValue());
+            final boolean sending = setContains(subscribed, transaction.getSender());
+            log.info("Notify confirmed transaction sending:" + sending + ", amount:" + amount);
+
+            clientMessageService.sendToTopic("/topic/confirmTransaction", new WalletConfirmTransactionDTO(
+                    hash,
+                    amount,
+                    sending
+            ));
+        });
+    }
+
 
     private String remove0x(String input) {
         if (input != null && input.startsWith("0x")) {
