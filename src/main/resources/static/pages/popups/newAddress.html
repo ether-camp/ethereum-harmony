@@ -3,22 +3,32 @@
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title">Import address</h4>
+                <h4 class="modal-title">New Address</h4>
             </div>
             <div class="modal-body">
-                <form name="form" novalidate>
+                <form name="form" novalidate autocomplete="off">
+                    <!-- Fake fields to avoid google auto fill -->
+                    <div style="height: 0px;opacity: 0.01" id="fakeusernameremembered">
+                        <input type="text" class="fake-autofill-fields"/>
+                        <input type="password" class="fake-autofill-fields"/>
+                    </div>
+                    <script>
+                        window.setTimeout(function () {
+                            $('#fakeusernameremembered').hide();
+                        }, 2000);
+                    </script>
+
                     <div class="form-group" show-errors>
                         <label>Name</label>
                         <input class="form-control" ng-model="newAddressData.name" name="nameInput"
                                autocomplete="off"
+                               value=" "
                                required type="text" auto111focus>
 
                         <div ng-show="form.$submitted || form.nameInput.$touched">
                             <div ng-show="form.nameInput.$error.required">Name is required</div>
                         </div>
                     </div>
-
-                    <input type="password" name="password" id="password_fake" class="hidden" autocomplete="off" style="display: none;">
 
                     <div class="form-group" show-errors>
                         <label>Password</label>
