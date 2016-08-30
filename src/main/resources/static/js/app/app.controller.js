@@ -76,6 +76,9 @@
      * App Controller
      */
 
+    /**
+     * @type {Object.<string, Object>}
+     */
     var topicStorage = {};
 
     var connectionLostOnce = false;
@@ -89,6 +92,15 @@
         }
     };
 
+    /**
+     * Remember confirmed transactions to avoid twice notifications.
+     * @type {String[]}
+     */
+    var confirmedTransactions = [];
+
+    // change default animation step time to improve performance
+    jQuery.fx.interval = 100;
+
 
     function formatBigDigital(value, decimals) {
         if(value == 0) return '0 ';
@@ -99,9 +111,6 @@
         return parseFloat((value / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
     }
 
-
-    // change default animation step time to improve performance
-    jQuery.fx.interval = 100;
 
     function updateBlockCounter(value) {
         var blockCounter = $('#blockCounter');
@@ -202,7 +211,7 @@
             }
         }
 
-        var updateLogSubscription       = updateSubscriptionFun('/topic/systemLog', onSystemLogResult,
+        var updateLogSubscription       = updateSubscriptionFun('/topic/systemLog', jsonParseAndBroadcast('systemLogEvent'),
             function() {
                 $stomp.send('/app/currentSystemLogs');
             });
@@ -338,14 +347,6 @@
             };
         }
 
-        function onSystemLogResult(data) {
-            var msg = data;
-
-            // send event to SystemLogCtrl
-            $scope.$broadcast('systemLogEvent', msg);
-        }
-
-
         function onMachineInfoResult(data) {
             var info = (data);
 
@@ -378,14 +379,6 @@
                 vm.data.nodeId = info.nodeId ? '0x' + info.nodeId.substr(0, 6) : 'n/a';
                 vm.data.rpcPort = info.rpcPort;
                 vm.data.portCheckerUrl = info.portCheckerUrl;
-
-                //$http({
-                //    url: vm.data.portCheckerUrl + '/checkIp',
-                //    method: 'GET',
-                //    transformResponse: [function (r) { return r; }]
-                //}).then(function(response) {
-                //    vm.data.publicIp = response.data;
-                //});
             }, 10);
 
             console.log('App version ' + info.appVersion + ', info.privateNetwork: ' + info.privateNetwork);
@@ -413,6 +406,15 @@
         function onConfirmedTransaction(data) {
             console.log('onConfirmedTransaction');
             console.log(data);
+
+            if (confirmedTransactions.indexOf(data.hash) > -1) {
+                console.log('Already notified tx ' + data.hash);
+                return;
+            }
+            confirmedTransactions.push(data.hash);
+            if (confirmedTransactions.length > 100) {
+                confirmedTransactions.shift();
+            }
 
             var sendMessage = data.sending ? 'SENT' : 'RECEIVED';
             var amountMessage = data.amount / Math.pow(10, 18);

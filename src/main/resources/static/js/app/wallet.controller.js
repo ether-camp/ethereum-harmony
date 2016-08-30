@@ -99,8 +99,17 @@
                 $scope.totalAmount = data.totalAmount;
                 $scope.totalAmountString = numberWithCommas(data.totalAmount / ETH_BASE);
                 data.addresses.forEach(function(a) {
+                    console.log(a);
+                    a.publicAddress = EthUtil.toChecksumAddress(a.publicAddress);
                     a.amount = a.amount / ETH_BASE;
                     a.amountString = numberWithCommas(a.amount);
+                    var pendingAmount = Math.max(0, Math.ceil((a.pendingAmount / (Math.pow(10, 11))) / 10000000));
+                    console.log(a.amount + ' vs ' + pendingAmount);
+                    if (a.amount != pendingAmount) {
+                        //a.pendingAmountString = '(' + numberWithCommas(pendingAmount) + ')';
+                    } else {
+                        //a.pendingAmountString = '';
+                    }
                 });
                 $scope.addresses = data.addresses;
             }, 10);

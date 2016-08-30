@@ -15,11 +15,13 @@
                         <label>To address</label>
                         <input name="toAddress" class="form-control" ng-model="txData.toAddress"
                                ethaddress
+                               ethaddresschecksum
                                auto111focus
                                type="text" required>
                         <div ng-show="form.$submitted || form.toAddress.$touched">
                             <div ng-show="form.toAddress.$error.required">Address is required</div>
                             <div ng-show="form.toAddress.$error.ethaddress">Address format is invalid</div>
+                            <div ng-show="form.toAddress.$error.ethaddresschecksum">Checksum address format is invalid</div>
                         </div>
 
                     </div>

@@ -6,6 +6,8 @@ import com.ethercamp.harmony.dto.WalletInfoDTO;
 import com.ethercamp.harmony.keystore.Keystore;
 import com.ethercamp.harmony.service.wallet.FileSystemWalletStore;
 import com.ethercamp.harmony.service.wallet.WalletAddressItem;
+import lombok.AllArgsConstructor;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.ethereum.core.*;
 import org.ethereum.crypto.ECKey;
@@ -20,7 +22,9 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
 import java.math.BigInteger;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -51,6 +55,8 @@ public class WalletService {
     @Autowired
     Keystore keystore;
 
+    Map<String, TransactionInfo> pendingTransactions = new ConcurrentHashMap<>();
+
     @PostConstruct
     public void init() {
         addresses.clear();
@@ -63,22 +69,30 @@ public class WalletService {
                 .forEach(a -> addresses.put(a.address, a.name));
 
         ethereum.addListener(new EthereumListenerAdapter() {
-//            @Override
-//            public void onPendingTransactionsReceived(List<Transaction> list) {
-//                checkForChangesInWallet(list);
-//            }
+            @Override
+            public void onPendingTransactionsReceived(List<Transaction> list) {
+                checkForChangesInWallet(list, (info) -> pendingTransactions.put(info.getHash(), info));
+            }
 
             @Override
             public void onBlock(BlockSummary blockSummary) {
                 checkForChangesInWallet(blockSummary
                         .getReceipts().stream()
                         .map(receipt -> receipt.getTransaction())
-                        .collect(Collectors.toList()));
+                        .collect(Collectors.toList()),
+                        (info) -> {
+                            pendingTransactions.remove(info.getHash());
+                            clientMessageService.sendToTopic("/topic/confirmTransaction", new WalletConfirmTransactionDTO(
+                                    info.getHash(),
+                                    info.getAmount(),
+                                    info.getSending()
+                            ));
+                        });
             }
         });
     }
 
-    private void checkForChangesInWallet(List<Transaction> transactions) {
+    private void checkForChangesInWallet(List<Transaction> transactions, Consumer<TransactionInfo> handler) {
         final Set<ByteArrayWrapper> subscribed = addresses.keySet().stream()
                 .map(a -> remove0x(a))
                 .flatMap(a -> {
@@ -97,23 +111,19 @@ public class WalletService {
                             || setContains(subscribed, transaction.getSender()))
                 .collect(Collectors.toList());
 
-        if (!confirmedTransactions.isEmpty()) {
-            // update wallet if transactions are related to wallet addresses
-            clientMessageService.sendToTopic("/topic/getWalletInfo", getWalletInfo());
-        }
-
         confirmedTransactions.forEach(transaction -> {
             final String hash = toHexString(transaction.getHash());
             final BigInteger amount = ByteUtil.bytesToBigInteger(transaction.getValue());
             final boolean sending = setContains(subscribed, transaction.getSender());
             log.info("Notify confirmed transaction sending:" + sending + ", amount:" + amount);
 
-            clientMessageService.sendToTopic("/topic/confirmTransaction", new WalletConfirmTransactionDTO(
-                    hash,
-                    amount,
-                    sending
-            ));
+            handler.accept(new TransactionInfo(hash, amount, sending, toHexString(sending ? transaction.getSender() : transaction.getReceiveAddress())));
         });
+
+        if (!confirmedTransactions.isEmpty()) {
+            // update wallet if transactions are related to wallet addresses
+            clientMessageService.sendToTopic("/topic/getWalletInfo", getWalletInfo());
+        }
     }
 
 
@@ -128,12 +138,18 @@ public class WalletService {
         List<WalletAddressDTO> list = addresses.entrySet().stream()
                 .flatMap(e -> {
                     try {
-                        byte[] address = Hex.decode(e.getKey());
-                        BigInteger balance = repository.getBalance(address).divide(BASE_OFFSET);
+                        String hexAddress = e.getKey();
+                        byte[] address = Hex.decode(hexAddress);
+                        BigInteger balance = repository.getBalance(address);
+                        BigInteger pendingBalance = pendingTransactions.values().stream()
+                                .filter(info -> info.hash.equals(e.getKey()))
+                                .map(info -> (info.sending ? info.getAmount().negate() : info.getAmount()))
+                                .reduce(balance, (state, amount) -> state.add(amount));
                         return Stream.of(new WalletAddressDTO(
                                 e.getValue(),
                                 e.getKey(),
-                                balance.longValue(),
+                                balance.divide(BASE_OFFSET).longValue(),
+                                pendingBalance,
                                 keystore.hasStoredKey(e.getKey())));
                     } catch (Exception exception) {
                         log.error("Error in making wallet address", exception);
@@ -213,5 +229,18 @@ public class WalletService {
         fileSystemWalletStore.toStore(addresses.entrySet().stream()
                 .map(e -> new WalletAddressItem(e.getKey(), e.getValue()))
                 .collect(Collectors.toList()));
+    }
+
+    @Value
+    @AllArgsConstructor
+    public class TransactionInfo {
+
+        private String hash;
+
+        private BigInteger amount;
+
+        private Boolean sending;
+
+        private String address;
     }
 }

@@ -242,4 +242,35 @@
         };
     });
 
+    // validate for correct checksum address
+    // https://github.com/ethereum/EIPs/issues/55
+    angular.module('HarmonyApp').directive('ethaddresschecksum', function() {
+        function hasBothLowerAndUpperCases(value) {
+            var str = Utils.Hex.remove0x(value);
+            return (/[a-z]/.test(str)) && (/[A-Z]/.test(str));
+        }
+
+        function isValid(value) {
+            return !value || !Utils.Hex.isHexAddress(value) || !hasBothLowerAndUpperCases(value) || EthUtil.isValidChecksumAddress(value);
+        }
+
+        return {
+            require: 'ngModel',
+            link: function(scope, elem, attr, ngModel) {
+                //For DOM -> model validation
+                ngModel.$parsers.unshift(function(value) {
+                    var valid = isValid(value);
+                    ngModel.$setValidity('ethaddresschecksum', valid);
+                    return valid ? value : undefined;
+                });
+
+                //For model -> DOM validation
+                ngModel.$formatters.unshift(function(value) {
+                    ngModel.$setValidity('ethaddresschecksum', isValid(value));
+                    return value;
+                });
+            }
+        };
+    });
+
 })();

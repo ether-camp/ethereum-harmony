@@ -20,11 +20,13 @@
                         <label>Address</label>
                         <input class="form-control" ng-model="importAddressData.address"
                                ethaddress
+                               ethaddresschecksum
                                name="address" required="" type="text">
 
                         <div ng-show="form.$submitted || form.address.$touched">
                             <div ng-show="form.address.$error.required">Address is required</div>
                             <div ng-show="form.address.$error.ethaddress">Address format is invalid</div>
+                            <div ng-show="form.address.$error.ethaddresschecksum">Checksum address format is invalid</div>
                         </div>
                     </div>
                 </form>

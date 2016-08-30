@@ -58,7 +58,7 @@
                                         <div class="font-sans-serif">{{item.publicAddress}}</div>
                                     </td>
                                     <td>
-                                        {{item.amountString}}
+                                        <span class="c-white">{{item.amountString}}</span> <span data-toggle="tooltip" title="Pending amount">{{item.pendingAmountString}}</span>
                                     </td>
                                     <td>
                                        <a href="#" ng-click="onSendClick(item)">Send Amount</a>
