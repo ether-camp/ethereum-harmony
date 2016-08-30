@@ -35,6 +35,8 @@ import java.util.stream.Stream;
 @Slf4j(topic = "harmony")
 public class WalletService {
 
+    private static final BigInteger gasLimit = BigInteger.valueOf(21_000L);
+
     @Autowired
     Ethereum ethereum;
 
@@ -150,22 +152,25 @@ public class WalletService {
     }
 
     public WalletInfoDTO getWalletInfo() {
-        log.info("getWalletInfo");
+        BigInteger gasPrice = BigInteger.valueOf(ethereum.getGasPrice());
+        BigInteger txFee = gasLimit.multiply(gasPrice);
+
+//        log.info("getWalletInfo");
         List<WalletAddressDTO> list = addresses.entrySet().stream()
                 .flatMap(e -> {
                     try {
                         final String hexAddress = e.getKey();
                         final byte[] address = Hex.decode(hexAddress);
                         final BigInteger balance = repository.getBalance(address);
-                        final BigInteger sendBalance = calculatePendingChange(pendingSendTransactions, hexAddress);
-                        final BigInteger receiveBalance = calculatePendingChange(pendingReceiveTransactions, hexAddress);
+                        final BigInteger sendBalance = calculatePendingChange(pendingSendTransactions, hexAddress, txFee);
+                        final BigInteger receiveBalance = calculatePendingChange(pendingReceiveTransactions, hexAddress, BigInteger.ZERO);
 //                        log.info("B " + hexAddress + " " + balance + " " + sendBalance + " " + receiveBalance);
 
                         return Stream.of(new WalletAddressDTO(
                                 e.getValue(),
                                 e.getKey(),
                                 balance,
-                                balance.add(receiveBalance).subtract(sendBalance),
+                                receiveBalance.subtract(sendBalance),
                                 keystore.hasStoredKey(e.getKey())));
                     } catch (Exception exception) {
                         log.error("Error in making wallet address", exception);
@@ -184,11 +189,11 @@ public class WalletService {
         return result;
     }
 
-    private BigInteger calculatePendingChange(Map<String, TransactionInfo> transactions, String hexAddress) {
+    private BigInteger calculatePendingChange(Map<String, TransactionInfo> transactions, String hexAddress, BigInteger txFee) {
         return transactions.values().stream()
                 .filter(info -> info.getAddress().equals(hexAddress))
                 .map(info -> info.getAmount())
-                .reduce(BigInteger.ZERO, (state, amount) -> state.add(amount));
+                .reduce(BigInteger.ZERO, (state, amount) -> state.add(amount).add(txFee));
     }
 
     public String newAddress(String name, String password) {

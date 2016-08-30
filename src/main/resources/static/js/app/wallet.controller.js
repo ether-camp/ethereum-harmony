@@ -110,8 +110,10 @@
 
                     a.amount = amount.toNumber();
                     a.amountString = numberWithCommas(a.amount);
-                    if (!amount.equals(pendingAmount)) {
-                        a.pendingAmountString = '(' + numberWithCommas(pendingAmount.toNumber()) + ')';
+                    var pendingAmountNumber = pendingAmount.toNumber();
+                    if (pendingAmountNumber != 0) {
+                        var sign = pendingAmountNumber > 0 ? '+' : '';
+                        a.pendingAmountString = '(' + sign + numberWithCommas(pendingAmountNumber) + ')';
                     } else {
                         a.pendingAmountString = '';
                     }
