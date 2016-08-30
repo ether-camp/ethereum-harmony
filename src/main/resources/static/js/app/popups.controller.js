@@ -5,8 +5,6 @@
 (function() {
     'use strict';
 
-    var TX_FEE = 0.00042;
-
     function showErrorToastr(topMessage, bottomMessage) {
         toastr.clear()
         toastr.options = {
@@ -25,7 +23,7 @@
             fromAddress:    item.publicAddress,
             toAddress:      '',
             amount:         '',
-            availableAmount: Math.max(0, Math.round(10000000 * (item.amount - TX_FEE)) / 10000000),
+            availableAmount: item.amount,
             useKeystoreKey: item.hasKeystoreKey,
             hasKeystoreKey: item.hasKeystoreKey,
             secret:         ''
@@ -33,6 +31,16 @@
 
         var add0x = Utils.Hex.add0x;
         var remove0x = Utils.Hex.remove0x;
+
+        jsonrpc.request('eth_gasPrice', [])
+            .then(function(value) {
+                var gasPrice = parseInt(remove0x(value), 16);
+                var gasLimit =  21000;
+
+                var gasCost = new BigNumber('' + (gasPrice * gasLimit)).dividedBy(new BigNumber('' + Math.pow(10, 18)));
+                $scope.txData.availableAmount = Math.max(0,
+                    new BigNumber('' + item.amount).plus( gasCost.neg()).toNumber());
+            });
 
         $scope.onSendAll = function () {
             $scope.txData.amount = $scope.txData.availableAmount;

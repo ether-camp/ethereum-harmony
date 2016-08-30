@@ -35,7 +35,7 @@
                                required>
 
                         <div ng-show="form.$submitted || form.amount.$touched">
-                            <div ng-show="form.amount.$error.required">Amount is invalid</div>
+                            <div ng-show="form.amount.$error.required">Please enter amount</div>
                             <div ng-show="form.amount.$error.min">Amount should be more than zero</div>
                             <div ng-show="form.amount.$error.max">Not enough funds on sender account</div>
                         </div>
