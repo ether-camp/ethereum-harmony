@@ -18,6 +18,7 @@
     "malihu-custom-scrollbar-plugin": "^3.1.5",
     "ng-scrollbars": "^0.0.10",
     "angular-ui": "^0.4.0",
-    "underscore": "^1.8.3"
+    "underscore": "^1.8.3",
+    "bignumber.js": "^2.4.0"
   }
 }

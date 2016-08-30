@@ -83,8 +83,8 @@
                             })
                     } else {
                         return RlpBuilder
-                            .balanceTransfer(remove0x(txData.toAddress))
-                            .from(remove0x(txData.fromAddress))
+                            .balanceTransfer(remove0x(txData.toAddress).toLowerCase())
+                            .from(remove0x(txData.fromAddress).toLowerCase())
                             .secretKey(secret)
                             .gasLimit(gasLimit)
                             .gasPrice(gasPrice)

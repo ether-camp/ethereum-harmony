@@ -35,9 +35,6 @@ import java.util.stream.Stream;
 @Slf4j(topic = "harmony")
 public class WalletService {
 
-    // TODO describe
-    private static BigInteger BASE_OFFSET = new BigInteger("1000000000", 10);
-
     @Autowired
     Ethereum ethereum;
 
@@ -55,7 +52,8 @@ public class WalletService {
     @Autowired
     Keystore keystore;
 
-    Map<String, TransactionInfo> pendingTransactions = new ConcurrentHashMap<>();
+    final Map<String, TransactionInfo> pendingSendTransactions = new ConcurrentHashMap<>();
+    final Map<String, TransactionInfo> pendingReceiveTransactions = new ConcurrentHashMap<>();
 
     @PostConstruct
     public void init() {
@@ -71,28 +69,39 @@ public class WalletService {
         ethereum.addListener(new EthereumListenerAdapter() {
             @Override
             public void onPendingTransactionsReceived(List<Transaction> list) {
-                checkForChangesInWallet(list, (info) -> pendingTransactions.put(info.getHash(), info));
+                handlePendingTransactionsReceived(list);
             }
 
             @Override
             public void onBlock(BlockSummary blockSummary) {
-                checkForChangesInWallet(blockSummary
-                        .getReceipts().stream()
-                        .map(receipt -> receipt.getTransaction())
-                        .collect(Collectors.toList()),
-                        (info) -> {
-                            pendingTransactions.remove(info.getHash());
-                            clientMessageService.sendToTopic("/topic/confirmTransaction", new WalletConfirmTransactionDTO(
-                                    info.getHash(),
-                                    info.getAmount(),
-                                    info.getSending()
-                            ));
-                        });
+                handleBlock(blockSummary);
             }
         });
     }
 
-    private void checkForChangesInWallet(List<Transaction> transactions, Consumer<TransactionInfo> handler) {
+    public void handleBlock(BlockSummary blockSummary) {
+        checkForChangesInWallet(blockSummary
+                        .getReceipts().stream()
+                        .map(receipt -> receipt.getTransaction())
+                        .collect(Collectors.toList()),
+                (info) -> {
+                    pendingSendTransactions.remove(info.getHash());
+                    clientMessageService.sendToTopic("/topic/confirmTransaction", new WalletConfirmTransactionDTO(
+                            info.getHash(),
+                            info.getAmount(),
+                            info.getSending()
+                    ));
+                },
+                (info) -> pendingReceiveTransactions.remove(info.getHash()));
+    }
+
+    public void handlePendingTransactionsReceived(List<Transaction> list) {
+        checkForChangesInWallet(list,
+                (info) -> pendingSendTransactions.put(info.getHash(), info),
+                (info) -> pendingReceiveTransactions.put(info.getHash(), info));
+    }
+
+    private void checkForChangesInWallet(List<Transaction> transactions, Consumer<TransactionInfo> sendHandler, Consumer<TransactionInfo> receiveHandler) {
         final Set<ByteArrayWrapper> subscribed = addresses.keySet().stream()
                 .map(a -> remove0x(a))
                 .flatMap(a -> {
@@ -114,10 +123,16 @@ public class WalletService {
         confirmedTransactions.forEach(transaction -> {
             final String hash = toHexString(transaction.getHash());
             final BigInteger amount = ByteUtil.bytesToBigInteger(transaction.getValue());
-            final boolean sending = setContains(subscribed, transaction.getSender());
-            log.info("Notify confirmed transaction sending:" + sending + ", amount:" + amount);
+            final boolean hasSender = setContains(subscribed, transaction.getSender());
+            final boolean hasReceiver = setContains(subscribed, transaction.getReceiveAddress());
+            log.debug("Handle transaction hash:" + hash + ", hasSender:" + hasSender + ", amount:" + amount);
 
-            handler.accept(new TransactionInfo(hash, amount, sending, toHexString(sending ? transaction.getSender() : transaction.getReceiveAddress())));
+            if (hasSender) {
+                sendHandler.accept(new TransactionInfo(hash, amount, hasSender, toHexString(transaction.getSender())));
+            }
+            if (hasReceiver) {
+                receiveHandler.accept(new TransactionInfo(hash, amount, hasSender, toHexString(transaction.getReceiveAddress())));
+            }
         });
 
         if (!confirmedTransactions.isEmpty()) {
@@ -135,21 +150,22 @@ public class WalletService {
     }
 
     public WalletInfoDTO getWalletInfo() {
+        log.info("getWalletInfo");
         List<WalletAddressDTO> list = addresses.entrySet().stream()
                 .flatMap(e -> {
                     try {
-                        String hexAddress = e.getKey();
-                        byte[] address = Hex.decode(hexAddress);
-                        BigInteger balance = repository.getBalance(address);
-                        BigInteger pendingBalance = pendingTransactions.values().stream()
-                                .filter(info -> info.hash.equals(e.getKey()))
-                                .map(info -> (info.sending ? info.getAmount().negate() : info.getAmount()))
-                                .reduce(balance, (state, amount) -> state.add(amount));
+                        final String hexAddress = e.getKey();
+                        final byte[] address = Hex.decode(hexAddress);
+                        final BigInteger balance = repository.getBalance(address);
+                        final BigInteger sendBalance = calculatePendingChange(pendingSendTransactions, hexAddress);
+                        final BigInteger receiveBalance = calculatePendingChange(pendingReceiveTransactions, hexAddress);
+//                        log.info("B " + hexAddress + " " + balance + " " + sendBalance + " " + receiveBalance);
+
                         return Stream.of(new WalletAddressDTO(
                                 e.getValue(),
                                 e.getKey(),
-                                balance.divide(BASE_OFFSET).longValue(),
-                                pendingBalance,
+                                balance,
+                                balance.add(receiveBalance).subtract(sendBalance),
                                 keystore.hasStoredKey(e.getKey())));
                     } catch (Exception exception) {
                         log.error("Error in making wallet address", exception);
@@ -158,16 +174,21 @@ public class WalletService {
                 })
                 .collect(Collectors.toList());
 
-        Long totalAmount = list.stream()
-                .mapToLong(a -> a.getAmount())
-                .sum();
-//                .map(a -> a.getAmount())
-//                .reduce(BigInteger.ZERO, (s, el) -> s.add(el));
+        BigInteger totalAmount = list.stream()
+                .map(t -> t.getAmount())
+                .reduce(BigInteger.ZERO, (state, amount) -> state.add(amount));
 
         WalletInfoDTO result = new WalletInfoDTO(totalAmount);
 
         result.getAddresses().addAll(list);
         return result;
+    }
+
+    private BigInteger calculatePendingChange(Map<String, TransactionInfo> transactions, String hexAddress) {
+        return transactions.values().stream()
+                .filter(info -> info.getAddress().equals(hexAddress))
+                .map(info -> info.getAmount())
+                .reduce(BigInteger.ZERO, (state, amount) -> state.add(amount));
     }
 
     public String newAddress(String name, String password) {

@@ -16,7 +16,7 @@ public class WalletAddressDTO {
 
     private final String publicAddress;
 
-    private final Long amount;
+    private final BigInteger amount;
 
     private final BigInteger pendingAmount;
 

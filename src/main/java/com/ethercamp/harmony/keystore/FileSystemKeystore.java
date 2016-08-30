@@ -98,7 +98,7 @@ public class FileSystemKeystore implements Keystore {
     }
 
     private boolean hasAddressInName(String address, File file) {
-        return !file.isDirectory() && file.getName().endsWith("--" + address);
+        return !file.isDirectory() && file.getName().toLowerCase().endsWith("--" + address.toLowerCase());
     }
 
     @Override
