@@ -2899,3 +2899,11 @@ input[type="number"]::-webkit-inner-spin-button {
 input[type="number"] {
     -moz-appearance: textfield;
 }
+
+.wallet-sign-group label {
+    color: #949ba2;
+}
+
+.cWhite {
+    color: #FFFFFF !important;
+}

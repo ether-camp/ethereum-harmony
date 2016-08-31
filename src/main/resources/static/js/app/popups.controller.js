@@ -5,6 +5,16 @@
 (function() {
     'use strict';
 
+    /**
+     * Runs sha3 (keccak) on phrase multiple times
+     */
+    function generateKeyByPhrase(phrase) {
+        return Array.apply(null, Array(2031)) // do n times
+            .reduce(function(state) {
+                return EthUtil.sha3(state);
+            }, phrase)
+    }
+
     function showErrorToastr(topMessage, bottomMessage) {
         toastr.clear()
         toastr.options = {
@@ -19,9 +29,9 @@
 
 
     function SendAmountCtrl($scope, item, $element, $stomp, close, jsonrpc, $q) {
-        $scope.signKeystore     = 'signKeystore';
-        $scope.signPrivate      = 'signPrivate';
-        $scope.signPhrases      = 'signPhrases';
+        $scope.SIGNTYPE_KEYSTORE     = 'SIGNTYPE_KEYSTORE';
+        $scope.SIGNTYPE_PRIVATE      = 'SIGNTYPE_PRIVATE';
+        $scope.SIGNTYPE_PHRASE       = 'SIGNTYPE_PHRASE';
 
         $scope.txData = {
             fromAddress:    item.publicAddress,
@@ -30,7 +40,7 @@
             availableAmount: item.amount,
             hasKeystoreKey: item.hasKeystoreKey,
             secret:         '',
-            signType:       item.hasKeystoreKey ? $scope.signKeystore : $scope.signPrivate
+            signType:       item.hasKeystoreKey ? $scope.SIGNTYPE_KEYSTORE : $scope.SIGNTYPE_PRIVATE
         };
 
         var add0x = Utils.Hex.add0x;
@@ -76,7 +86,7 @@
                     var nonce = parseInt(remove0x(results[1]), 16);
                     var gasLimit =  21000;
 
-                    if (txData.signType == $scope.signKeystore) {
+                    if (txData.signType == $scope.SIGNTYPE_KEYSTORE) {
                         console.log('try to unlock account with ' + [add0x(txData.fromAddress), secret, null]);
                         return jsonrpc.request('personal_unlockAccount', [add0x(txData.fromAddress), secret, null])
                             .then(function(result) {
@@ -93,6 +103,11 @@
                                 ]);
                             })
                     } else {
+                        if (txData.signType == $scope.SIGNTYPE_PHRASE) {
+                            secret = generateKeyByPhrase(secret);
+                            console.log('Phrase generated private key ' + secret);
+                        }
+
                         return RlpBuilder
                             .balanceTransfer(remove0x(txData.toAddress).toLowerCase())
                             .from(remove0x(txData.fromAddress).toLowerCase())
@@ -142,7 +157,7 @@
                 })
                 .then(function() {
                     //.always(function() {
-                    if (txData.signType == $scope.signKeystore) {
+                    if (txData.signType == $scope.SIGNTYPE_KEYSTORE) {
                         console.log('Attempt to lock account back');
                         jsonrpc.request('personal_lockAccount', [add0x(txData.fromAddress)]);
                     }
@@ -160,8 +175,7 @@
     function ImportAddressCtrl($scope, $stomp, $element, close) {
         $scope.importAddressData = {
             address:    '',
-            name:       '',
-            type:       'address'
+            name:       ''
         };
 
         $scope.onImportAddressConfirmed = function() {
@@ -211,7 +225,94 @@
     angular.module('HarmonyApp')
         .controller('NewAddressCtrl', ['$scope', '$stomp', '$element', 'close', NewAddressCtrl]);
 
+    /**
+     * NewAddressCtrl
+     */
 
+    function NewAddressCtrl($scope, $stomp, $element, close) {
+        $scope.newAddressData = {
+            address:    '',
+            secret:     ''
+        };
+
+        $scope.onNewAddressConfirmed = function() {
+            console.log('onImportAddressConfirmed');
+
+            $scope.$broadcast('show-errors-check-validity');
+
+            if (!$scope.form.$valid) {
+                showErrorToastr('FORM VALIDATION', 'Please correct form inputted data.');
+                return;
+            }
+
+            $stomp.send('/app/newAddress', $scope.newAddressData);
+
+            $element.modal('hide');
+            close(null, 500);
+        };
+    }
+
+    angular.module('HarmonyApp')
+        .controller('NewAddressCtrl', ['$scope', '$stomp', '$element', 'close', NewAddressCtrl]);
+
+    /**
+     * PhraseAddressCtrl
+     */
+
+    function PhraseAddressCtrl($scope, $stomp, $element, close, $http) {
+        $scope.phraseAddressData = {
+            address:    '',
+            phrase:     '',
+            name:       ''
+        };
+
+        $scope.updateAddress = function() {
+            var startTime = new Date().getTime();
+
+            var privateKey = generateKeyByPhrase($scope.phraseAddressData.phrase);
+
+            $scope.phraseAddressData.address = Utils.Hex.remove0x(EthUtil.toAddress(privateKey));
+            console.log('Generation took ' + (new Date().getTime() - startTime) + ' ms');
+        };
+
+        $scope.onGeneratePhrase = function() {
+            $http({
+                method: 'GET',
+                url: '/wallet/generateWords?wordsCount=5'
+            }).then(function(result) {
+                $scope.phraseAddressData.phrase = result.data.join(' ');
+                $scope.updateAddress();
+            });
+        };
+        $scope.onGeneratePhrase();
+
+        $scope.onPhraseAddressConfirmed = function() {
+            console.log('onPhraseAddressConfirmed');
+
+            $scope.$broadcast('show-errors-check-validity');
+
+            if (!$scope.form.$valid) {
+                showErrorToastr('FORM VALIDATION', 'Please correct form inputted data.');
+                return;
+            }
+
+            $stomp.send('/app/importAddress', $scope.phraseAddressData);
+
+            $element.modal('hide');
+            close(null, 500);
+        };
+    }
+
+    angular.module('HarmonyApp')
+        .controller('PhraseAddressCtrl', ['$scope', '$stomp', '$element', 'close', '$http', PhraseAddressCtrl]);
+
+
+
+    /**
+     *
+     * TOOLS
+     *
+     */
     angular.module('HarmonyApp')
         .directive('showErrors', function() {
             return {

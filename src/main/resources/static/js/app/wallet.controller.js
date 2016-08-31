@@ -76,6 +76,17 @@
             });
         };
 
+        $scope.onPhraseAddress = function() {
+            console.log('onPhraseAddress');
+
+            ModalService.showModal({
+                templateUrl:    "pages/popups/phraseAddress.html",
+                controller:     "PhraseAddressCtrl"
+            }).then(function(modal) {
+                modal.element.modal();
+            });
+        };
+
         function resizeContainer() {
             console.log('Wallet page resize');
 

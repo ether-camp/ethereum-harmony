@@ -1,0 +1,52 @@
+<div class="modal fade" id="importAddressModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Generate address with mnemonic phrase</h4>
+                <span>Be sure to remember phrase and write it on paper. Private key will not be kept on server.</span>
+            </div>
+            <div class="modal-body">
+                <form name="form" novalidate autocomplete="off">
+                    <div class="form-group" show-errors>
+                        <label>Name</label>
+                        <input class="form-control" ng-model="phraseAddressData.name" name="nameInput"
+                               autocomplete="off"
+                               value=" "
+                               required type="text" auto111focus>
+
+                        <div ng-show="form.$submitted || form.nameInput.$touched">
+                            <div ng-show="form.nameInput.$error.required">Name is required</div>
+                        </div>
+                    </div>
+
+                    <div class="form-group" show-errors>
+                        <label>Phrase</label>
+                        <input class="form-control"
+                               autocomplete="off"
+                               ng-model="phraseAddressData.phrase"
+                               ng-change="updateAddress()"
+                               name="secret" required="" type="text">
+
+                        <div ng-show="form.$submitted || form.address.$touched">
+                            <div ng-show="form.secret.$error.required">Phrase is required</div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <a href="#" ng-click="onGeneratePhrase()" class="btn btn-w-md btn-primary">Generate new</a>
+                    </div>
+
+                    <div class="form-group" show-errors>
+                        <label>Address</label>
+                        <input class="form-control" ng-model="phraseAddressData.address"
+                               name="address" readonly type="text">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" ng-click="onPhraseAddressConfirmed()">Import</button>
+            </div>
+        </div>
+    </div>
+</div>

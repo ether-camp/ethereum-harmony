@@ -17,6 +17,11 @@ import org.ethereum.listener.EthereumListenerAdapter;
 import org.ethereum.util.ByteUtil;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.embedded.EmbeddedDatabase;
+import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
+import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -27,6 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.Random;
 
 /**
  * Wallet logic:
@@ -63,6 +69,14 @@ public class WalletService {
     @Autowired
     Keystore keystore;
 
+    @Autowired
+    Environment env;
+
+    @Autowired
+    protected JdbcTemplate jdbcTemplate;
+
+    EmbeddedDatabase wordsDatabase;
+
     /**
      * key - hex address in lower case
      * value - address user friendly name
@@ -94,6 +108,8 @@ public class WalletService {
                 handleBlock(blockSummary);
             }
         });
+
+        generateWords(5);
     }
 
     public void handleBlock(BlockSummary blockSummary) {
@@ -133,15 +149,15 @@ public class WalletService {
 
         final List<Transaction> confirmedTransactions = transactions.stream()
                 .filter(transaction ->
-                        setContains(subscribed, transaction.getReceiveAddress())
-                            || setContains(subscribed, transaction.getSender()))
+                        isSetContains(subscribed, transaction.getReceiveAddress())
+                            || isSetContains(subscribed, transaction.getSender()))
                 .collect(Collectors.toList());
 
         confirmedTransactions.forEach(transaction -> {
             final String hash = toHexString(transaction.getHash());
             final BigInteger amount = ByteUtil.bytesToBigInteger(transaction.getValue());
-            final boolean hasSender = setContains(subscribed, transaction.getSender());
-            final boolean hasReceiver = setContains(subscribed, transaction.getReceiveAddress());
+            final boolean hasSender = isSetContains(subscribed, transaction.getSender());
+            final boolean hasReceiver = isSetContains(subscribed, transaction.getReceiveAddress());
             log.debug("Handle transaction hash:" + hash + ", hasSender:" + hasSender + ", amount:" + amount);
 
             if (hasSender) {
@@ -271,11 +287,32 @@ public class WalletService {
         clientMessageService.sendToTopic("/topic/getWalletInfo", getWalletInfo());
     }
 
+    public List<String> generateWords(int wordsCount) {
+        if (wordsDatabase == null) {
+            EmbeddedDatabaseBuilder builder = new EmbeddedDatabaseBuilder();
+            wordsDatabase = builder.setType(EmbeddedDatabaseType.H2)
+                    .addScript("words/V10.0__word_dict.sql")
+                    .build();
+
+            jdbcTemplate.queryForObject("select count (*) from word_dictionary", Integer.class);
+        }
+
+        Integer totalWords = jdbcTemplate.queryForObject("select count (*) from word_dictionary", Integer.class);
+
+        final List<String> words = new Random().ints(0, totalWords - 1)
+                .limit(wordsCount)
+                .mapToObj(i -> jdbcTemplate.queryForObject("select word from word_dictionary offset ? limit 1", String.class, i))
+                .collect(Collectors.toList());
+
+        log.debug("Generated words " + words + " from totalWords: " + totalWords);
+        return words;
+    }
+
     private String toHexString(byte[] value) {
         return value == null ? "" : Hex.toHexString(value);
     }
 
-    private boolean setContains(Set<ByteArrayWrapper> set, byte[] value) {
+    private boolean isSetContains(Set<ByteArrayWrapper> set, byte[] value) {
         return value != null && set.contains(new ByteArrayWrapper(value));
     }
 

@@ -5,12 +5,17 @@ import com.ethercamp.harmony.service.WalletService;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.*;
+
+import java.security.Principal;
+import java.util.List;
 
 /**
  * Created by Stan Reshetnyk on 26.08.16.
  */
-@Controller
+@RestController
 public class WalletController {
 
     @Autowired
@@ -36,6 +41,11 @@ public class WalletController {
         walletService.removeAddress(data.value);
     }
 
+//    @MessageMapping("/generateWords")
+    @RequestMapping(value = "/wallet/generateWords", method = RequestMethod.GET)
+    public List<String> generateWords(@RequestParam Integer wordsCount) {
+        return walletService.generateWords(wordsCount);
+    }
 
     /**
      * Created by Stan Reshetnyk on 26.08.16.

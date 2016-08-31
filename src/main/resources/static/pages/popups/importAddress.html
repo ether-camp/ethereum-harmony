@@ -17,16 +17,6 @@
                             <div ng-show="form.nameInput.$error.required">Name is required</div>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label>
-                            <input type="radio" ng-model="importAddressData.type" ng-value="address" >
-                            Address
-                        </label>
-                        <label>
-                            <input type="radio" ng-model="importAddressData.type" ng-value="phrases">
-                            Phrases
-                        </label>
-                    </div>
                     <div class="form-group" show-errors>
                         <label>Address</label>
                         <input class="form-control" ng-model="importAddressData.address"
