@@ -19,14 +19,18 @@
 
 
     function SendAmountCtrl($scope, item, $element, $stomp, close, jsonrpc, $q) {
+        $scope.signKeystore     = 'signKeystore';
+        $scope.signPrivate      = 'signPrivate';
+        $scope.signPhrases      = 'signPhrases';
+
         $scope.txData = {
             fromAddress:    item.publicAddress,
             toAddress:      '',
             amount:         '',
             availableAmount: item.amount,
-            useKeystoreKey: item.hasKeystoreKey,
             hasKeystoreKey: item.hasKeystoreKey,
-            secret:         ''
+            secret:         '',
+            signType:       item.hasKeystoreKey ? $scope.signKeystore : $scope.signPrivate
         };
 
         var add0x = Utils.Hex.add0x;
@@ -72,8 +76,7 @@
                     var nonce = parseInt(remove0x(results[1]), 16);
                     var gasLimit =  21000;
 
-                    console.log('txData.useKeystoreKey ' + txData.useKeystoreKey);
-                    if (txData.useKeystoreKey) {
+                    if (txData.signType == $scope.signKeystore) {
                         console.log('try to unlock account with ' + [add0x(txData.fromAddress), secret, null]);
                         return jsonrpc.request('personal_unlockAccount', [add0x(txData.fromAddress), secret, null])
                             .then(function(result) {
@@ -139,7 +142,7 @@
                 })
                 .then(function() {
                     //.always(function() {
-                    if (txData.useKeystoreKey) {
+                    if (txData.signType == $scope.signKeystore) {
                         console.log('Attempt to lock account back');
                         jsonrpc.request('personal_lockAccount', [add0x(txData.fromAddress)]);
                     }
@@ -157,7 +160,8 @@
     function ImportAddressCtrl($scope, $stomp, $element, close) {
         $scope.importAddressData = {
             address:    '',
-            name:       ''
+            name:       '',
+            type:       'address'
         };
 
         $scope.onImportAddressConfirmed = function() {

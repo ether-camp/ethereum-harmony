@@ -129,8 +129,10 @@ public class JsonRpcImpl implements JsonRpc {
     @Autowired
     PendingStateImpl pendingState;
 
-//    Map<ByteArrayWrapper, Account> accounts = new HashMap<>();
-    Map<ByteArrayWrapper, Account> unlockedAccounts = new ConcurrentHashMap<>();
+    /**
+     * Lowercase hex address as a key.
+     */
+    Map<String, Account> unlockedAccounts = new ConcurrentHashMap<>();
 
     AtomicInteger filterCounter = new AtomicInteger(1);
     Map<Integer, Filter> installedFilters = new Hashtable<>();
@@ -238,7 +240,7 @@ public class JsonRpcImpl implements JsonRpc {
         if (address.indexOf("0x") == 0) {
             address = address.substring(2);
         }
-        final Account account = unlockedAccounts.get(new ByteArrayWrapper(StringHexToByteArray(address)));
+        final Account account = unlockedAccounts.get(address.toLowerCase());
         if (account != null) {
             return account;
         }
@@ -1232,15 +1234,18 @@ public class JsonRpcImpl implements JsonRpc {
 
     @Override
     public boolean personal_unlockAccount(String address, String password, String duration) {
-        log.debug("personal_unlockAccount(" + address + ", ...)");
+        log.info("personal_unlockAccount(" + address + ", ...)");
+
         Objects.requireNonNull(address, "address is required");
         Objects.requireNonNull(password, "password is required");
 
-        final ECKey key = keystore.loadStoredKey(JSonHexToHex(address), password);
+        final ECKey key = keystore.loadStoredKey(JSonHexToHex(address).toLowerCase(), password);
         if (key != null) {
+            log.info("Found key address is " + Hex.toHexString(key.getAddress()));
             final Account account = new Account();
             account.init(key);
-            unlockedAccounts.put(new ByteArrayWrapper(account.getAddress()), account);
+            log.info("Found account address is " + Hex.toHexString(account.getAddress()));
+            unlockedAccounts.put(Hex.toHexString(account.getAddress()).toLowerCase(), account);
             return true;
         } else {
             // we can return false or send description message with exception
@@ -1251,7 +1256,9 @@ public class JsonRpcImpl implements JsonRpc {
 
     @Override
     public boolean personal_lockAccount(String address) {
-        unlockedAccounts.remove(new ByteArrayWrapper(StringHexToByteArray(address)));
+        Objects.requireNonNull(address, "address is required");
+
+        unlockedAccounts.remove(address.toLowerCase());
         return true;
     }
 

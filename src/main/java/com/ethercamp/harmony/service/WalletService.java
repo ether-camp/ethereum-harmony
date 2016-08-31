@@ -29,6 +29,17 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
+ * Wallet logic:
+ *  - show list of addresses owned by users from next locations:
+ *      a) default ethereum keystore folder in filesystem;
+ *      b) manually added addresses which are stored in wallet.json
+ *  - import / generate new address;
+ *  - remove address;
+ *  - show pending balance;
+ *  - notify client if interesting tx was included in block.
+ *
+ * This class operate with addresses in lowercase form without 0x prefix.
+ *
  * Created by Stan Reshetnyk on 24.08.16.
  */
 @Service
@@ -49,10 +60,14 @@ public class WalletService {
     @Autowired
     ClientMessageService clientMessageService;
 
-    final Map<String, String> addresses = new HashMap<>();
-
     @Autowired
     Keystore keystore;
+
+    /**
+     * key - hex address in lower case
+     * value - address user friendly name
+     */
+    final Map<String, String> addresses = new ConcurrentHashMap<>();
 
     final Map<String, TransactionInfo> pendingSendTransactions = new ConcurrentHashMap<>();
     final Map<String, TransactionInfo> pendingReceiveTransactions = new ConcurrentHashMap<>();
@@ -61,9 +76,9 @@ public class WalletService {
     public void init() {
         addresses.clear();
 
-        AtomicInteger index = new AtomicInteger();
+        final AtomicInteger index = new AtomicInteger();
         Arrays.asList(keystore.listStoredKeys())
-                .forEach(a -> addresses.put(remove0x(a), "Account " + index.incrementAndGet()));
+                .forEach(a -> addresses.put(cleanAddress(a), "Account " + index.incrementAndGet()));
 
         fileSystemWalletStore.fromStore().stream()
                 .forEach(a -> addresses.put(a.address, a.name));
@@ -105,7 +120,7 @@ public class WalletService {
 
     private void checkForChangesInWallet(List<Transaction> transactions, Consumer<TransactionInfo> sendHandler, Consumer<TransactionInfo> receiveHandler) {
         final Set<ByteArrayWrapper> subscribed = addresses.keySet().stream()
-                .map(a -> remove0x(a))
+                .map(a -> cleanAddress(a))
                 .flatMap(a -> {
                     try {
                         return Stream.of(new ByteArrayWrapper(Hex.decode(a)));
@@ -143,10 +158,12 @@ public class WalletService {
         }
     }
 
-
-    private String remove0x(String input) {
-        if (input != null && input.startsWith("0x")) {
-            return input.substring(2);
+    private String cleanAddress(String input) {
+        if (input != null) {
+            if (input.startsWith("0x")) {
+                return input.substring(2).toLowerCase();
+            }
+            return input.toLowerCase();
         }
         return input;
     }
@@ -155,7 +172,6 @@ public class WalletService {
         BigInteger gasPrice = BigInteger.valueOf(ethereum.getGasPrice());
         BigInteger txFee = gasLimit.multiply(gasPrice);
 
-//        log.info("getWalletInfo");
         List<WalletAddressDTO> list = addresses.entrySet().stream()
                 .flatMap(e -> {
                     try {
@@ -164,7 +180,6 @@ public class WalletService {
                         final BigInteger balance = repository.getBalance(address);
                         final BigInteger sendBalance = calculatePendingChange(pendingSendTransactions, hexAddress, txFee);
                         final BigInteger receiveBalance = calculatePendingChange(pendingReceiveTransactions, hexAddress, BigInteger.ZERO);
-//                        log.info("B " + hexAddress + " " + balance + " " + sendBalance + " " + receiveBalance);
 
                         return Stream.of(new WalletAddressDTO(
                                 e.getValue(),
@@ -196,13 +211,16 @@ public class WalletService {
                 .reduce(BigInteger.ZERO, (state, amount) -> state.add(amount).add(txFee));
     }
 
+    /**
+     * Generate new key and address. Key will be kept in keystore.
+     */
     public String newAddress(String name, String password) {
         log.info("newAddress " + name);
         // generate new private key
         final ECKey key = new ECKey();
         final Account account = new Account();
         account.init(key);
-        final String address = toHexString(account.getAddress());
+        final String address = cleanAddress(toHexString(account.getAddress()));
 
         keystore.storeKey(key, password);
         addresses.put(address, name);
@@ -214,7 +232,14 @@ public class WalletService {
         return address;
     }
 
-    public String importAddress(String address, String name) {
+    /**
+     * Import address without keeping key on server.
+     */
+    public String importAddress(String addressValue, String name) {
+        Objects.requireNonNull(addressValue);
+
+        final String address = cleanAddress(addressValue);
+
         validateAddress(address);
 
         addresses.put(address, name);
@@ -234,7 +259,10 @@ public class WalletService {
         Hex.decode(value);
     }
 
-    public void removeAddress(String address) {
+    public void removeAddress(String value) {
+        Objects.requireNonNull(value);
+
+        final String address = cleanAddress(value);
         addresses.remove(address);
         keystore.removeKey(address);
 

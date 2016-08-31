@@ -90,8 +90,6 @@
         }
 
         $scope.$on('walletInfoEvent', function(event, data) {
-            console.log('walletInfoEvent');
-            console.log(data);
 
             $timeout(function() {
                 var ethRate = Math.pow(10, 18);

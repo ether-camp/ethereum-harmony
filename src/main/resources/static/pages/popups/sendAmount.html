@@ -42,12 +42,16 @@
                     </div>
                     <div class="form-group">
                         <label ng-show="txData.hasKeystoreKey">
-                            <input type="radio" ng-model="txData.useKeystoreKey" ng-value="true" >
+                            <input type="radio" ng-model="txData.signType" ng-value="signKeystore" >
                             Keystore password
                         </label>
                         <label>
-                            <input type="radio" ng-model="txData.useKeystoreKey" ng-value="false">
-                            Private key or seed phrase
+                            <input type="radio" ng-model="txData.signType" ng-value="signPrivate">
+                            Private key or seed words
+                        </label>
+                        <label>
+                            <input type="radio" ng-model="txData.signType" ng-value="signPhrases">
+                            Phrases
                         </label>
                     </div>
                     <div class="form-group" show-errors>
