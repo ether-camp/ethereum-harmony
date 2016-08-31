@@ -278,8 +278,19 @@
         $scope.onGeneratePhrase = function() {
             $http({
                 method: 'GET',
-                url: '/wallet/generateWords?wordsCount=5'
+                url: '/wallet/generateWords',
+                params: {
+                    wordsCount: 5
+                }
             }).then(function(result) {
+                var words = result.data;
+                var insertIndex = getRandomInt(0, words.length);
+                words.splice(insertIndex, 0, generateWord());   // insert generated word
+
+                function getRandomInt(min, max) {
+                    return Math.floor(Math.random() * (max - min + 1)) + min;
+                }
+
                 $scope.phraseAddressData.phrase = result.data.join(' ');
                 $scope.updateAddress();
             });
