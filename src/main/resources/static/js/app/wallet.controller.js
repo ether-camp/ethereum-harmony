@@ -111,7 +111,6 @@
                 $scope.totalAmountString = numberWithCommas($scope.totalAmount);
 
                 data.addresses.forEach(function(a) {
-                    console.log(a);
                     a.publicAddress = EthUtil.toChecksumAddress(a.publicAddress);
 
                     var amount = convertToEth(a.amount);

@@ -1,21 +1,21 @@
 package com.ethercamp.harmony.service;
 
 import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.PatternLayout;
 import ch.qos.logback.classic.filter.LevelFilter;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.UnsynchronizedAppenderBase;
-import com.ethercamp.harmony.api.EthereumApiImpl;
 import com.ethercamp.harmony.dto.*;
 import com.sun.management.OperatingSystemMXBean;
 import lombok.extern.slf4j.Slf4j;
+import org.ethereum.config.SystemProperties;
 import org.ethereum.core.Block;
+import org.ethereum.core.Blockchain;
 import org.ethereum.core.TransactionReceipt;
 import org.ethereum.facade.Ethereum;
 import org.ethereum.listener.EthereumListenerAdapter;
-import org.ethereum.mine.MinerListener;
+import org.ethereum.net.server.ChannelManager;
 import org.ethereum.sync.SyncManager;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
@@ -37,7 +37,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
 /**
@@ -61,8 +60,16 @@ public class BlockchainInfoService implements ApplicationListener {
     private Ethereum ethereum;
 
     @Autowired
-    private EthereumApiImpl ethereumApi;
+    private Blockchain blockchain;
 
+    @Autowired
+    private SyncManager syncManager;
+
+    @Autowired
+    SystemProperties config;
+
+    @Autowired
+    ChannelManager channelManager;
 
     /**
      * Concurrent queue of last blocks.
@@ -87,13 +94,16 @@ public class BlockchainInfoService implements ApplicationListener {
         return initialInfo.get();
     }
 
+    protected volatile SyncStatus syncStatus = SyncStatus.LONG_SYNC;
+
 
     @PostConstruct
     private void postConstruct() {
         /**
          * - gather blocks to calculate hash rate;
          * - gather blocks to keep for client block tree;
-         * - notify client on new block.
+         * - notify client on new block;
+         * - track sync status.
          */
         ethereum.addListener(new EthereumListenerAdapter() {
             @Override
@@ -102,17 +112,29 @@ public class BlockchainInfoService implements ApplicationListener {
             }
         });
 
+        if (!config.isSyncEnabled()) {
+            syncStatus = BlockchainInfoService.SyncStatus.DISABLED;
+        } else {
+            ethereum.addListener(new EthereumListenerAdapter() {
+                @Override
+                public void onSyncDone() {
+                    log.info("Sync done");
+                    syncStatus = BlockchainInfoService.SyncStatus.SHORT_SYNC;
+                }
+            });
+        }
+
 
         createLogAppenderForMessaging();
 
 
-        final long lastBlock = ethereumApi.getBestBlockNumber();
+        final long lastBlock = blockchain.getBestBlock().getNumber();
         final long startImportBlock = Math.max(0, lastBlock - Math.max(BLOCK_COUNT_FOR_HASH_RATE, KEEP_BLOCKS_FOR_CLIENT));
 
         LongStream.rangeClosed(startImportBlock, lastBlock)
                 .forEach(i -> {
                     log.debug("Imported block " + i);
-                    addBlock(ethereumApi.getBlock(i));
+                    addBlock(blockchain.getBlockByNumber(i));
                 });
     }
 
@@ -142,7 +164,7 @@ public class BlockchainInfoService implements ApplicationListener {
             final int port = ((EmbeddedServletContainerInitializedEvent) event).getEmbeddedServletContainer().getPort();
 
             final boolean isPrivateNetwork = env.getProperty("isPrivateNetwork", "false").equalsIgnoreCase("true");
-            final Optional<String> blockHash = Optional.ofNullable(ethereumApi.getBlock(0l))
+            final Optional<String> blockHash = Optional.ofNullable(blockchain.getBlockByNumber(0l))
                     .map(block -> Hex.toHexString(block.getHash()));
             final String networkName = isPrivateNetwork ? "Private Miner Network" : blockHash
                     .map(hash -> BlockchainConsts.GENESIS_BLOCK_HASH_MAP.getOrDefault(hash, "Unknown network"))
@@ -154,7 +176,7 @@ public class BlockchainInfoService implements ApplicationListener {
                     networkName,
                     blockHash.orElse(null),
                     System.currentTimeMillis(),
-                    ethereumApi.getNodeId(),
+                    Hex.toHexString(config.nodeId()),
                     port,
                     isPrivateNetwork,
                     env.getProperty("portCheckerUrl")
@@ -197,7 +219,7 @@ public class BlockchainInfoService implements ApplicationListener {
 
         blockchainInfo.set(
                 new BlockchainInfoDTO(
-                        ethereumApi.getLastKnownBlockNumber(),
+                        syncManager.getLastKnownBlockNumber(),
                         bestBlock.getNumber(),
                         bestBlock.getTimestamp(),
                         bestBlock.getTransactionsList().size(),
@@ -214,9 +236,9 @@ public class BlockchainInfoService implements ApplicationListener {
     @Scheduled(fixedRate = 2000)
     private void doUpdateNetworkInfo() {
         final NetworkInfoDTO info = new NetworkInfoDTO(
-                ethereumApi.getActivePeersCount(),
-                ethereumApi.getSyncStatus().toString(),
-                ethereumApi.getEthPort(),
+                channelManager.getActivePeers().size(),
+                syncStatus.toString(),
+                config.listenPort(),
                 true
         );
 
@@ -356,5 +378,14 @@ public class BlockchainInfoService implements ApplicationListener {
             // not static as user can put changes into genesis, which cause hash to change
             // GENESIS_BLOCK_HASH_MAP.put("???", "Private Miner Network");
         }
+    }
+
+    /**
+     * Created by Stan Reshetnyk on 09.08.16.
+     */
+    public static enum SyncStatus {
+        DISABLED,
+        LONG_SYNC,
+        SHORT_SYNC
     }
 }

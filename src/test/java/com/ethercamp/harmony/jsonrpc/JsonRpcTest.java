@@ -1,8 +1,6 @@
 package com.ethercamp.harmony.jsonrpc;
 
-import com.ethercamp.harmony.api.EthereumApiImpl;
 import com.ethercamp.harmony.keystore.FileSystemKeystore;
-import com.ethercamp.harmony.keystore.KeystoreFormat;
 import com.typesafe.config.ConfigFactory;
 import org.ethereum.config.SystemProperties;
 import org.ethereum.config.blockchain.FrontierConfig;
@@ -85,11 +83,6 @@ public class JsonRpcTest {
                     return keystorePath;
                 }
             };
-        }
-
-        @Bean
-        public EthereumApiImpl ethereumApi() {
-            return new EthereumApiImpl();
         }
 
         @Bean

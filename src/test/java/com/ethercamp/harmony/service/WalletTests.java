@@ -6,6 +6,7 @@ import com.ethercamp.harmony.keystore.Keystore;
 import com.ethercamp.harmony.service.wallet.FileSystemWalletStore;
 import org.ethereum.core.*;
 import org.ethereum.crypto.ECKey;
+import org.ethereum.facade.Ethereum;
 import org.ethereum.util.ByteUtil;
 import org.junit.Before;
 import org.junit.Test;
@@ -38,10 +39,12 @@ public class WalletTests {
         walletService.fileSystemWalletStore = mock(FileSystemWalletStore.class);
         walletService.repository = mock(Repository.class);
         walletService.keystore = mock(Keystore.class);
+        walletService.ethereum = mock(Ethereum.class);
 
         when(walletService.fileSystemWalletStore.fromStore()).thenReturn(Arrays.asList());
         when(walletService.repository.getBalance(Hex.decode(ADDRESS_1))).thenReturn(BALANCE_1);
         when(walletService.keystore.hasStoredKey(any(String.class))).thenReturn(false);
+        when(walletService.ethereum.getGasPrice()).thenReturn(0l);
     }
 
     @Test
@@ -72,7 +75,7 @@ public class WalletTests {
             WalletAddressDTO walletAddress = walletInfo.getAddresses().get(0);
             assertEquals(BALANCE_1, walletInfo.getTotalAmount());
             assertEquals(BALANCE_1, walletAddress.getAmount());
-            assertEquals(BALANCE_1_1, walletAddress.getPendingAmount());
+            assertEquals(TRANSFER_1, walletAddress.getPendingAmount());
         }
 
         TransactionReceipt transactionReceipt = new TransactionReceipt();
@@ -88,7 +91,7 @@ public class WalletTests {
             WalletAddressDTO walletAddress = walletInfo.getAddresses().get(0);
             assertEquals(BALANCE_1_1, walletInfo.getTotalAmount());
             assertEquals(BALANCE_1_1, walletAddress.getAmount());
-            assertEquals(BALANCE_1_1, walletAddress.getPendingAmount());
+            assertEquals(BigInteger.ZERO, walletAddress.getPendingAmount());
         }
     }
 

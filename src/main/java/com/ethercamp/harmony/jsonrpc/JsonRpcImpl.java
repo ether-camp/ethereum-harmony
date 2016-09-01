@@ -1,12 +1,12 @@
 package com.ethercamp.harmony.jsonrpc;
 
-import com.ethercamp.harmony.api.EthereumApiImpl;
-import com.ethercamp.harmony.api.data.ParsedBlock;
 import com.ethercamp.harmony.keystore.Keystore;
+import com.ethercamp.harmony.service.BlockchainInfoService;
 import com.ethercamp.harmony.util.ErrorCodes;
 import com.ethercamp.harmony.util.HarmonyException;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.ethereum.config.SystemProperties;
 import org.ethereum.core.*;
 import org.ethereum.crypto.ECKey;
 import org.ethereum.crypto.HashUtil;
@@ -18,10 +18,12 @@ import org.ethereum.listener.CompositeEthereumListener;
 import org.ethereum.listener.EthereumListenerAdapter;
 import org.ethereum.manager.WorldManager;
 import org.ethereum.mine.BlockMiner;
+import org.ethereum.net.client.ConfigCapabilities;
 import org.ethereum.net.server.ChannelManager;
 import org.ethereum.net.server.PeerServer;
 import org.ethereum.solidity.compiler.SolidityCompiler;
 import org.ethereum.sync.SyncManager;
+import org.ethereum.util.BuildInfo;
 import org.ethereum.util.ByteUtil;
 import org.ethereum.util.LRUMap;
 import org.ethereum.util.RLP;
@@ -88,9 +90,6 @@ public class JsonRpcImpl implements JsonRpc {
     }
 
     @Autowired
-    EthereumApiImpl ethereumApi;
-
-    @Autowired
     Keystore keystore;
 
     @Autowired
@@ -129,10 +128,21 @@ public class JsonRpcImpl implements JsonRpc {
     @Autowired
     PendingStateImpl pendingState;
 
+    @Autowired
+    SystemProperties config;
+
+    @Autowired
+    ConfigCapabilities configCapabilities;
+
     /**
      * Lowercase hex address as a key.
      */
     Map<String, Account> unlockedAccounts = new ConcurrentHashMap<>();
+
+    /**
+     * State fields
+     */
+    protected volatile long initialBlockNumber;
 
     AtomicInteger filterCounter = new AtomicInteger(1);
     Map<Integer, Filter> installedFilters = new Hashtable<>();
@@ -140,6 +150,8 @@ public class JsonRpcImpl implements JsonRpc {
 
     @PostConstruct
     private void init() {
+        initialBlockNumber = blockchain.getBestBlock().getNumber();
+
         compositeEthereumListener.addListener(new EthereumListenerAdapter() {
             @Override
             public void onBlock(Block block, List<TransactionReceipt> receipts) {
@@ -194,10 +206,6 @@ public class JsonRpcImpl implements JsonRpc {
     private Block getBlockByJSonHash(String blockHash) throws Exception {
         byte[] bhash = TypeConverter.StringHexToByteArray(blockHash);
         return worldManager.getBlockchain().getBlockByHash(bhash);
-    }
-
-    private ParsedBlock getParsedBlockByJSonHash(String blockHash) throws Exception {
-        return ethereumApi.getBlockByHash(blockHash);
     }
 
     private Block getByJsonBlockId(String id) {
@@ -261,40 +269,46 @@ public class JsonRpcImpl implements JsonRpc {
     }
 
     public String web3_clientVersion() {
-        return ethereumApi.web3_clientVersion();
+        return "EthereumJ" + "/v" + config.projectVersion() + "/" +
+                System.getProperty("os.name") + "/Java1.7/" + config.projectVersionModifier() + "-" + BuildInfo.buildHash;
     }
 
     public String web3_sha3(String data) throws Exception {
-        return ethereumApi.web3_sha3(data);
+        byte[] result = HashUtil.sha3(data.getBytes());
+        return TypeConverter.toJsonHex(result);
     }
 
     public String net_version() {
-        return ethereumApi.eth_protocolVersion();
+        return eth_protocolVersion();
     }
 
     public String net_peerCount(){
-        int n = ethereumApi.net_peerCount();
-        return TypeConverter.toJsonHex(n);
+        int size = channelManager.getActivePeers().size();
+        return TypeConverter.toJsonHex(size);
     }
 
     public boolean net_listening() {
-        return ethereumApi.net_listening();
+        return peerServer.isListening();
     }
 
     public String eth_protocolVersion(){
-        return ethereumApi.eth_protocolVersion();
+        return configCapabilities.getConfigCapabilities().stream()
+                .filter(p -> p.isEth())
+                .map(p -> ((Byte) p.getVersion()).intValue())
+                .reduce(0, (state, v) -> Math.max(state, v))
+                .toString();
     }
 
     public SyncingResult eth_syncing(){
         return new SyncingResult(
-                TypeConverter.toJsonHex(ethereumApi.getInitialBlockNumber()),
-                TypeConverter.toJsonHex(ethereumApi.getBestBlockNumber()),
-                TypeConverter.toJsonHex(ethereumApi.getLastKnownBlockNumber())
+                TypeConverter.toJsonHex(initialBlockNumber),
+                TypeConverter.toJsonHex(blockchain.getBestBlock().getNumber()),
+                TypeConverter.toJsonHex(syncManager.getLastKnownBlockNumber())
         );
     }
 
     public String eth_coinbase() {
-        return toJsonHex(ethereumApi.eth_coinbase());
+        return toJsonHex(blockchain.getMinerCoinbase());
     }
 
     public boolean eth_mining() {
@@ -312,7 +326,7 @@ public class JsonRpcImpl implements JsonRpc {
 //    }
 
     public String eth_gasPrice(){
-        return TypeConverter.toJsonHex(ethereumApi.eth_gasPrice());
+        return TypeConverter.toJsonHex(eth.getGasPrice());
     }
 
     public String[] eth_accounts() {
@@ -320,7 +334,7 @@ public class JsonRpcImpl implements JsonRpc {
     }
 
     public String eth_blockNumber() {
-        return TypeConverter.toJsonHex(ethereumApi.getBestBlockNumber());
+        return TypeConverter.toJsonHex(blockchain.getBestBlock().getNumber());
     }
 
     public String eth_getBalance(String address, String blockId) throws Exception {
@@ -351,15 +365,8 @@ public class JsonRpcImpl implements JsonRpc {
         return TypeConverter.toJsonHex(nonce);
     }
 
-    public String eth_getBlockTransactionCountByHash_Old(String blockHash) throws Exception {
-        Block b = getBlockByJSonHash(blockHash);
-        if (b == null) return null;
-        long n = b.getTransactionsList().size();
-        return TypeConverter.toJsonHex(n);
-    }
-
     public String eth_getBlockTransactionCountByHash(String blockHash) throws Exception {
-        ParsedBlock b = getParsedBlockByJSonHash(blockHash);
+        Block b = getBlockByJSonHash(blockHash);
         if (b == null) return null;
         long n = b.getTransactionsList().size();
         return TypeConverter.toJsonHex(n);
