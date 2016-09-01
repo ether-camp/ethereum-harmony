@@ -1,6 +1,6 @@
 # Ethereum Harmony
 
-Application for demonstrating EthereumJ feature. It runs local Java based node https://github.com/ethereum/ethereumj . Next features were implemented:
+Application for demonstrating EthereumJ features. It runs local Java based node https://github.com/ethereum/ethereumj . Next features were implemented:
 
  * JSON-RPC implementation and usage statistics. Note, that some JSON-RPC methods are not implemented yet;
  

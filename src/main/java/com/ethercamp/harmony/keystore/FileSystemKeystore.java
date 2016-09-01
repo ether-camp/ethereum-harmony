@@ -29,8 +29,7 @@ public class FileSystemKeystore implements Keystore {
 
     @Override
     public void removeKey(String address) {
-        final File dir = getKeyStoreLocation().toFile();
-        Arrays.stream(dir.listFiles())
+        getFiles().stream()
                 .filter(f -> hasAddressInName(address, f))
                 .findFirst()
                 .ifPresent(f -> f.delete());
@@ -66,8 +65,7 @@ public class FileSystemKeystore implements Keystore {
      */
     @Override
     public String[] listStoredKeys() {
-        final File dir = getKeyStoreLocation().toFile();
-        return Arrays.stream(dir.listFiles())
+        return getFiles().stream()
                 .filter(f -> !f.isDirectory())
                 .map(f -> f.getName().split("--"))
                 .filter(n -> n != null && n.length == 3)
@@ -80,8 +78,7 @@ public class FileSystemKeystore implements Keystore {
      */
     @Override
     public ECKey loadStoredKey(String address, String password) throws RuntimeException {
-        final File dir = getKeyStoreLocation().toFile();
-        return Arrays.stream(dir.listFiles())
+        return getFiles().stream()
                 .filter(f -> hasAddressInName(address, f))
                 .map(f -> {
                     try {
@@ -103,11 +100,16 @@ public class FileSystemKeystore implements Keystore {
 
     @Override
     public boolean hasStoredKey(String address) {
-        final File dir = getKeyStoreLocation().toFile();
-        return Arrays.stream(dir.listFiles())
+        return getFiles().stream()
                 .filter(f -> hasAddressInName(address, f))
                 .findFirst()
                 .isPresent();
+    }
+
+    private List<File> getFiles() {
+        final File dir = getKeyStoreLocation().toFile();
+        final File[] files = dir.listFiles();
+        return files != null ? Arrays.asList(files) : Collections.emptyList();
     }
 
     private String getISODate(long milliseconds) {
