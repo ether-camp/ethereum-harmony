@@ -44,28 +44,27 @@
                         <h4 class="m-t-n-sm m-b-xs">Peers location</h4>
                         <span>Connected to <span class="c-white">{{activePeersCount}}</span> peers. Total detected <span class="c-white">{{peersCount}}</span></span>
 
-                        <div style="position: relative; padding-bottom: 50%;" id="serverMap">
-                            <div style="z-index: 10001; position: absolute;" class="datamaps-hoverover"></div>
+                        <div id="serverMap">
+                            <div class="datamaps-hoverover"></div>
                         </div>
 
                         <div class="row" align="center" style="height: 50px;">
                             <div class="datamaps-legend">
                                 <dl>
-                                    <dt style="margin-left: 15px">Country with peers:</dt>
+                                    <dt>Country with peers:</dt>
                                     <dd style="background-color:#CA8800">&nbsp;</dd>
 
-                                    <dt style="margin-left: 15px">New peer detected: </dt>
+                                    <dt>New peer detected: </dt>
                                     <dd style="background-color:#FFF108">&nbsp;</dd>
 
-                                    <dt style="margin-left: 15px">Block received: </dt>
+                                    <dt>Block received: </dt>
                                     <dd style="margin-top: 3px;width:10px;height:10px;-webkit-border-radius: 5px;-moz-border-radius: 5px;border-radius: 5px;border:1px solid #FFFFFF;background-color:#FF0000;">&nbsp;</dd>
                                 </dl>
                             </div>
                         </div>
 
                         <div class="panel panel-filled" ng-hide="hidePeerDetails">
-                            <div class="panel-body text-left" style="white-space: pre-wrap; word-wrap: break-word;"
-                                >{{peerDetails}}</div>
+                            <div class="panel-body text-left peer-details">{{peerDetails}}</div>
                         </div>
 
                     </div>
@@ -80,7 +79,7 @@
                             <ul class="list-inline">
                                 <li>
                                     <div class="checkbox">
-                                        <label style="font-size: 16px">
+                                        <label class="font-16">
                                             <input type="checkbox"
                                                    ng-model="showInactive"
                                                    ng-change="onShowInactiveChange()">
@@ -101,7 +100,7 @@
                                         <th>
                                             IP
                                         </th>
-                                        <th style="text-align: left">
+                                        <th class="text-left">
                                             Geo
                                         </th>
                                         <th class="text-right">
@@ -123,13 +122,12 @@
                                         ng-mouseout="onOutPeer(peer)"
                                         ng-cloak
                                         ng-class="{'peer-active': peer.isActive}"
-                                        class="peer-row"
-                                        style="cursor: pointer;">
+                                        class="peer-row">
                                         <td data-toggle="tooltip" title="{{peer.nodeId}}">
                                             0x{{peer.nodeId | limitTo : 12 : 0}}...
                                         </td>
                                         <td>{{peer.ip}}</td>
-                                        <td style="padding-top: 0;padding-bottom: 0" data-toggle="tooltip" title="{{peer.country3Code}}">
+                                        <td class="p-t-none p-b-none" data-toggle="tooltip" title="{{peer.country3Code}}">
                                             <ul class="f16 m-l-xs m-t-sm">
                                                 <li class="flag {{peer.country2Code | lowercase}}"></li>
                                             </ul>

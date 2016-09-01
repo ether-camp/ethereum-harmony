@@ -1,10 +1,10 @@
-<section class="content" style="height: 100%;">
+<section class="content height-100p">
 
     <div class="row">
         <div class="col-lg-12">
             <div class="view-header">
 
-                <div class="m-l-sm pull-right text-right" style="line-height: 14px; margin-right: 30px">
+                <div class="m-l-sm pull-right text-right rpc-filter-div">
                     <form class="navbar-form navbar-right" role="search">
                         <div class="form-group">
                             <input type="text" class="form-control query" placeholder="Filter by name" tabindex="1"
@@ -31,26 +31,26 @@
     </div>
 
     <div class="table-responsive" id="rpc-scroll-container">
-        <ul class="table peers-table" style="padding: 0;">
+        <ul class="table peers-table">
 
             <il ng-repeat="item in rpcItems | rpcItemFilter:filterWord"
                 ng-cloak>
                 <div class="panel panel-dark-filled">
-                    <div class="panel-heading" style="padding-top: 0;padding-bottom: 0">
+                    <div class="panel-heading p-b-none p-t-none">
                         <div class="row">
                             <div class="col-sm-6">
-                                <u><h3 style="font-weight: normal">{{item.methodName}}</h3></u>
+                                <u><h3 class="font-weight-normal">{{item.methodName}}</h3></u>
                             </div>
                             <div class="col-sm-3">
-                                <h4 style="font-weight: normal">Invoked: {{item.count}}</h4>
+                                <h4 class="font-weight-normal">Invoked: {{item.count}}</h4>
                             </div>
                             <div class="col-sm-3">
-                                <h4 style="font-weight: normal">Last: {{item.lastTime}}</h4>
+                                <h4 class="font-weight-normal">Last: {{item.lastTime}}</h4>
                             </div>
                         </div>
                     </div>
 
-                    <div class="panel-footer" style="padding-top: 0;padding-bottom: 0">
+                    <div class="panel-footer p-b-none p-t-none">
                         <!-- Last Result -->
                         <div class="rpc-item-header" ng-show="item.lastResult != null">
                             <a href="#" ng-click="showLastResult(item)">
@@ -63,18 +63,16 @@
                         </div>
 
                         <div class="rpc-item-result-{{item.methodName}}" ng-show="item.lastResult != null && item.isLastResultVisible">
-                            <pre class="panel panel-black-filled"
-                                 style="margin-top: 0px; padding-top: 10px; margin-bottom: 10px;padding-bottom: 10px"
-                            >{{item.lastResult}}</pre>
+                            <pre class="panel panel-black-filled rpc-item-result">{{item.lastResult}}</pre>
                         </div>
 
                         <!-- Usage Sample -->
-                        <div class="rpc-item-header flex-row flex-align-center" style="padding-bottom: 8px">
+                        <div class="rpc-item-header flex-row flex-align-center rpc-usage">
                             <!--<a href="#" ng-click="showUsageHelp(item.methodName)">-->
                                 <div class="header-icon m-l-xs m-r-xs">
                                     <i class="pe page-header-icon pe-7s-study"></i>
                                 </div>
-                            <pre class="panel panel-black-filled m-t-xs m-b-xs">{{item.curl}} <span style="color: #c4660f">{{item.curlUrl}}</span></pre>
+                            <pre class="panel panel-black-filled m-t-xs m-b-xs">{{item.curl}} <span>{{item.curlUrl}}</span></pre>
                                 <!--<div class="header-title"><h5 class="rpc-item-text">Curl</h5>-->
                                 <!--</div>-->
                             <!--</a>-->

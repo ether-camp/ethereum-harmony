@@ -74,9 +74,9 @@
                         </a>
                     </div>
                 </div>
-                <a class="navbar-brand" href="/" style="padding: 10px 10px">
+                <a class="navbar-brand main-logo" href="/">
                     <!--<img src="images/harmony-title.svg" onerror="this.src='images/harmony-logo.png'"/>-->
-                    <img src="images/large_EH_logo.png" style="max-width:100%;max-height:100%;"/>
+                    <img src="images/large_EH_logo.png"/>
                 </a>
             </div>
             <div id="navbar" class="navbar-collapse collapse">
@@ -86,7 +86,7 @@
                     </a>
                 </div>
 
-                <ul class="list-inline navbar-right" style="margin-bottom: 0">
+                <ul class="list-inline navbar-right m-b-none">
                     <li>
                         <div class="panel tp-panel" ng-cloak>
                             <div class="panel-body" data-toggle="tooltip" title="Created at {{vm.data.lastBlockTimeString}}">
@@ -157,7 +157,7 @@
 
     <!-- NAVIGATION-->
     <aside class="navigation">
-        <nav style="height: 100%">
+        <nav class="height-100p">
             <ul class="nav luna-nav">
 
                 <li ng-class="{active: vm.data.currentPage == '/'}">
@@ -185,7 +185,7 @@
                 </li>
 
                 <div class="text-center m-l-md m-r-md m-t-lg" ng-cloak ng-hide="!vm.data.privateNetwork">
-                    <h5 style="color:#f6a821;"><i class="fa fa-gears m-r-sm"></i>Private network</h5>
+                    <h5 class="c-yellow"><i class="fa fa-gears m-r-sm"></i>Private network</h5>
                     <small>Peer discovery is disabled</small>
                     <br>
                     <small>Mining is auto started</small>
@@ -193,7 +193,7 @@
 
 
                 <!-- INSTANT STATS -->
-                <li class="nav-info" style="position: absolute">
+                <li class="nav-info instant-stats">
 
                     <h5 class="m-t-md m-b-xs v-c">
                         <i class="pe pe-7s-shield text-warning"></i>
@@ -207,7 +207,7 @@
                     </div>
                     <div class="">
                         <div class="progress m-t-xs full progress-small">
-                            <div id="cpuUsageProgress" style="width: 0%" aria-valuemax="100" aria-valuemin="0" aria-valuenow="35" role="progressbar" class=" progress-bar progress-bar-warning">
+                            <div id="cpuUsageProgress" aria-valuemax="100" aria-valuemin="0" aria-valuenow="35" role="progressbar" class="width-0p progress-bar progress-bar-warning">
                                 <span class="sr-only">{{vm.data.cpuUsage}}%</span>
                             </div>
                         </div>
@@ -219,7 +219,7 @@
                     </div>
                     <div class="m-b-md">
                         <div class="progress m-t-xs full progress-small">
-                            <div id="memoryUsageProgress" style="width: 0%" aria-valuemax="100" aria-valuemin="0" aria-valuenow="35" role="progressbar" class=" progress-bar progress-bar-warning">
+                            <div id="memoryUsageProgress" aria-valuemax="100" aria-valuemin="0" aria-valuenow="35" role="progressbar" class="width-0p progress-bar progress-bar-warning">
                                 <span class="sr-only">{{vm.data.memoryOccupied}}</span>
                             </div>
                         </div>

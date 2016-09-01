@@ -7,7 +7,7 @@
         <div class="row">
             <div class="col-lg-12">
                 <div class="view-header">
-                    <div class="pull-right text-right" style="line-height: 14px">
+                    <div class="pull-right text-right text-14">
                         <small>Ethereum Harmony<br>Dashboard<br> <span class="c-white">v.1.0</span></small>
                     </div>
                     <div class="header-icon">
@@ -120,16 +120,16 @@
                     <div class="panel-heading">
                         Top block miners
                     </div>
-                    <div id="miners-scroll-container" class="panel-body" style="padding-top: 0">
+                    <div id="miners-scroll-container" class="panel-body p-t-none">
                         <div ng-repeat="item in miners">
-                            <div class="bs-example m-b-sm">
-                                <div style="text-align:left;">
+                            <div class="bs-example m-b-sm miner-div">
+                                <div class="text-left">
                                     0x{{item.address}}
-                                    <h4 style="float:right;color:#C5E0B4;">{{item.count}}</h4>
+                                    <h4>{{item.count}}</h4>
                                 </div>
 
-                                <ul class="list-inline m-b-none m-l-none" style="overflow: hidden; height: 20px">
-                                    <li style="padding: 0;margin: 0; padding-right: 4px" ng-repeat="n in [] | range:item.count">
+                                <ul class="list-inline m-b-none m-l-none">
+                                    <li ng-repeat="n in [] | range:item.count">
                                         <div class="home-miner-box"></div>
                                     </li>
                                 </ul>

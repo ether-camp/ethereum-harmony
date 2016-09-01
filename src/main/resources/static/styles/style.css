@@ -2753,10 +2753,18 @@ fieldset[disabled] .form-control {
     text-align: right;
 }
 
+.text-left {
+    text-align: left;
+}
+
 
 /*
  * PEERS
  */
+.peers-table {
+    padding: 0;
+}
+
 .peers-table td {
     padding-top: 0;
     padding-bottom: 0;
@@ -2780,6 +2788,7 @@ fieldset[disabled] .form-control {
 }
 
 .peer-row {
+    cursor: pointer;
     border: none;
     background-color: #3b3c46;
 }
@@ -2882,6 +2891,10 @@ fieldset[disabled] .form-control {
     height: 100%;
 }
 
+.width-0p {
+    width: 0;
+}
+
 .port-test-result {
 
 }
@@ -2906,4 +2919,98 @@ input[type="number"] {
 
 .cWhite {
     color: #FFFFFF !important;
+}
+
+.c-yellow {
+    color: #f6a821;
+}
+
+.main-logo {
+    padding: 10px 10px !important;
+}
+
+.main-logo img {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.instant-stats {
+    position: absolute !important;
+}
+
+.text-14 {
+    line-height: 14px;
+}
+
+.p-t-none {
+    padding-top: 0 !important;
+}
+.p-b-none {
+    padding-bottom: 0 !important;
+}
+
+.miner-div div h4 {
+    float: right;
+    color: #C5E0B4;
+}
+
+.miner-div ul {
+    overflow: hidden;
+    height: 20px;
+}
+
+.miner-div ul li {
+    margin: 0;
+    padding: 0 4px 0 0;
+}
+
+#serverMap {
+    position: relative;
+    padding-bottom: 50%;
+}
+
+#serverMap div {
+    z-index: 10001;
+    position: absolute;
+}
+
+.datamaps-legend dl dt {
+    margin-left: 15px;
+}
+
+.peer-details {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.font-16 {
+    font-size: 16px;
+}
+
+.rpc-filter-div {
+    line-height: 14px;
+    margin-right: 30px;
+}
+
+.font-weight-normal {
+    font-weight: normal;
+}
+
+.rpc-item-result {
+    margin-top: 0px;
+    padding-top: 10px;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+}
+
+.rpc-usage {
+    padding-bottom: 8px;
+}
+
+.rpc-usage pre span {
+    color: #c4660f;
+}
+
+.suggestion-item {
+    padding: 5px 0 5px 5px;
 }
