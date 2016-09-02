@@ -374,9 +374,9 @@ public class BlockchainInfoService implements ApplicationListener {
         messagingAppender.start();
     }
 
-    public static class BlockchainConsts {
+    static class BlockchainConsts {
 
-        public static final Map<String, String> GENESIS_BLOCK_HASH_MAP = new HashMap<>();
+        static final Map<String, String> GENESIS_BLOCK_HASH_MAP = new HashMap<>();
 
         static {
             GENESIS_BLOCK_HASH_MAP.put("d4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3", "Live ETH");

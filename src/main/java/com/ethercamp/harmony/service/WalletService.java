@@ -324,7 +324,7 @@ public class WalletService {
 
     @Value
     @AllArgsConstructor
-    public class TransactionInfo {
+    static class TransactionInfo {
 
         private String hash;
 

@@ -75,7 +75,8 @@ public class KeystoreFormat {
 
     private byte[] generateRandomBytes(int size) {
         final byte[] bytes = new byte[size];
-        new Random().nextBytes(bytes);
+        Random random = new Random();
+        random.nextBytes(bytes);
         return bytes;
     }
 

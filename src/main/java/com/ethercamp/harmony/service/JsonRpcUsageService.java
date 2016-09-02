@@ -132,7 +132,7 @@ public class JsonRpcUsageService implements ApplicationListener {
         // do not track stats for non existing methods
     }
 
-    class CallStats {
+    static class CallStats {
 
         public String name;
 

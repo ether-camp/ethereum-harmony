@@ -141,7 +141,7 @@ public class JsonRpcUsageFilter implements Filter {
         }
 
 
-        private class ResettableServletInputStream extends ServletInputStream {
+        private static class ResettableServletInputStream extends ServletInputStream {
 
             private InputStream stream;
 
@@ -167,7 +167,7 @@ public class JsonRpcUsageFilter implements Filter {
         }
     }
 
-    public class ServletOutputStreamCopier extends ServletOutputStream {
+    public static class ServletOutputStreamCopier extends ServletOutputStream {
 
         private OutputStream outputStream;
         private ByteArrayOutputStream copy;
@@ -198,7 +198,7 @@ public class JsonRpcUsageFilter implements Filter {
         }
     }
 
-    public class HttpServletResponseCopier extends HttpServletResponseWrapper {
+    public static class HttpServletResponseCopier extends HttpServletResponseWrapper {
 
         private ServletOutputStream outputStream;
         private PrintWriter writer;
