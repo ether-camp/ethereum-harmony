@@ -4,8 +4,13 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.PatternLayout;
 import ch.qos.logback.classic.filter.LevelFilter;
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.UnsynchronizedAppenderBase;
+
+import org.slf4j.LoggerFactory;
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
 import com.ethercamp.harmony.dto.*;
 import com.sun.management.OperatingSystemMXBean;
 import lombok.extern.slf4j.Slf4j;
@@ -348,6 +353,13 @@ public class BlockchainInfoService implements ApplicationListener {
                 clientMessageService.sendToTopic("/topic/systemLog", message);
             }
         };
+//        context.getLoggerList().stream().filter(l -> l.iteratorForAppenders)
+
+//        Logger logger1 = (Logger) LoggerFactory.get();
+//        Appender<ILoggingEvent> stdout = logger1.getAppender("STDOUT");
+//        stdout
+
+        Logger root = (Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
 
 
         // No effect of this
@@ -355,31 +367,11 @@ public class BlockchainInfoService implements ApplicationListener {
         filter.setLevel(Level.INFO);
         messagingAppender.addFilter(filter);
         messagingAppender.setName("ClientMessagingAppender");
+        messagingAppender.setContext(context);
+
+        root.addAppender(messagingAppender);
 
         messagingAppender.start();
-
-        // Attach appender to specific loggers
-        Arrays.asList("blockchain", "sync", "facade", "net", "general", "stat", "vmtrace", "pending",
-                "repository", "main", "db", "discover",
-                "ROOT",
-                "wallet", "jsonrpc", "keystore", "harmony")
-                .stream()
-                .map(name -> context.getLogger(name))
-                .forEach(logger -> {
-//                    logger.setLevel(Level.INFO);
-                    logger.setAdditive(false);      // to avoid log event duplication
-                    logger.addAppender(messagingAppender);
-                });
-
-        // way to subscribe to all loggers existing at the moment
-//        context.getLoggerList().stream()
-//                .forEach(l -> {
-//                    if (l.getLevel() != null && Level.DEBUG.isGreaterOrEqual(l.getLevel())) {
-//                        l.setLevel(Level.INFO);
-//                    }
-////                    log.info("Subscribed to log " + l.getName());
-//                    l.addAppender(messagingAppender);
-//                });
     }
 
     public static class BlockchainConsts {
