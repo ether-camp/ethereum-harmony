@@ -228,7 +228,7 @@
             });
 
         /**
-         * Listen for page changes and subscribe to 'systemLog' topic only when we stay on that page.
+         * Listen for page changes and subscribe to page relevant topic only when we stay on that page.
          * Unsubscribe otherwise.
          */
         $scope.$on('$routeChangeSuccess', function(event, data) {
@@ -275,17 +275,8 @@
         function connect() {
             console.log("Attempting to connect");
             $stomp.setDebug(function (args) {
-                //$log.debug(args)
+                //console.log(args);
             });
-
-            //var socket = new SockJS('/websocket');
-            //$stomp = Stomp.over(socket);
-            //// disable network data traces from Stomp library
-            //$stomp.debug = null;
-            //$stomp.connect(
-            //    {},
-            //    function(frame) {
-            //        setConnected(true);
 
             $stomp.connect('/websocket', {}, disconnect)
                 .then(function (frame) {

@@ -42,8 +42,8 @@ import java.util.stream.LongStream;
 /**
  * Created by Stan Reshetnyk on 11.07.16.
  */
-@Slf4j(topic = "harmony")
 @Service
+@Slf4j(topic = "harmony")
 public class BlockchainInfoService implements ApplicationListener {
 
     public static final int KEEP_LOG_ENTRIES = 1000;
@@ -349,6 +349,7 @@ public class BlockchainInfoService implements ApplicationListener {
             }
         };
 
+
         // No effect of this
         final LevelFilter filter = new LevelFilter();
         filter.setLevel(Level.INFO);
@@ -365,7 +366,8 @@ public class BlockchainInfoService implements ApplicationListener {
                 .stream()
                 .map(name -> context.getLogger(name))
                 .forEach(logger -> {
-                    logger.setLevel(Level.INFO);
+//                    logger.setLevel(Level.INFO);
+                    logger.setAdditive(false);      // to avoid log event duplication
                     logger.addAppender(messagingAppender);
                 });
 
