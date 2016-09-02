@@ -1280,13 +1280,11 @@ public class JsonRpcImpl implements JsonRpc {
      */
     @Override
     public String[] ethj_listAvailableMethods() {
-        Set<String> ignore = Arrays.asList(Object.class.getMethods())
-                .stream()
+        final Set<String> ignore = Arrays.asList(Object.class.getMethods()).stream()
                 .map(method -> method.getName())
                 .collect(Collectors.toSet());
 
-        return Arrays.asList(JsonRpcImpl.class.getMethods())
-                .stream()
+        return Arrays.asList(JsonRpcImpl.class.getMethods()).stream()
                 .filter(method -> Modifier.isPublic(method.getModifiers()))
                 .filter(method -> !ignore.contains(method.getName()))
                 .map(method -> {

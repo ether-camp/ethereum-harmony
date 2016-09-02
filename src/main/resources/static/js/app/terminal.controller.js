@@ -208,11 +208,16 @@
                 }
 
                 // fill missing arguments with null values
+                var isNotAllArguments = false;
                 var originArgs = originCommandRow.split(' ');
                 originArgs.shift();
                 for (var i = args.length; i < originArgs.length; i++) {
                     console.log('Added optional argument to command:' + command + ', arg:' + originArgs[i]);
                     args.push(null);
+                    isNotAllArguments = true;
+                }
+                if (isNotAllArguments) {
+                    term.echo('[[;#96BC96;]WARNING: You didn\'t enter all arguments.]');
                 }
 
                 jsonrpc.request(command, args)

@@ -1,6 +1,5 @@
 package com.ethercamp.harmony.service.wallet;
 
-import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
 /**
