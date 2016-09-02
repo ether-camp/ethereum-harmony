@@ -163,12 +163,21 @@ public class BlockchainInfoService implements ApplicationListener {
         if (event instanceof EmbeddedServletContainerInitializedEvent) {
             final int port = ((EmbeddedServletContainerInitializedEvent) event).getEmbeddedServletContainer().getPort();
 
-            final boolean isPrivateNetwork = env.getProperty("isPrivateNetwork", "false").equalsIgnoreCase("true");
+            final boolean isPrivateNetwork = env.getProperty("networkProfile", "").equalsIgnoreCase("private");
+            final boolean isClassicNetwork = env.getProperty("networkProfile", "").equalsIgnoreCase("classic");
+
             final Optional<String> blockHash = Optional.ofNullable(blockchain.getBlockByNumber(0l))
                     .map(block -> Hex.toHexString(block.getHash()));
-            final String networkName = isPrivateNetwork ? "Private Miner Network" : blockHash
-                    .map(hash -> BlockchainConsts.GENESIS_BLOCK_HASH_MAP.getOrDefault(hash, "Unknown network"))
-                    .orElse("Undefined blockchain");
+            final String networkName;
+            if (isPrivateNetwork) {
+                networkName = "Private Miner Network";
+            } else if (isClassicNetwork) {
+                networkName = "Ethereum Classic";
+            } else {
+                networkName = blockHash
+                        .map(hash -> BlockchainConsts.GENESIS_BLOCK_HASH_MAP.getOrDefault(hash, "Unknown network"))
+                        .orElse("Undefined blockchain");
+            }
 
             initialInfo.set(new InitialInfoDTO(
                     env.getProperty("ethereumJ.version"),
@@ -349,22 +358,26 @@ public class BlockchainInfoService implements ApplicationListener {
         messagingAppender.start();
 
         // Attach appender to specific loggers
-//        Arrays.asList("blockchain", "sync", "facade", "net", "general")
-//                .stream()
-//                .forEach(l -> {
-//                    Logger logger = context.getLogger(l);
-//                    logger.setLevel(Level.INFO);
-//                    logger.addAppender(messagingAppender);
-//                });
+        Arrays.asList("blockchain", "sync", "facade", "net", "general", "stat", "vmtrace", "pending",
+                "repository", "main", "db", "discover",
+                "ROOT",
+                "wallet", "jsonrpc", "keystore", "harmony")
+                .stream()
+                .map(name -> context.getLogger(name))
+                .forEach(logger -> {
+                    logger.setLevel(Level.INFO);
+                    logger.addAppender(messagingAppender);
+                });
 
         // way to subscribe to all loggers existing at the moment
-        context.getLoggerList().stream()
-                .forEach(l -> {
-                    if (l.getLevel() != null && Level.DEBUG.isGreaterOrEqual(l.getLevel())) {
-                        l.setLevel(Level.INFO);
-                    }
-                    l.addAppender(messagingAppender);
-                });
+//        context.getLoggerList().stream()
+//                .forEach(l -> {
+//                    if (l.getLevel() != null && Level.DEBUG.isGreaterOrEqual(l.getLevel())) {
+//                        l.setLevel(Level.INFO);
+//                    }
+////                    log.info("Subscribed to log " + l.getName());
+//                    l.addAppender(messagingAppender);
+//                });
     }
 
     public static class BlockchainConsts {

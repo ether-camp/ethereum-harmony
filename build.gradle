@@ -115,7 +115,7 @@ task runTest (type: JavaExec) {
 task runPrivate (type: JavaExec) {
     main = mainClassName
     classpath = sourceSets.main.runtimeClasspath
-    jvmArgs = applicationDefaultJvmArgs + '-Dethereumj.conf.res=private.conf' + '-DisPrivateNetwork=true'
+    jvmArgs = applicationDefaultJvmArgs + '-Dethereumj.conf.res=private.conf' + '-DnetworkProfile=private'
 
 }
 
@@ -123,5 +123,5 @@ task runPrivate (type: JavaExec) {
 task runClassic (type: JavaExec) {
     main = mainClassName
     classpath = sourceSets.main.runtimeClasspath
-    jvmArgs = applicationDefaultJvmArgs + '-Dethereumj.conf.res=ethereum-classic.conf'
+    jvmArgs = applicationDefaultJvmArgs + '-Dethereumj.conf.res=ethereum-classic.conf' + '-DnetworkProfile=classic'
 }
