@@ -36,11 +36,11 @@
                     </div>
 
                     <div class="panel-heading">
-                        <a href="#" ng-click="onNewAddress()" class="btn btn-w-md btn-primary">New address in keystore</a>
+                        <a href="#" ng-click="onNewAddress()" class="btn btn-w-md btn-primary"><span class="pe-7s-key m-r-sm"></span>New address in keystore</a>
                         <span class="m-l-sm"/>
                         <a href="#" ng-click="onPhraseAddress()" class="btn btn-w-md btn-primary">New mnemonic address</a>
                         <span class="m-l-sm"/>
-                        <a href="#" ng-click="onImportAddress()" class="btn btn-w-md btn-primary">Import address</a>
+                        <a href="#" ng-click="onImportAddress()" class="btn btn-w-md btn-primary"><i class="fa fa-eye m-r-sm"/>Import address</a>
                     </div>
 
                     <div class="table-responsive" id="address-scroll-container">
@@ -51,7 +51,7 @@
                                 <tr ng-repeat="item in addresses"
                                     >
                                     <td>
-                                        <span class="pe-7s-key" ng-hide="!item.hasKeystoreKey"></span>
+                                        <span class="pe-7s-key m-l-sm" ng-hide="!item.hasKeystoreKey"></span>
                                     </td>
                                     <td>
                                         {{item.name}}
@@ -80,10 +80,6 @@
                     </div>
 
                 </div>
-            </div>
-
-            <div class="col-lg-4 height-100p">
-
             </div>
         </div>
 

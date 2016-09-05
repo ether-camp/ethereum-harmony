@@ -2,14 +2,13 @@
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 <h4 class="modal-title" id="myModalLabel">Send amount</h4>
             </div>
             <div class="modal-body">
                 <form name="form" novalidate>
                     <div class="form-group">
                         <label>From address</label>
-                        <input class="form-control" placeholder="{{txData.fromAddress}}" readonly type="text">
+                        <input class="form-control" placeholder="{{txData.fromAddress}}" readonly type="text" tabindex="-1">
                     </div>
                     <div class="form-group" show-errors>
                         <label>To address</label>
@@ -26,7 +25,7 @@
 
                     </div>
                     <div class="form-group" show-errors>
-                        <label>ETH amount</label><span class="m-l-md">Total available for transfer <a href="#" ng-click="onSendAll()">{{txData.availableAmount}}</a></span>
+                        <label>ETH amount</label><span class="m-l-md">Total available for transfer <a href="#" ng-click="onSendAll()" tabindex="-1">{{txData.availableAmount}}</a></span>
                         <input name="amount" class="form-control" ng-model="txData.amount"
                                type="number"
                                ng-min="0.0001"
@@ -40,6 +39,7 @@
                             <div ng-show="form.amount.$error.max">Not enough funds on sender account</div>
                         </div>
                     </div>
+                    <hr/>
                     <div class="form-group wallet-sign-group">
                         <label ng-show="txData.hasKeystoreKey" ng-class="{cWhite : txData.signType == SIGNTYPE_KEYSTORE}">
                             <input type="radio" ng-model="txData.signType" ng-value="SIGNTYPE_KEYSTORE" >

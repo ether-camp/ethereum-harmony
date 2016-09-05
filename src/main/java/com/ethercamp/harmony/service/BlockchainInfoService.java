@@ -4,12 +4,10 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.PatternLayout;
 import ch.qos.logback.classic.filter.LevelFilter;
-import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.UnsynchronizedAppenderBase;
 
 import org.slf4j.LoggerFactory;
-import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import com.ethercamp.harmony.dto.*;
 import com.sun.management.OperatingSystemMXBean;
@@ -22,7 +20,6 @@ import org.ethereum.facade.Ethereum;
 import org.ethereum.listener.EthereumListenerAdapter;
 import org.ethereum.net.server.ChannelManager;
 import org.ethereum.sync.SyncManager;
-import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.embedded.EmbeddedServletContainerInitializedEvent;
@@ -353,11 +350,6 @@ public class BlockchainInfoService implements ApplicationListener {
                 clientMessageService.sendToTopic("/topic/systemLog", message);
             }
         };
-//        context.getLoggerList().stream().filter(l -> l.iteratorForAppenders)
-
-//        Logger logger1 = (Logger) LoggerFactory.get();
-//        Appender<ILoggingEvent> stdout = logger1.getAppender("STDOUT");
-//        stdout
 
         Logger root = (Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
 

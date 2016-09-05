@@ -108,8 +108,6 @@ public class WalletService {
                 handleBlock(blockSummary);
             }
         });
-
-        generateWords(5);
     }
 
     public void handleBlock(BlockSummary blockSummary) {
