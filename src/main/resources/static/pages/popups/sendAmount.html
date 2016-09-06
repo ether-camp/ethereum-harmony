@@ -48,14 +48,23 @@
                         <span class="m-r-md" ng-show="txData.hasKeystoreKey"/>
                         <label ng-class="{cWhite : txData.signType == SIGNTYPE_PRIVATE}">
                             <input type="radio" ng-model="txData.signType" ng-value="SIGNTYPE_PRIVATE">
-                            Private key or sha3 seed words
+                            Private key or seed phrase
                         </label>
-                        <span class="m-r-md"/>
-                        <label ng-class="{cWhite : txData.signType == SIGNTYPE_PHRASE}">
-                            <input type="radio" ng-model="txData.signType" ng-value="SIGNTYPE_PHRASE">
-                            Mnemonic phrase
-                        </label>
+                        <!--<span class="m-r-md"/>-->
+                        <!--<label ng-class="{cWhite : txData.signType == SIGNTYPE_PHRASE}">-->
+                            <!--<input type="radio" ng-model="txData.signType" ng-value="SIGNTYPE_PHRASE">-->
+                            <!--Mnemonic phrase-->
+                        <!--</label>-->
                     </div>
+                    <div class="form-group" ng-show="txData.signType == SIGNTYPE_KEYSTORE">
+                        Enter keystore password which you used to create this address. Private key is kept on server in sharable storage.
+                    </div>
+                    <div class="form-group" ng-show="txData.signType == SIGNTYPE_PRIVATE">
+                        Paste plain key here or enter sha3 seed words.
+                    </div>
+                    <!--<div class="form-group" ng-show="txData.signType == SIGNTYPE_PHRASE">-->
+                        <!--Select this if you imported address using address mnemonic phrase.-->
+                    <!--</div>-->
                     <div class="form-group" show-errors>
                         <textarea name="secret" class="form-control" rows="3" ng-model="txData.secret"
                                   placeholder="secret"

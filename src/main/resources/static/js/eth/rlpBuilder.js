@@ -98,11 +98,11 @@ var RlpBuilder = (function() {
             var txData = _.pick(self.data, 'data', 'value', 'gasLimit', 'pkey', 'to', 'gasPrice', 'nonce');
 
             var dfds = [];
-            console.log(txData);
+            //console.log(txData);
 
             txData.pkey = '0x' + txData.pkey;
             console.log('txData before create tx');
-            console.log(txData);
+            //console.log(txData);
             var rlp = EthUtil.createTx(txData);
             dfd.resolve(remove0x(rlp));
 

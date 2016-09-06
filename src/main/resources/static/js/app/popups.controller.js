@@ -38,7 +38,7 @@
     function SendAmountCtrl($scope, item, $element, $stomp, close, jsonrpc, $q) {
         $scope.SIGNTYPE_KEYSTORE     = 'SIGNTYPE_KEYSTORE';
         $scope.SIGNTYPE_PRIVATE      = 'SIGNTYPE_PRIVATE';
-        $scope.SIGNTYPE_PHRASE       = 'SIGNTYPE_PHRASE';
+        //$scope.SIGNTYPE_PHRASE       = 'SIGNTYPE_PHRASE';
 
         $scope.txData = {
             fromAddress:    item.publicAddress,
@@ -52,6 +52,10 @@
 
         var add0x = Utils.Hex.add0x;
         var remove0x = Utils.Hex.remove0x;
+
+        function isAddressesEqual(a1, a2) {
+            return remove0x(a1).toLowerCase() == remove0x(a2).toLowerCase();
+        }
 
         jsonrpc.request('eth_gasPrice', [])
             .then(function(value) {
@@ -110,10 +114,33 @@
                                 ]);
                             })
                     } else {
-                        if (txData.signType == $scope.SIGNTYPE_PHRASE) {
-                            secret = generateKeyByPhrase(secret);
-                            //console.log('Phrase generated private key ' + secret);
+                        //if (txData.signType == $scope.SIGNTYPE_PHRASE) {
+                        //    secret = generateKeyByPhrase(secret);
+                        //    //console.log('Phrase generated private key ' + secret);
+                        //}
+
+                        var isPrivateKey = (remove0x(secret)).length == 64 && Utils.Hex.isHexString(secret);
+                        console.log('isPrivateKey ' + isPrivateKey);
+                        var privateKey = isPrivateKey ? ('0x' + remove0x(secret)) : (EthUtil.sha3(secret));
+                        var addressFromKey = EthUtil.toAddress(privateKey);
+                        console.log('addressFromKey ' + addressFromKey);
+                        var isSimpleAddressEquals = isAddressesEqual(txData.fromAddress, addressFromKey);
+
+                        if (isSimpleAddressEquals) {
+                            console.log('Using ' + (isPrivateKey ? 'plain key' : 'sha3 single pass'));
+                            secret = privateKey;
+                        } else {
+                            var mnemonicKey = generateKeyByPhrase(secret);
+                            var mnemonicAddress = EthUtil.toAddress(mnemonicKey);
+
+                            var isMnemonicAddressEquals = isAddressesEqual(txData.fromAddress, mnemonicAddress);
+                            if (isMnemonicAddressEquals) {
+                                secret = mnemonicKey;
+                            } else {
+                                throw new Error('Secret phrase or key doesn\'t match your address.');
+                            }
                         }
+
 
                         return RlpBuilder
                             .balanceTransfer(remove0x(txData.toAddress).toLowerCase())
@@ -303,7 +330,10 @@
                 $scope.updateAddress();
             });
         };
-        $scope.onGeneratePhrase();
+        // allow bootstrap animation to pass
+        setTimeout(function() {
+            $scope.onGeneratePhrase();
+        }, 500);
 
         $scope.onPhraseAddressConfirmed = function() {
             console.log('onPhraseAddressConfirmed');
