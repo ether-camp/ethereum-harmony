@@ -19,6 +19,11 @@
         sha.update(str);
         return '0x' + sha.digest();
       },
+      sha3buffer: function(str) {
+        var sha = new SHA3Hash();
+        sha.update(str);
+        return new Buffer(sha.digest('hex'), 'hex');
+      },
       createTx: function(options) {
         var tx = new ethTx({
           nonce: options.nonce,

@@ -1,18 +1,25 @@
 /**
  * Controllers for modal popups.
+ *
  */
 
 (function() {
     'use strict';
 
     /**
-     * Runs sha3 (keccak) on phrase multiple times
+     * Runs sha3 (keccak) on phrase multiple times.
+     * Note: that Buffer is used inside for sha3
      */
     function generateKeyByPhrase(phrase) {
-        return Array.apply(null, Array(2031)) // do n times
-            .reduce(function(state) {
-                return EthUtil.sha3(state);
-            }, phrase)
+        return '0x' + applySha3WithBuffer(phrase, 2031).toString('hex');
+    }
+
+    function applySha3WithBuffer(data, times) {
+        if (times > 0) {
+            return applySha3WithBuffer(EthUtil.sha3buffer(data), times - 1)
+        } else {
+            return data;
+        }
     }
 
     function showErrorToastr(topMessage, bottomMessage) {
@@ -84,7 +91,7 @@
 
                     var gasPrice = parseInt(remove0x(results[0]), 16);
                     var nonce = parseInt(remove0x(results[1]), 16);
-                    var gasLimit =  21000;
+                    var gasLimit = 21000;
 
                     if (txData.signType == $scope.SIGNTYPE_KEYSTORE) {
                         console.log('try to unlock account with ' + [add0x(txData.fromAddress), secret, null]);
@@ -105,7 +112,7 @@
                     } else {
                         if (txData.signType == $scope.SIGNTYPE_PHRASE) {
                             secret = generateKeyByPhrase(secret);
-                            console.log('Phrase generated private key ' + secret);
+                            //console.log('Phrase generated private key ' + secret);
                         }
 
                         return RlpBuilder
@@ -121,7 +128,7 @@
 
                             .then(function (rlp) {
                                 console.log('Signed transaction');
-                                console.log(rlp);
+                                //console.log(rlp);
 
                                 return jsonrpc.request('eth_sendRawTransaction', [rlp]);
                             });
@@ -271,8 +278,8 @@
 
             var privateKey = generateKeyByPhrase($scope.phraseAddressData.phrase);
 
-            $scope.phraseAddressData.address = Utils.Hex.remove0x(EthUtil.toAddress(privateKey));
-            console.log('Generation took ' + (new Date().getTime() - startTime) + ' ms');
+            $scope.phraseAddressData.address = EthUtil.toChecksumAddress(EthUtil.toAddress(privateKey));
+            //console.log('Generation took ' + (new Date().getTime() - startTime) + ' ms');
         };
 
         $scope.onGeneratePhrase = function() {
@@ -291,7 +298,8 @@
                     return Math.floor(Math.random() * (max - min + 1)) + min;
                 }
 
-                $scope.phraseAddressData.phrase = result.data.join(' ');
+                //$scope.phraseAddressData.phrase = result.data.join(' ');
+                $scope.phraseAddressData.phrase = 'lugubriosity molder aduzedavo rye modernized tecassir'
                 $scope.updateAddress();
             });
         };
