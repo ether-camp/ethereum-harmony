@@ -39,13 +39,13 @@
                     <div class="panel-heading p-b-none p-t-none">
                         <div class="row">
                             <div class="col-sm-6">
-                                <u><h3 class="font-weight-normal">{{item.methodName}}</h3></u>
+                                <u><h4 class="font-weight-normal">{{item.methodName}}</h4></u>
                             </div>
                             <div class="col-sm-3">
-                                <h4 class="font-weight-normal">Invoked: {{item.count}}</h4>
+                                <h5 class="font-weight-normal" ng-show="item.count &gt; 0">Invoked: {{item.count}}</h5>
                             </div>
-                            <div class="col-sm-3">
-                                <h4 class="font-weight-normal">Last: {{item.lastTime}}</h4>
+                            <div class="col-sm-3 m-l-none">
+                                <h5 class="font-weight-normal" ng-show="item.lastTime">Last call: {{item.lastTime}}</h5>
                             </div>
                         </div>
                     </div>
@@ -54,22 +54,22 @@
                         <!-- Last Result -->
                         <div class="rpc-item-header" ng-show="item.lastResult != null">
                             <a href="#" ng-click="showLastResult(item)">
-                                <div class="header-icon">
+                                <div class="header-icon m-r-md" style="margin-right: 8px;">
                                     <i class="pe page-header-icon pe-7s-plus"></i>
                                 </div>
-                                <div class="header-title"><h5 class="rpc-item-text">Last Result</h5>
+                                <div class="header-title m-l-md"><h5 class="rpc-item-text">Last Result</h5>
                                 </div>
                             </a>
                         </div>
 
                         <div class="rpc-item-result-{{item.methodName}}" ng-show="item.lastResult != null && item.isLastResultVisible">
-                            <pre class="panel panel-black-filled rpc-item-result">{{item.lastResult}}</pre>
+                            <pre class="panel panel-black-filled rpc-item-result">{{item.lastResult | json}}</pre>
                         </div>
 
                         <!-- Usage Sample -->
                         <div class="rpc-item-header flex-row flex-align-center rpc-usage">
                             <!--<a href="#" ng-click="showUsageHelp(item.methodName)">-->
-                                <div class="header-icon m-l-xs m-r-xs">
+                                <div class="header-icon m-l-none m-r-xs">
                                     <i class="pe page-header-icon pe-7s-study"></i>
                                 </div>
                             <pre class="panel panel-black-filled m-t-xs m-b-xs">{{item.curl}} <span>{{item.curlUrl}}</span></pre>

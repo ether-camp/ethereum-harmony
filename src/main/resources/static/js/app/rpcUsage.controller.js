@@ -61,7 +61,7 @@
                 }
                 synchronizeArrays(items, $scope.rpcItems, function(item, updatedItem) {
                     item.count = updatedItem.count;
-                    item.lastResult = updatedItem.lastResult;
+                    item.lastResult = JSON.parse(updatedItem.lastResult);
                     item.curl = item.curl;
                     item.lastTime = updatedItem.lastTime > 0 ? moment(updatedItem.lastTime).fromNow() : '';
                 });
