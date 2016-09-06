@@ -1,6 +1,8 @@
 # Ethereum Harmony
 
-Application for demonstrating EthereumJ features. It runs local Java based node https://github.com/ethereum/ethereumj and expose web interface for monitoring and interact. 
+Application for demonstrating EthereumJ features. It runs local Java based node https://github.com/ethereum/ethereumj and expose web interface for monitoring and interact. Harmony is licensed under the GPL 3.
+ 
+ 
 Next features were implemented:
 
  * **JSON-RPC 2.0** implementation and usage statistics. Note, that some JSON-RPC methods are not implemented yet;
@@ -100,6 +102,22 @@ Harmony contains improved copy of *jsonrpc* package from *ethereumj-core*.
 Testing JSON-RPC is tricky because tests are NodeJS based and located in https://github.com/ethereum/rpc-tests
 
 Harmony should be started with main class *com.ethercamp.harmony.jsonrpc.TestApplication*. Then *rpc-tests* should be configured launched.
-More description located in *TestApplication* class. 
+More description located in *TestApplication* class.
+ 
+### Wallet
+
+Wallet allows to use addresses by keeping private keys on server and without.
+
+1. App is able to store and use private key in password protected format in user file system. 
+Location of directory is universal among other ethereum nodes and located:
+ *   Mac: `~/Library/Ethereum`
+ *   Linux: `~/.ethereum`
+ *   Windows: `%APPDATA%\Ethereum`
+
+2. User is able to add watch-only addresses without sharing private key with server.
+App will prompt user to enter private key for such addresses. Otherwise user also have possibility to enter:
+    - seed word, sha3 of which will produce private key;
+    - or mnemonic phrases, which also will produce private key after applying sha3 2031 times.
+
 
 
