@@ -23,8 +23,10 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.PatternLayout;
 import ch.qos.logback.classic.filter.LevelFilter;
 import ch.qos.logback.classic.spi.LoggingEvent;
+import ch.qos.logback.core.ConsoleAppender;
 import ch.qos.logback.core.UnsynchronizedAppenderBase;
 
+import org.apache.commons.logging.LogFactory;
 import org.slf4j.LoggerFactory;
 import ch.qos.logback.classic.Logger;
 import com.ethercamp.harmony.dto.*;
@@ -110,6 +112,8 @@ public class BlockchainInfoService implements ApplicationListener {
 
     private final Queue<String> lastLogs = new ConcurrentLinkedQueue();
 
+    private volatile int serverPort;
+
     public InitialInfoDTO getInitialInfo() {
         return initialInfo.get();
     }
@@ -144,10 +148,6 @@ public class BlockchainInfoService implements ApplicationListener {
             });
         }
 
-
-        createLogAppenderForMessaging();
-
-
         final long lastBlock = blockchain.getBestBlock().getNumber();
         final long startImportBlock = Math.max(0, lastBlock - Math.max(BLOCK_COUNT_FOR_HASH_RATE, KEEP_BLOCKS_FOR_CLIENT));
 
@@ -180,7 +180,12 @@ public class BlockchainInfoService implements ApplicationListener {
     @Override
     public void onApplicationEvent(ApplicationEvent event) {
         if (event instanceof EmbeddedServletContainerInitializedEvent) {
-            final int port = ((EmbeddedServletContainerInitializedEvent) event).getEmbeddedServletContainer().getPort();
+            serverPort = ((EmbeddedServletContainerInitializedEvent) event).getEmbeddedServletContainer().getPort();
+
+            final String ANSI_RESET = "\u001B[0m";
+            final String ANSI_BLUE = "\u001B[34m";
+            System.out.println(ANSI_BLUE + "Server started. http://localhost:" + serverPort + " Please check logs in browser" + ANSI_RESET);
+            createLogAppenderForMessaging();
 
             final boolean isPrivateNetwork = env.getProperty("networkProfile", "").equalsIgnoreCase("private");
             final boolean isClassicNetwork = env.getProperty("networkProfile", "").equalsIgnoreCase("classic");
@@ -205,7 +210,7 @@ public class BlockchainInfoService implements ApplicationListener {
                     blockHash.orElse(null),
                     System.currentTimeMillis(),
                     Hex.toHexString(config.nodeId()),
-                    port,
+                    serverPort,
                     isPrivateNetwork,
                     env.getProperty("portCheckerUrl")
             ));
@@ -344,8 +349,10 @@ public class BlockchainInfoService implements ApplicationListener {
     }
 
     /**
-     * Create log appender, which will subscribe to loggers, we are interested in.
+     * 1. Create log appender, which will subscribe to loggers, we are interested in.
      * Appender will send logs to messaging topic then (for delivering to client side).
+     *
+     * 2. Stop throwing INFO logs to STDOUT, but only throw ERRORs there.
      */
     private void createLogAppenderForMessaging() {
         final LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
@@ -368,19 +375,33 @@ public class BlockchainInfoService implements ApplicationListener {
             }
         };
 
-        Logger root = (Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+        final Logger root = (Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
 
+        LogFactory.getLog("harmony-notification").info("Server started. Please check logs in browser.");
+        Optional.ofNullable(root.getAppender("STDOUT"))
+            .ifPresent(stdout -> stdout.stop());
 
-        // No effect of this
         final LevelFilter filter = new LevelFilter();
         filter.setLevel(Level.INFO);
-        messagingAppender.addFilter(filter);
+        messagingAppender.addFilter(filter); // No effect of this
         messagingAppender.setName("ClientMessagingAppender");
         messagingAppender.setContext(context);
 
         root.addAppender(messagingAppender);
 
+        messagingAppender.addFilter(filter); // No effect of this
+        messagingAppender.setName("ClientMessagingAppender");
+        messagingAppender.setContext(context);
+        root.addAppender(messagingAppender);
         messagingAppender.start();
+
+        final ConsoleAppender stdoutAppender = new ConsoleAppender<>();
+        final LevelFilter errorFilter = new LevelFilter();
+        errorFilter.setLevel(Level.ERROR);
+        stdoutAppender.addFilter(errorFilter);
+        stdoutAppender.setContext(context);
+//        root.addAppender(stdoutAppender);
+//        stdoutAppender.start();
     }
 
     static class BlockchainConsts {

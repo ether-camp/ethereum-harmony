@@ -43,14 +43,6 @@
     </root>
 
 
-    <!--Query debugging-->
-    <!--
-        <logger level="TRACE" name="org.hibernate.type"/>
-        <logger level="TRACE" name="org.hibernate.engine.query"/>
-        <logger level="TRACE" name="org.hibernate.jdbc"/>
-        <logger level="DEBUG" name="org.hibernate.SQL"/>
-    -->
-
     <logger level="DEBUG" name="keystore"/>
     <logger level="DEBUG" name="wallet"/>
     <logger level="DEBUG" name="harmony"/>
