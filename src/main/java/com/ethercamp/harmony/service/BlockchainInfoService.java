@@ -153,11 +153,6 @@ public class BlockchainInfoService implements ApplicationListener {
 
         LongStream.rangeClosed(startImportBlock, lastBlock)
                 .forEach(i -> addBlock(blockchain.getBlockByNumber(i)));
-
-        final String ANSI_RESET = "\u001B[0m";
-        final String ANSI_BLUE = "\u001B[34m";
-        System.out.println(ANSI_BLUE + "Server started at http://localhost:" + serverPort + " Please check logs in browser" + ANSI_RESET);
-        createLogAppenderForMessaging();
     }
 
     private void addBlock(Block block) {
@@ -212,6 +207,11 @@ public class BlockchainInfoService implements ApplicationListener {
                     isPrivateNetwork,
                     env.getProperty("portCheckerUrl")
             ));
+
+            final String ANSI_RESET = "\u001B[0m";
+            final String ANSI_BLUE = "\u001B[34m";
+            System.out.println(ANSI_BLUE + "Server started at http://localhost:" + serverPort + " Please check logs in browser" + ANSI_RESET);
+            createLogAppenderForMessaging();
         }
     }
 
