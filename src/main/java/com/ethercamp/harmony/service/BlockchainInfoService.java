@@ -152,9 +152,12 @@ public class BlockchainInfoService implements ApplicationListener {
         final long startImportBlock = Math.max(0, lastBlock - Math.max(BLOCK_COUNT_FOR_HASH_RATE, KEEP_BLOCKS_FOR_CLIENT));
 
         LongStream.rangeClosed(startImportBlock, lastBlock)
-                .forEach(i -> {
-                    addBlock(blockchain.getBlockByNumber(i));
-                });
+                .forEach(i -> addBlock(blockchain.getBlockByNumber(i)));
+
+        final String ANSI_RESET = "\u001B[0m";
+        final String ANSI_BLUE = "\u001B[34m";
+        System.out.println(ANSI_BLUE + "Server started at http://localhost:" + serverPort + " Please check logs in browser" + ANSI_RESET);
+        createLogAppenderForMessaging();
     }
 
     private void addBlock(Block block) {
@@ -181,11 +184,6 @@ public class BlockchainInfoService implements ApplicationListener {
     public void onApplicationEvent(ApplicationEvent event) {
         if (event instanceof EmbeddedServletContainerInitializedEvent) {
             serverPort = ((EmbeddedServletContainerInitializedEvent) event).getEmbeddedServletContainer().getPort();
-
-            final String ANSI_RESET = "\u001B[0m";
-            final String ANSI_BLUE = "\u001B[34m";
-            System.out.println(ANSI_BLUE + "Server started. http://localhost:" + serverPort + " Please check logs in browser" + ANSI_RESET);
-            createLogAppenderForMessaging();
 
             final boolean isPrivateNetwork = env.getProperty("networkProfile", "").equalsIgnoreCase("private");
             final boolean isClassicNetwork = env.getProperty("networkProfile", "").equalsIgnoreCase("classic");
@@ -377,7 +375,6 @@ public class BlockchainInfoService implements ApplicationListener {
 
         final Logger root = (Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
 
-        LogFactory.getLog("harmony-notification").info("Server started. Please check logs in browser.");
         Optional.ofNullable(root.getAppender("STDOUT"))
             .ifPresent(stdout -> stdout.stop());
 
@@ -389,10 +386,6 @@ public class BlockchainInfoService implements ApplicationListener {
 
         root.addAppender(messagingAppender);
 
-        messagingAppender.addFilter(filter); // No effect of this
-        messagingAppender.setName("ClientMessagingAppender");
-        messagingAppender.setContext(context);
-        root.addAppender(messagingAppender);
         messagingAppender.start();
 
         final ConsoleAppender stdoutAppender = new ConsoleAppender<>();
@@ -400,8 +393,8 @@ public class BlockchainInfoService implements ApplicationListener {
         errorFilter.setLevel(Level.ERROR);
         stdoutAppender.addFilter(errorFilter);
         stdoutAppender.setContext(context);
-//        root.addAppender(stdoutAppender);
-//        stdoutAppender.start();
+        root.addAppender(stdoutAppender);
+        stdoutAppender.start();
     }
 
     static class BlockchainConsts {

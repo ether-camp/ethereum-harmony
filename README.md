@@ -96,13 +96,6 @@ Harmony contains improved copy of *jsonrpc* package from *ethereumj-core*.
   
 ### New JSON-RPC methods:
  - *ethj_getTransactionReceipt* - method useful for debugging sending transactions. Shows cause message in case of transaction has been rejected by node verification.
-  
-### Testing JSON-RCP
-  
-Testing JSON-RPC is tricky because tests are NodeJS based and located in https://github.com/ethereum/rpc-tests
-
-Harmony should be started with main class *com.ethercamp.harmony.jsonrpc.TestApplication*. Then *rpc-tests* should be configured launched.
-More description located in *TestApplication* class.
  
 ### Wallet
 
