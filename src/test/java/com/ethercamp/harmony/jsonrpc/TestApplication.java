@@ -19,6 +19,11 @@
 package com.ethercamp.harmony.jsonrpc;
 
 import com.ethercamp.harmony.Application;
+import com.ethercamp.harmony.jsontestsuite.suite.BlockTestCase;
+import com.ethercamp.harmony.jsontestsuite.suite.BlockTestSuite;
+import com.ethercamp.harmony.jsontestsuite.suite.JSONReader;
+import com.ethercamp.harmony.jsontestsuite.suite.builder.BlockBuilder;
+import com.ethercamp.harmony.jsontestsuite.suite.model.BlockTck;
 import org.ethereum.config.DefaultConfig;
 import org.ethereum.config.SystemProperties;
 import org.ethereum.config.blockchain.FrontierConfig;
@@ -29,11 +34,6 @@ import org.ethereum.core.ImportResult;
 import org.ethereum.core.Transaction;
 import org.ethereum.crypto.ECKey;
 import org.ethereum.facade.EthereumImpl;
-import org.ethereum.jsontestsuite.BlockTestCase;
-import org.ethereum.jsontestsuite.BlockTestSuite;
-import org.ethereum.jsontestsuite.JSONReader;
-import org.ethereum.jsontestsuite.builder.BlockBuilder;
-import org.ethereum.jsontestsuite.model.BlockTck;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
