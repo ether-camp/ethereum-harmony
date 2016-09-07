@@ -85,7 +85,7 @@ public class JsonRpcUsageService implements ApplicationListener {
                         String curlExample = curlExamples.get(methodName);
                         if (curlExample == null) {
                             curlExample = generateCurlExample(line) + " " + serverUrl;
-                            log.debug("Generate curl example for JSON-RPC method: " + methodName);
+//                            log.debug("Generate curl example for JSON-RPC method: " + methodName);
                         }
                         stats.put(methodName, new CallStats(methodName, 0l, null, curlExample));
                     });
