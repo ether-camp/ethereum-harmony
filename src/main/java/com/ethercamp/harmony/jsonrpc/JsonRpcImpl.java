@@ -44,10 +44,10 @@ import org.ethereum.sync.SyncManager;
 import org.ethereum.util.BuildInfo;
 import org.ethereum.util.ByteUtil;
 import org.ethereum.util.LRUMap;
-import org.ethereum.util.RLP;
 import org.ethereum.vm.DataWord;
 import org.ethereum.vm.LogInfo;
-import org.spongycastle.util.encoders.Hex;
+import org.spongycastle.util.encoders.*;
+import org.spongycastle.util.encoders.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.annotation.PostConstruct;
@@ -417,19 +417,24 @@ public class JsonRpcImpl implements JsonRpc {
         return TypeConverter.toJsonHex(code);
     }
 
-    public String eth_sign(String address, String data) throws Exception {
+    /**
+     * Sign message hash with key to produce Elliptic Curve Digital Signature (ECDSA) signature.
+     *
+     * Note: implementation may be different to othere Ethereum node implementations.
+     *
+     * @param address - address to sign. Account must be unlocked
+     * @param messageHash - sha3 of message
+     * @return ECDSA signature (in hex)
+     * @throws Exception
+     */
+    public String eth_sign(String address, String messageHash) throws Exception {
         String ha = JSonHexToHex(address);
         Account account = getAccountFromKeystore(ha);
 
-        if (account==null)
-            throw new Exception("Inexistent account");
+        ECKey.ECDSASignature signature = account.getEcKey().sign(Hex.decode(JSonHexToHex(messageHash)));
+        byte[] signatureBytes = Base64.decode(signature.toBase64());
 
-        // Todo: is not clear from the spec what hash function must be used to sign
-        byte[] masgHash= HashUtil.sha3(TypeConverter.StringHexToByteArray(data));
-        ECKey.ECDSASignature signature = account.getEcKey().sign(masgHash);
-        // Todo: is not clear if result should be RlpEncoded or serialized by other means
-        byte[] rlpSig = RLP.encode(signature);
-        return TypeConverter.toJsonHex(rlpSig);
+        return TypeConverter.toJsonHex(signatureBytes);
     }
 
     public String eth_sendTransaction(CallArguments args) throws Exception {

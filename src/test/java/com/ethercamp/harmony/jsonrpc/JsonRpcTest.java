@@ -20,11 +20,14 @@ package com.ethercamp.harmony.jsonrpc;
 
 import com.ethercamp.harmony.keystore.FileSystemKeystore;
 import com.typesafe.config.ConfigFactory;
+import junit.framework.Assert;
+import org.apache.commons.codec.binary.Base64;
 import org.ethereum.config.SystemProperties;
 import org.ethereum.config.blockchain.FrontierConfig;
 import org.ethereum.core.CallTransaction;
 import org.ethereum.core.Transaction;
 import org.ethereum.crypto.ECKey;
+import org.ethereum.crypto.HashUtil;
 import org.ethereum.datasource.HashMapDB;
 import org.ethereum.datasource.KeyValueDataSource;
 import org.ethereum.facade.Ethereum;
@@ -38,8 +41,11 @@ import org.springframework.context.annotation.Scope;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.stream.IntStream;
 
 import static java.math.BigInteger.valueOf;
 import static org.ethereum.crypto.HashUtil.sha3;
@@ -137,6 +143,21 @@ public class JsonRpcTest {
             String keydata = Hex.toHexString(newKey.getPrivKeyBytes());
             String cowAcct = jsonRpc.personal_importRawKey(keydata, passphrase);
             jsonRpc.personal_unlockAccount(cowAcct, passphrase, "");
+
+
+            /*
+             * Testing ECDSA signature in JSON-RPC
+             */
+            String message = "Test message";
+            byte[] dataHash = HashUtil.sha3(message.getBytes());
+            System.out.println("data: " + Hex.toHexString(dataHash));
+            String hexSignature = jsonRpc.eth_sign(cowAcct, "0x" + Hex.toHexString(dataHash));
+//            hexSignature = "0x78161f22e473546259ce6be468666b810b32a68cdde7c6ce14c60744b9452db31e2b65a4a176d053c009f53cb8c6b06a1df161f75962bd3e2677734790a2e30500";
+            byte[] bytesSignature = TypeConverter.StringHexToByteArray(hexSignature);
+            String base64Signature = new String(org.spongycastle.util.encoders.Base64.encode(bytesSignature), Charset.forName("UTF-8"));
+
+            boolean signatureRecovered = Arrays.equals(newKey.getPubKey(), ECKey.signatureToKeyBytes(dataHash, base64Signature));
+            assertTrue(signatureRecovered);
 
             String bal0 = jsonRpc.eth_getBalance(cowAcct, "latest");
             System.out.println("Balance: " + bal0);
