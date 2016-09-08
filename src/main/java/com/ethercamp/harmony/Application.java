@@ -18,7 +18,9 @@
 
 package com.ethercamp.harmony;
 
+import com.ethercamp.harmony.config.EthereumHarmonyConfig;
 import org.ethereum.config.DefaultConfig;
+import org.ethereum.config.SystemProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Import;
@@ -26,12 +28,12 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @EnableScheduling
-@Import({DefaultConfig.class})
+@Import({EthereumHarmonyConfig.class})
 public class Application {
 
-
-
     public static void main(String[] args) {
+        SystemProperties.getDefault().setDataBaseDir("${user.home}/ethereumj/database");
+
         SpringApplication.run(new Object[]{Application.class}, args);
     }
 }

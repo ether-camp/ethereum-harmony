@@ -26,7 +26,6 @@ import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.ConsoleAppender;
 import ch.qos.logback.core.UnsynchronizedAppenderBase;
 
-import org.apache.commons.logging.LogFactory;
 import org.slf4j.LoggerFactory;
 import ch.qos.logback.classic.Logger;
 import com.ethercamp.harmony.dto.*;
@@ -92,6 +91,9 @@ public class BlockchainInfoService implements ApplicationListener {
 
     @Autowired
     ChannelManager channelManager;
+
+    @Autowired
+    SystemProperties systemProperties;
 
     /**
      * Concurrent queue of last blocks.
@@ -210,6 +212,7 @@ public class BlockchainInfoService implements ApplicationListener {
 
             final String ANSI_RESET = "\u001B[0m";
             final String ANSI_BLUE = "\u001B[34m";
+            System.out.println("EthereumJ database dir location: " + systemProperties.databaseDir());
             System.out.println(ANSI_BLUE + "Server started at http://localhost:" + serverPort + "" + ANSI_RESET);
             createLogAppenderForMessaging();
         }

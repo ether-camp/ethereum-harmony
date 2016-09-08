@@ -104,25 +104,24 @@ applicationDefaultJvmArgs = ["-server", "-Xss32m", "-XX:-OmitStackTraceInFastThr
 task runMorden (type: JavaExec) {
     main = mainClassName
     classpath = sourceSets.main.runtimeClasspath
-    jvmArgs = applicationDefaultJvmArgs + '-Dethereumj.conf.res=morden.conf'
+    jvmArgs = applicationDefaultJvmArgs + '-Dethereumj.conf.res=morden.conf' + '-Ddatabase.name=database-morden'
 }
 
 task runTest (type: JavaExec) {
     main = mainClassName
     classpath = sourceSets.main.runtimeClasspath
-    jvmArgs = applicationDefaultJvmArgs + '-Dethereumj.conf.res=test.conf'
+    jvmArgs = applicationDefaultJvmArgs + '-Dethereumj.conf.res=test.conf' + '-Ddatabase.name=database-test'
 }
 
 task runPrivate (type: JavaExec) {
     main = mainClassName
     classpath = sourceSets.main.runtimeClasspath
-    jvmArgs = applicationDefaultJvmArgs + '-Dethereumj.conf.res=private.conf' + '-DnetworkProfile=private'
-
+    jvmArgs = applicationDefaultJvmArgs + '-Dethereumj.conf.res=private.conf' + '-DnetworkProfile=private' + '-Ddatabase.name=database-private'
 }
 
 
 task runClassic (type: JavaExec) {
     main = mainClassName
     classpath = sourceSets.main.runtimeClasspath
-    jvmArgs = applicationDefaultJvmArgs + '-Dethereumj.conf.res=ethereum-classic.conf' + '-DnetworkProfile=classic'
+    jvmArgs = applicationDefaultJvmArgs + '-Dethereumj.conf.res=ethereum-classic.conf' + '-DnetworkProfile=classic' + '-Ddatabase.name=database-classic'
 }
