@@ -1,46 +1,45 @@
 # Ethereum Harmony
 
-Application for demonstrating EthereumJ features. It runs local Java based node https://github.com/ethereum/ethereumj and expose web interface for monitoring and interact. Harmony is licensed under the GPL 3.
+Ethereum network private peer. Based on EthereumJ implementation. 
  
 
 [![Ethereum Harmony Demo](http://i.imgur.com/zeJMQ94.png)](https://www.youtube.com/watch?v=3qASGOy3qrw )
 
  
-Next features were implemented:
+### Features: 
 
- * **JSON-RPC 2.0** implementation and usage statistics. Note, that some JSON-RPC methods are not implemented yet;
+ * Ethereum peer JSON-RPC 2.0 standard ;
  
  * Keeping private keys in filesystem **keystore** compatible with go-ethereum;
  
- * Browser based **terminal** for calling JSON-RPC methods;
+ * In Browser command line terminal
  
- * Display blockchain info, like last block details, **blocks hierarchy**;  
+ * Blockchain canonical tracing   
  
- * Display physical machine info;
-  
- * Connected peers displayed in list view and visualized on world map;
+ * Monitoring peers connectivity;
  
- * Monitoring system logs in web browser;
+ * Easy go Ethereum **wallet** 
  
- * Ether wallet with abilities to view balance, and send amount with private key, keystore, mnemonic phrases.
 
-Application is not designed for public access as may expose private info without restriction.
 
-## Usage
+## Prerequisites Installed: To run application locally, system should have already installed: Java 8, Bower
+* Java 8
+* Node JS
+* Bower
 
-To run application locally, system should have already installed: Java 8, Bower
+## Run 
 
-First `bower install`
-
-Then to run server: `gradlew bootRun`
+* `git clone https://github.com/ether-camp/ethereum-harmony`
+* `cd ethereum-harmony`
+* only on updates: `bower install`
+* Run Service: `gradlew bootRun`  ( or any [other option](#options) )
 
 Navigate to `http://localhost:8080`
-
 JSON-RPC is available at `http://localhost:8080/rpc`
 
-Use `gradlew bootRun -Dserver.port=9999` option to change web interface port number.
+(*) Use `gradlew bootRun -Dserver.port=9999` option to change web interface port number.
 
-## Command line options
+## Command line options <a id="options"></a>
 
 There are ways to connect to other networks:
 
@@ -68,13 +67,6 @@ Checkout and build:
 > gradlew build
 ```
 
-IDEA: 
-
-* File -> New -> Project from existing sources…
-* Select ethereum-harmony/build.gradle
-* Dialog “Import Project from gradle”: press “OK”
-* After building run either Gradle launcher with task bootRun 
-
 
 ## Implementation details
 
@@ -83,23 +75,8 @@ Lombok library is used to avoid writing generic code over data objects.
  
 Original JSON-RPC specification located here: https://github.com/ethereum/wiki/wiki/JSON-RPC .   
 Harmony contains improved copy of *jsonrpc* package from *ethereumj-core*.   
- 
-### Not implemented JSON-RPC methods:
-  - *eth_hashrate*
-  - *eth_compileLLL*
-  - *eth_compileSerpent*
-  - *eth_resend*
-  - *eth_getWork*
-  - *eth_submitWork*
-  - *eth_submitHashrate*
-  - *db_** set of calls
-  - *shh_** set of calls
-  - *admin_** set of calls
-  - *debug_** set of calls
-  
-### New JSON-RPC methods:
- - *ethj_getTransactionReceipt* - method useful for debugging sending transactions. Shows cause message in case of transaction has been rejected by node verification.
- 
+
+
 ### Wallet
 
 Wallet allows to use addresses by keeping private keys on server and without.
@@ -115,5 +92,4 @@ App will prompt user to enter private key for such addresses. Otherwise user als
     - seed word, sha3 of which will produce private key;
     - or mnemonic phrases, which also will produce private key after applying sha3 2031 times.
 
-
-
+[License GPL 3.0](https://github.com/ether-camp/ethereum-harmony/blob/master/LICENSE)
