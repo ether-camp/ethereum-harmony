@@ -210,7 +210,7 @@ public class BlockchainInfoService implements ApplicationListener {
 
             final String ANSI_RESET = "\u001B[0m";
             final String ANSI_BLUE = "\u001B[34m";
-            System.out.println(ANSI_BLUE + "Server started at http://localhost:" + serverPort + " Please check logs in browser" + ANSI_RESET);
+            System.out.println(ANSI_BLUE + "Server started at http://localhost:" + serverPort + "" + ANSI_RESET);
             createLogAppenderForMessaging();
         }
     }
