@@ -2,6 +2,10 @@
 
 Application for demonstrating EthereumJ features. It runs local Java based node https://github.com/ethereum/ethereumj and expose web interface for monitoring and interact. Harmony is licensed under the GPL 3.
  
+
+
+[![Ethereum Harmony Demo](http://i.imgur.com/tqCIhuQ.jpg)](https://www.youtube.com/watch?v=3qASGOy3qrw)
+
  
 Next features were implemented:
 
