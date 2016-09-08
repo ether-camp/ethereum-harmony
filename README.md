@@ -32,7 +32,7 @@ Ethereum network private peer. Based on EthereumJ implementation.
 * `git clone https://github.com/ether-camp/ethereum-harmony`
 * `cd ethereum-harmony`
 * only on updates: `bower install`
-* Run Service: `gradlew bootRun`  ( or any [other option](#options) )
+* Run Service: `gradlew bootRun`  ( live by default or any [other environment](#options) )
 
 Navigate to `http://localhost:8080`
 JSON-RPC is available at `http://localhost:8080/rpc`
@@ -41,15 +41,14 @@ JSON-RPC is available at `http://localhost:8080/rpc`
 
 ## Command line options <a id="options"></a>
 
+| Environment        | Run      |
+| ------------- |:-------------:| 
+| Morden      | `gradlew runMorden` | will start server and tell ethereum node to connect to Morden network
+| Test      | `gradlew runTest`      | will start server and tell ethereum node to connect to Test network
+| Classic | `gradlew runClassic`      | will start server and tell ethereum node to connect to classic fork    
+| Private | `gradlew runPrivate`      | will start server without connecting to network. Mining will be enabled after start.    
+
 There are ways to connect to other networks:
-
-`gradlew runMorden` will start server and tell ethereum node to connect to Morden network
-
-`gradlew runTest` will start server and tell ethereum node to connect to Test network
-
-`gradlew runClassic` will start server and tell ethereum node to connect to classic fork
-
-`gradlew runPrivate` will start server without connecting to network. Mining will be enabled after start.
 
 ## Importing project to IntelliJ IDEA: 
 
