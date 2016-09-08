@@ -22,7 +22,7 @@ Ethereum network private peer. Based on EthereumJ implementation.
  
 
 
-## Prerequisites Installed: To run application locally, system should have already installed: Java 8, Bower
+## Prerequisites Installed: 
 * Java 8
 * Node JS
 * Bower
