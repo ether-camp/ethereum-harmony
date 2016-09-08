@@ -420,7 +420,7 @@ public class JsonRpcImpl implements JsonRpc {
     /**
      * Sign message hash with key to produce Elliptic Curve Digital Signature (ECDSA) signature.
      *
-     * Note: implementation may be different to othere Ethereum node implementations.
+     * Note: implementation may be different to other Ethereum node implementations.
      *
      * @param address - address to sign. Account must be unlocked
      * @param messageHash - sha3 of message

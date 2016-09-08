@@ -325,8 +325,7 @@
                     return Math.floor(Math.random() * (max - min + 1)) + min;
                 }
 
-                //$scope.phraseAddressData.phrase = result.data.join(' ');
-                $scope.phraseAddressData.phrase = 'lugubriosity molder aduzedavo rye modernized tecassir'
+                $scope.phraseAddressData.phrase = result.data.join(' ');
                 $scope.updateAddress();
             });
         };
