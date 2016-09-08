@@ -1,7 +1,8 @@
 # Ethereum Harmony
 
 Ethereum network private peer. Based on EthereumJ implementation. 
- 
+
+[![Slack Status](http://harmony-slack-ether-camp.herokuapp.com/badge.svg)](https://ether.camp) 
 
 [![Ethereum Harmony Demo](http://i.imgur.com/zeJMQ94.png)](https://www.youtube.com/watch?v=3qASGOy3qrw )
 
