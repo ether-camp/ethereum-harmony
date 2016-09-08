@@ -22,10 +22,14 @@ Ethereum network private peer. Based on EthereumJ implementation.
  
 
 
+
 ## Prerequisites Installed: 
 * Java 8
 * Node JS
 * Bower
+
+
+
 
 ## Run 
 
@@ -38,6 +42,8 @@ Navigate to `http://localhost:8080`
 JSON-RPC is available at `http://localhost:8080/rpc`
 
 (*) Use `gradlew bootRun -Dserver.port=9999` option to change web interface port number.
+
+
 
 ## Command line options <a id="options"></a>
 
