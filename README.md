@@ -49,5 +49,10 @@ JSON-RPC is available at `http://localhost:8080/rpc`
 | Classic | `gradlew runClassic`      | Start server connecting to **Ethereum Classic** network |   
 | Private | `gradlew runPrivate`      | Start server, no network connection, single miner running|    
 
+.
+.
+.
 
-### [License GPL 3.0](https://github.com/ether-camp/ethereum-harmony/blob/master/LICENSE)
+### License
+
+[License GPL 3.0](https://github.com/ether-camp/ethereum-harmony/blob/master/LICENSE)
