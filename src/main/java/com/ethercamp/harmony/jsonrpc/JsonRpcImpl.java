@@ -432,7 +432,7 @@ public class JsonRpcImpl implements JsonRpc {
         Account account = getAccountFromKeystore(ha);
 
         ECKey.ECDSASignature signature = account.getEcKey().sign(Hex.decode(JSonHexToHex(messageHash)));
-        byte[] signatureBytes = Base64.decode(signature.toBase64());
+        byte[] signatureBytes = signature.toByteArray();
 
         return TypeConverter.toJsonHex(signatureBytes);
     }

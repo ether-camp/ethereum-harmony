@@ -147,6 +147,7 @@ public class JsonRpcTest {
 
             /*
              * Testing ECDSA signature in JSON-RPC
+             * https://etherchain.org/verify/signature
              */
             String message = "Test message";
             byte[] dataHash = HashUtil.sha3(message.getBytes());
@@ -154,9 +155,13 @@ public class JsonRpcTest {
             String hexSignature = jsonRpc.eth_sign(cowAcct, "0x" + Hex.toHexString(dataHash));
 //            hexSignature = "0x78161f22e473546259ce6be468666b810b32a68cdde7c6ce14c60744b9452db31e2b65a4a176d053c009f53cb8c6b06a1df161f75962bd3e2677734790a2e30500";
             byte[] bytesSignature = TypeConverter.StringHexToByteArray(hexSignature);
-            String base64Signature = new String(org.spongycastle.util.encoders.Base64.encode(bytesSignature), Charset.forName("UTF-8"));
 
-            boolean signatureRecovered = Arrays.equals(newKey.getPubKey(), ECKey.signatureToKeyBytes(dataHash, base64Signature));
+            ECKey.ECDSASignature signature = ECKey.ECDSASignature.fromComponents(
+                    Arrays.copyOfRange(bytesSignature, 0, 32),
+                    Arrays.copyOfRange(bytesSignature, 32, 64),
+                    (byte) (bytesSignature[64] + 27));
+
+            boolean signatureRecovered = Arrays.equals(newKey.getPubKey(), ECKey.signatureToKeyBytes(dataHash, signature));
             assertTrue(signatureRecovered);
 
             String bal0 = jsonRpc.eth_getBalance(cowAcct, "latest");
