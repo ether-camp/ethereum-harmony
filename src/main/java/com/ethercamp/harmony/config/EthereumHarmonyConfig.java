@@ -33,5 +33,4 @@ public class EthereumHarmonyConfig extends CommonConfig {
         props.setDataBaseDir(environment.getProperty("database.dir"));
         return props;
     }
-
 }

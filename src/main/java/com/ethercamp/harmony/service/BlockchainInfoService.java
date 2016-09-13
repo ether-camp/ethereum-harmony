@@ -199,7 +199,7 @@ public class BlockchainInfoService implements ApplicationListener {
             }
 
             initialInfo.set(new InitialInfoDTO(
-                    env.getProperty("ethereumJ.version"),
+                    config.projectVersion() + "-" + config.projectVersionModifier(),
                     env.getProperty("app.version"),
                     networkName,
                     blockHash.orElse(null),

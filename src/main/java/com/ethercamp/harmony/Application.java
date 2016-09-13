@@ -32,8 +32,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class Application {
 
     public static void main(String[] args) {
-        SystemProperties.getDefault().setDataBaseDir("${user.home}/ethereumj/database");
-
         SpringApplication.run(new Object[]{Application.class}, args);
     }
 }
