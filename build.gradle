@@ -108,13 +108,13 @@ applicationDefaultJvmArgs = ["-server", "-Xss32m", "-XX:-OmitStackTraceInFastThr
  * Tasks for connecting to predefined networks.
  * It is not possible to override task defined values from command line.
  */
-task runMorden << bootRunWithNetworkConfig('morden')
+task runMorden << { bootRunWithNetworkConfig('morden') }
 
-task runTest << bootRunWithNetworkConfig('test')
+task runTest << { bootRunWithNetworkConfig('test') }
 
-task runPrivate << bootRunWithNetworkConfig('private')
+task runPrivate << { bootRunWithNetworkConfig('private') }
 
-task runClassic << bootRunWithNetworkConfig('classic')
+task runClassic << { bootRunWithNetworkConfig('classic') }
 
 def bootRunWithNetworkConfig(String name) {
     bootRun.jvmArgs = bootRun.jvmArgs + ('-Dethereumj.conf.res=' + name + '.conf') + ('-Ddatabase.name=database-' + name)

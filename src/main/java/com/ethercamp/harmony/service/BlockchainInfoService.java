@@ -21,9 +21,8 @@ package com.ethercamp.harmony.service;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.PatternLayout;
-import ch.qos.logback.classic.filter.LevelFilter;
+import ch.qos.logback.classic.filter.ThresholdFilter;
 import ch.qos.logback.classic.spi.LoggingEvent;
-import ch.qos.logback.core.ConsoleAppender;
 import ch.qos.logback.core.UnsynchronizedAppenderBase;
 
 import org.slf4j.LoggerFactory;
@@ -59,6 +58,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
+import java.util.stream.StreamSupport;
 
 /**
  * Created by Stan Reshetnyk on 11.07.16.
@@ -379,10 +379,20 @@ public class BlockchainInfoService implements ApplicationListener {
         final Logger root = (Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
 
         Optional.ofNullable(root.getAppender("STDOUT"))
-            .ifPresent(stdout -> stdout.stop());
+            .ifPresent(stdout -> {
+                stdout.stop();
+                stdout.clearAllFilters();
 
-        final LevelFilter filter = new LevelFilter();
-        filter.setLevel(Level.INFO);
+                ThresholdFilter filter = new ThresholdFilter();
+                filter.setLevel(Level.ERROR.toString());
+                stdout.addFilter(filter);
+                filter.start();
+                stdout.start();
+            });
+
+
+        final ThresholdFilter filter = new ThresholdFilter();
+        filter.setLevel(Level.INFO.toString());
         messagingAppender.addFilter(filter); // No effect of this
         messagingAppender.setName("ClientMessagingAppender");
         messagingAppender.setContext(context);
@@ -390,14 +400,6 @@ public class BlockchainInfoService implements ApplicationListener {
         root.addAppender(messagingAppender);
 
         messagingAppender.start();
-
-        final ConsoleAppender stdoutAppender = new ConsoleAppender<>();
-        final LevelFilter errorFilter = new LevelFilter();
-        errorFilter.setLevel(Level.ERROR);
-        stdoutAppender.addFilter(errorFilter);
-        stdoutAppender.setContext(context);
-        root.addAppender(stdoutAppender);
-        stdoutAppender.start();
     }
 
     static class BlockchainConsts {
