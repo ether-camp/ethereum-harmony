@@ -74,10 +74,13 @@ bootRun {
 
     def args = ["-server", "-Xss32m", "-XX:+UseCompressedOops", "-XX:+HeapDumpOnOutOfMemoryError", "-XX:-OmitStackTraceInFastThrow"]
     if ( project.hasProperty('jvmArgs') ) {
+        println "Adding properties from jvmArgs " + project.jvmArgs
         args.addAll(project.jvmArgs.split('\\s+'))
     }
 
-    jvmArgs = args
+    jvmArgs = jvmArgs + args
+    println "Running app with default args:"
+    println jvmArgs
 
     addResources = true
 }
@@ -101,27 +104,19 @@ sourceCompatibility=1.8
 mainClassName = 'com.ethercamp.harmony.Application'
 applicationDefaultJvmArgs = ["-server", "-Xss32m", "-XX:-OmitStackTraceInFastThrow"]
 
-task runMorden (type: JavaExec) {
-    main = mainClassName
-    classpath = sourceSets.main.runtimeClasspath
-    jvmArgs = applicationDefaultJvmArgs + '-Dethereumj.conf.res=morden.conf' + '-Ddatabase.name=database-morden'
-}
+/**
+ * Tasks for connecting to predefined networks.
+ * It is not possible to override task defined values from command line.
+ */
+task runMorden << bootRunWithNetworkConfig('morden')
 
-task runTest (type: JavaExec) {
-    main = mainClassName
-    classpath = sourceSets.main.runtimeClasspath
-    jvmArgs = applicationDefaultJvmArgs + '-Dethereumj.conf.res=test.conf' + '-Ddatabase.name=database-test'
-}
+task runTest << bootRunWithNetworkConfig('test')
 
-task runPrivate (type: JavaExec) {
-    main = mainClassName
-    classpath = sourceSets.main.runtimeClasspath
-    jvmArgs = applicationDefaultJvmArgs + '-Dethereumj.conf.res=private.conf' + '-DnetworkProfile=private' + '-Ddatabase.name=database-private'
-}
+task runPrivate << bootRunWithNetworkConfig('private')
 
+task runClassic << bootRunWithNetworkConfig('classic')
 
-task runClassic (type: JavaExec) {
-    main = mainClassName
-    classpath = sourceSets.main.runtimeClasspath
-    jvmArgs = applicationDefaultJvmArgs + '-Dethereumj.conf.res=ethereum-classic.conf' + '-DnetworkProfile=classic' + '-Ddatabase.name=database-classic'
+def bootRunWithNetworkConfig(String name) {
+    bootRun.jvmArgs = bootRun.jvmArgs + ('-Dethereumj.conf.res=' + name + '.conf') + ('-Ddatabase.name=database-' + name)
+    tasks.bootRun.execute()
 }
