@@ -40,7 +40,7 @@ dependencies {
     compile "org.springframework:spring-context:4.2.0.BUILD-SNAPSHOT"
 
     // don't forget to adjust {ethereumJ.version} in application.properties
-    compile ("org.ethereum:ethereumj-core:1.3.0-RELEASE") {
+    compile ("org.ethereum:ethereumj-core:1.3.1-RELEASE") {
         changing = true
 
         exclude group: "log4j"
