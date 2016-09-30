@@ -72,7 +72,12 @@ task stage {
 bootRun {
     systemProperties = System.properties
 
-    def args = ["-server", "-Xss32m", "-XX:+UseCompressedOops", "-XX:+HeapDumpOnOutOfMemoryError", "-XX:-OmitStackTraceInFastThrow"]
+    def args = ["-server", "-Xss32m",
+                "-XX:+UseCompressedOops", "-XX:+HeapDumpOnOutOfMemoryError", "-XX:-OmitStackTraceInFastThrow",
+
+                // point logback to config to use
+                // without this line logback will warn that it found 2 files (in core.jar and in this app)
+                "-Dlogback.configurationFile=src/main/resources/logback.xml"]
     if ( project.hasProperty('jvmArgs') ) {
         println "Adding properties from jvmArgs " + project.jvmArgs
         args.addAll(project.jvmArgs.split('\\s+'))
