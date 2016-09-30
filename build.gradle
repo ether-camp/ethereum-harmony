@@ -79,8 +79,6 @@ bootRun {
     }
 
     jvmArgs = jvmArgs + args
-    println "Running app with default args:"
-    println jvmArgs
 
     addResources = true
 }

@@ -19,8 +19,6 @@
 package com.ethercamp.harmony;
 
 import com.ethercamp.harmony.config.EthereumHarmonyConfig;
-import org.ethereum.config.DefaultConfig;
-import org.ethereum.config.SystemProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Import;
@@ -30,6 +28,12 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 @Import({EthereumHarmonyConfig.class})
 public class Application {
+
+    static {
+        // point logback to config to use
+        // without this line logback will warn that it found 2 files (in core.jar and in this app)
+        System.setProperty("logback.configurationFile", "src/main/resources/logback.xml");
+    }
 
     public static void main(String[] args) {
         SpringApplication.run(new Object[]{Application.class}, args);
