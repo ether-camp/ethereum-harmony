@@ -20,8 +20,6 @@ package com.ethercamp.harmony.jsonrpc;
 
 import com.ethercamp.harmony.keystore.FileSystemKeystore;
 import com.typesafe.config.ConfigFactory;
-import junit.framework.Assert;
-import org.apache.commons.codec.binary.Base64;
 import org.ethereum.config.SystemProperties;
 import org.ethereum.config.blockchain.FrontierConfig;
 import org.ethereum.core.CallTransaction;
@@ -41,11 +39,9 @@ import org.springframework.context.annotation.Scope;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.stream.IntStream;
 
 import static java.math.BigInteger.valueOf;
 import static org.ethereum.crypto.HashUtil.sha3;
@@ -111,7 +107,7 @@ public class JsonRpcTest {
 
         @Bean
         public JsonRpc jsonRpc() {
-            return new JsonRpcImpl();
+            return new EthJsonRpcImpl();
         }
 
         @Bean

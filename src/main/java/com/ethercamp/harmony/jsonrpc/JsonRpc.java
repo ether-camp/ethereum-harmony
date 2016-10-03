@@ -18,6 +18,8 @@
 
 package com.ethercamp.harmony.jsonrpc;
 
+import com.ethercamp.harmony.util.AppConst;
+import com.googlecode.jsonrpc4j.JsonRpcService;
 import lombok.AllArgsConstructor;
 import lombok.ToString;
 import lombok.Value;
@@ -33,6 +35,7 @@ import static com.ethercamp.harmony.jsonrpc.TypeConverter.toJsonHex;
 /**
  * Created by Anton Nashatyrev on 25.11.2015.
  */
+@JsonRpcService(AppConst.JSON_RPC_PATH)
 public interface JsonRpc {
 
     @Value

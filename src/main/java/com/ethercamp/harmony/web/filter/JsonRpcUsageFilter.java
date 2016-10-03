@@ -51,8 +51,11 @@ public class JsonRpcUsageFilter implements Filter {
 
     private static final List<String> EXCLUDE_LOGS = Arrays.asList("eth_getLogs", "eth_getFilterLogs",
             "personal_newAccount", "personal_importRawKey", "personal_unlockAccount");
+
     @Autowired
     JsonRpcUsageService jsonRpcUsageService;
+
+    final ObjectMapper mapper = new ObjectMapper();
 
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
@@ -65,19 +68,12 @@ public class JsonRpcUsageFilter implements Filter {
             HttpServletRequest httpRequest = (HttpServletRequest) request;
 
             if (AppConst.JSON_RPC_PATH.equals(httpRequest.getRequestURI())) {
-                final ObjectMapper mapper = new ObjectMapper();
 
                 try {
                     final ResettableStreamHttpServletRequest wrappedRequest = new ResettableStreamHttpServletRequest(
                             (HttpServletRequest) request);
 
                     final String body = IOUtils.toString(wrappedRequest.getReader());
-
-                    // read request for log later
-                    final JsonNode json = mapper.readTree(body);
-                    final String methodName = json.get("method").asText();
-                    final List<String> params = new ArrayList<>();
-                    json.get("params").forEach(n -> params.add(n.asText()));
 
                     wrappedRequest.resetInputStream();
 
@@ -93,17 +89,19 @@ public class JsonRpcUsageFilter implements Filter {
                         // read response for stats and log
                         final byte[] copy = responseCopier.getCopy();
                         final String responseText = new String(copy, response.getCharacterEncoding());
-                        jsonRpcUsageService.methodInvoked(methodName, responseText);
 
-                        if (log.isInfoEnabled()) {
-                            // passwords could be sent here
-                            if (!EXCLUDE_LOGS.contains(methodName)) {
-                                log.info(methodName + "(" + params.stream().collect(Collectors.joining(", ")) + "): " + responseText);
-                            } else {
-                                // logging is handled manually in service
+                        final JsonNode json = mapper.readTree(body);
+                        final JsonNode responseJson = mapper.readTree(responseText);
+
+                        if (json.isArray()) {
+                            for (int i = 0; i < json.size(); i++) {
+                                notifyInvocation(json.get(i), responseJson.get(i));
                             }
+                        } else {
+                            notifyInvocation(json, responseJson);
                         }
                     }
+
                 } catch (IOException e) {
                     log.error("Error parsing JSON-RPC request", e);
                 }
@@ -114,6 +112,25 @@ public class JsonRpcUsageFilter implements Filter {
             throw new RuntimeException("JsonRpcUsageFilter supports only HTTP requests.");
         }
     }
+
+    private void notifyInvocation(JsonNode requestJson, JsonNode responseJson) throws IOException {
+        final String responseText = mapper.writeValueAsString(responseJson);
+        final String methodName = requestJson.get("method").asText();
+        final List<String> params = new ArrayList<>();
+        requestJson.get("params").forEach(n -> params.add(n.asText()));
+
+        jsonRpcUsageService.methodInvoked(methodName, responseText);
+
+        if (log.isInfoEnabled()) {
+            // passwords could be sent here
+            if (!EXCLUDE_LOGS.contains(methodName)) {
+                log.info(methodName + "(" + params.stream().collect(Collectors.joining(", ")) + "): " + responseText);
+            } else {
+                // logging is handled manually in service
+            }
+        }
+    }
+
 
     @Override
     public void destroy() {

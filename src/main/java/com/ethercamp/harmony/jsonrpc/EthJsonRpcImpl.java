@@ -19,7 +19,6 @@
 package com.ethercamp.harmony.jsonrpc;
 
 import com.ethercamp.harmony.keystore.Keystore;
-import com.ethercamp.harmony.service.BlockchainInfoService;
 import com.ethercamp.harmony.util.ErrorCodes;
 import com.ethercamp.harmony.util.HarmonyException;
 import lombok.NonNull;
@@ -47,8 +46,8 @@ import org.ethereum.util.LRUMap;
 import org.ethereum.vm.DataWord;
 import org.ethereum.vm.LogInfo;
 import org.spongycastle.util.encoders.*;
-import org.spongycastle.util.encoders.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import java.lang.reflect.Modifier;
@@ -66,9 +65,10 @@ import static org.ethereum.util.ByteUtil.bigIntegerToBytes;
  * @author Anton Nashatyrev
  */
 @Slf4j(topic = "jsonrpc")
-// cant put @Component definition as this class will conflict with class in core
+@Service
+// renamed to not conflict with class from core
 // wait for core class to be removed
-public class JsonRpcImpl implements JsonRpc {
+public class EthJsonRpcImpl implements JsonRpc {
 
     private static final String BLOCK_LATEST = "latest";
 
@@ -1307,7 +1307,7 @@ public class JsonRpcImpl implements JsonRpc {
                 .map(method -> method.getName())
                 .collect(Collectors.toSet());
 
-        return Arrays.asList(JsonRpcImpl.class.getMethods()).stream()
+        return Arrays.asList(EthJsonRpcImpl.class.getMethods()).stream()
                 .filter(method -> Modifier.isPublic(method.getModifiers()))
                 .filter(method -> !ignore.contains(method.getName()))
                 .map(method -> {

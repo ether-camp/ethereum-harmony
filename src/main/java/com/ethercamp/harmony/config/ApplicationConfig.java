@@ -18,12 +18,8 @@
 
 package com.ethercamp.harmony.config;
 
-import com.ethercamp.harmony.jsonrpc.JsonRpc;
-import com.ethercamp.harmony.jsonrpc.JsonRpcImpl;
-import com.ethercamp.harmony.util.AppConst;
 import com.ethercamp.harmony.web.filter.JsonRpcUsageFilter;
-import com.googlecode.jsonrpc4j.spring.JsonServiceExporter;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.googlecode.jsonrpc4j.spring.AutoJsonRpcServiceExporter;
 import org.springframework.boot.context.embedded.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -36,23 +32,13 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter
 @Configuration
 public class ApplicationConfig extends WebMvcConfigurerAdapter {
 
-    @Autowired
-    JsonRpc jsonRpc;
-
     /**
-     * Configuration for publishing all service methods as JSON-RPC
+     * Export bean which will find our json-rpc bean with @JsonRpcService and publish it.
+     * https://github.com/briandilley/jsonrpc4j/issues/69
      */
-    @Bean(name = AppConst.JSON_RPC_PATH)
-    public JsonServiceExporter rpc() {
-        JsonServiceExporter ret = new JsonServiceExporter();
-        ret.setService(jsonRpc);
-        ret.setServiceInterface(JsonRpc.class);
-        return ret;
-    }
-
     @Bean
-    public JsonRpc harmonyJsonRpc() {
-        return new JsonRpcImpl();
+    public AutoJsonRpcServiceExporter exporter() {
+        return new AutoJsonRpcServiceExporter();
     }
 
     /**
