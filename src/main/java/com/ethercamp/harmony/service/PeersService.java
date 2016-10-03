@@ -148,6 +148,7 @@ public class PeersService {
         final String details = "Details: " + clientId;
         final String supports = "Supported protocols: " + nodeStatistics.capabilities
                 .stream()
+                .filter(c -> c != null)
                 .map(c -> StringUtils.capitalize(c.getName()) + ": " + c.getVersion())
                 .collect(Collectors.joining(", "));
 
