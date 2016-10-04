@@ -33,11 +33,11 @@ import static com.ethercamp.harmony.jsonrpc.TypeConverter.toJsonHex;
 public class TransactionReceiptDTO {
 
     public String transactionHash;  // hash of the transaction.
-    public int transactionIndex;    // integer of the transactions index position in the block.
+    public String transactionIndex;    // integer of the transactions index position in the block.
     public String blockHash;        // hash of the block where this transaction was in.
-    public long blockNumber;         // block number where this transaction was in.
+    public String blockNumber;         // block number where this transaction was in.
     public long cumulativeGasUsed;   // The total amount of gas used when this transaction was executed in the block.
-    public long gasUsed;             //The amount of gas used by this specific transaction alone.
+    public String gasUsed;             //The amount of gas used by this specific transaction alone.
     public String contractAddress; // The contract address created, if the transaction was a contract creation, otherwise  null .
     public org.ethereum.jsonrpc.JsonRpc.LogFilterElement[] logs;         // Array of log objects, which this transaction generated.
 
@@ -45,14 +45,14 @@ public class TransactionReceiptDTO {
         TransactionReceipt receipt = txInfo.getReceipt();
 
         transactionHash = toJsonHex(receipt.getTransaction().getHash());
-        transactionIndex = txInfo.getIndex();
+        transactionIndex = toJsonHex(new Integer(txInfo.getIndex()).longValue());
         cumulativeGasUsed = ByteUtil.byteArrayToLong(receipt.getCumulativeGas());
-        gasUsed = ByteUtil.byteArrayToLong(receipt.getGasUsed());
+        gasUsed = toJsonHex(receipt.getGasUsed());
         if (receipt.getTransaction().getContractAddress() != null)
             contractAddress = toJsonHex(receipt.getTransaction().getContractAddress());
         logs = new org.ethereum.jsonrpc.JsonRpc.LogFilterElement[receipt.getLogInfoList().size()];
         if (block != null) {
-            blockNumber = block.getNumber();
+            blockNumber = toJsonHex(block.getNumber());
             blockHash = toJsonHex(txInfo.getBlockHash());
             for (int i = 0; i < logs.length; i++) {
                 LogInfo logInfo = receipt.getLogInfoList().get(i);

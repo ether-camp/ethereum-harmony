@@ -49,11 +49,23 @@ public class TypeConverter {
     }
 
     public static byte[] StringHexToByteArray(String x) {
+        return Hex.decode(fromHex(x));
+    }
+
+    public static long HexToLong(String x) {
+        return ByteUtil.byteArrayToLong(Hex.decode(fromHex(x)));
+    }
+
+    public static long HexToInt(String x) {
+        return ByteUtil.byteArrayToInt(Hex.decode(fromHex(x)));
+    }
+
+    private static String fromHex(String x) {
         if (x.startsWith("0x")) {
             x = x.substring(2);
         }
         if (x.length() % 2 != 0) x = "0" + x;
-        return Hex.decode(x);
+        return x;
     }
 
     public static String toJsonHex(byte[] x) {

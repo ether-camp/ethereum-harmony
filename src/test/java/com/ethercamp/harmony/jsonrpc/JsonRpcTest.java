@@ -43,6 +43,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 
+import static com.ethercamp.harmony.jsonrpc.TypeConverter.*;
 import static java.math.BigInteger.valueOf;
 import static org.ethereum.crypto.HashUtil.sha3;
 import static org.junit.Assert.*;
@@ -150,7 +151,7 @@ public class JsonRpcTest {
             System.out.println("data: " + Hex.toHexString(dataHash));
             String hexSignature = jsonRpc.eth_sign(cowAcct, "0x" + Hex.toHexString(dataHash));
 //            hexSignature = "0x78161f22e473546259ce6be468666b810b32a68cdde7c6ce14c60744b9452db31e2b65a4a176d053c009f53cb8c6b06a1df161f75962bd3e2677734790a2e30500";
-            byte[] bytesSignature = TypeConverter.StringHexToByteArray(hexSignature);
+            byte[] bytesSignature = StringHexToByteArray(hexSignature);
 
             ECKey.ECDSASignature signature = ECKey.ECDSASignature.fromComponents(
                     Arrays.copyOfRange(bytesSignature, 0, 32),
@@ -200,9 +201,9 @@ public class JsonRpcTest {
             assertEquals(hash1, blockResult1.hash);
             assertEquals(txHash1, ((com.ethercamp.harmony.jsonrpc.TransactionResultDTO) blockResult1.transactions[0]).hash);
             TransactionReceiptDTO receipt1 = jsonRpc.eth_getTransactionReceipt(txHash1);
-            assertEquals(1, receipt1.blockNumber);
-            assertTrue(receipt1.gasUsed > 0);
-            assertEquals(sGas, receipt1.gasUsed);
+            assertEquals(1, HexToLong(receipt1.blockNumber));
+            assertTrue(HexToLong(receipt1.gasUsed) > 0);
+            assertEquals(sGas, HexToLong(receipt1.gasUsed));
 
             String bal1 = jsonRpc.eth_getBalance(cowAcct, "latest");
             System.out.println("Balance: " + bal0);
@@ -233,10 +234,10 @@ public class JsonRpcTest {
             assertEquals(hash2, blockResult2.hash);
             assertEquals(txHash2, ((com.ethercamp.harmony.jsonrpc.TransactionResultDTO) blockResult2.transactions[0]).hash);
             TransactionReceiptDTO receipt2 = jsonRpc.eth_getTransactionReceipt(txHash2);
-            assertTrue(receipt2.blockNumber > 1);
-            assertTrue(receipt2.gasUsed > 0);
-            assertEquals(sGas, receipt2.gasUsed);
-            assertTrue(TypeConverter.StringHexToByteArray(receipt2.contractAddress).length == 20);
+            assertTrue(HexToLong(receipt2.blockNumber) > 1);
+            assertTrue(HexToLong(receipt2.gasUsed) > 0);
+            assertEquals(sGas, HexToLong(receipt2.gasUsed));
+            assertTrue(StringHexToByteArray(receipt2.contractAddress).length == 20);
 
             JsonRpc.FilterRequest filterReq = new JsonRpc.FilterRequest();
             filterReq.topics = new Object[]{"0x2222"};
@@ -248,7 +249,7 @@ public class JsonRpcTest {
             Transaction rawTx = ethereum.createTransaction(valueOf(2),
                     valueOf(50_000_000_000L),
                     valueOf(3_000_000),
-                    TypeConverter.StringHexToByteArray(receipt2.contractAddress),
+                    StringHexToByteArray(receipt2.contractAddress),
                     valueOf(0), function.encode(0x777));
             rawTx.sign(ECKey.fromPrivate(sha3("cow".getBytes())));
 
@@ -260,8 +261,8 @@ public class JsonRpcTest {
             assertEquals(hash3, blockResult3.hash);
             assertEquals(txHash3, ((TransactionResultDTO) blockResult3.transactions[0]).hash);
             TransactionReceiptDTO receipt3 = jsonRpc.eth_getTransactionReceipt(txHash3);
-            assertTrue(receipt3.blockNumber > 2);
-            assertTrue(receipt3.gasUsed > 0);
+            assertTrue(HexToLong(receipt3.blockNumber) > 2);
+            assertTrue(HexToLong(receipt3.gasUsed) > 0);
 
             Object[] logs = jsonRpc.eth_getFilterLogs(filterId);
             assertEquals(1, logs.length);
