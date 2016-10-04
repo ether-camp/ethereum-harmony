@@ -215,7 +215,7 @@ public interface JsonRpc {
     String net_peerCount();
     boolean net_listening();
     String eth_protocolVersion();
-    SyncingResult eth_syncing();
+    Object eth_syncing();
     String eth_coinbase();
     boolean eth_mining();
 //    String eth_hashrate();
@@ -346,4 +346,5 @@ public interface JsonRpc {
 
     String[] personal_listAccounts();
     String[] ethj_listAvailableMethods();
+    String personal_signAndSendTransaction(CallArguments tx, String password);
 }

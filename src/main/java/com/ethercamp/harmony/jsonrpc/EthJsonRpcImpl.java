@@ -317,12 +317,16 @@ public class EthJsonRpcImpl implements JsonRpc {
                 .toString();
     }
 
-    public SyncingResult eth_syncing(){
-        return new SyncingResult(
-                TypeConverter.toJsonHex(initialBlockNumber),
-                TypeConverter.toJsonHex(blockchain.getBestBlock().getNumber()),
-                TypeConverter.toJsonHex(syncManager.getLastKnownBlockNumber())
-        );
+    public Object eth_syncing() {
+        if (syncManager.isSyncDone()) {
+            return false;
+        } else {
+            return new SyncingResult(
+                    TypeConverter.toJsonHex(initialBlockNumber),
+                    TypeConverter.toJsonHex(blockchain.getBestBlock().getNumber()),
+                    TypeConverter.toJsonHex(syncManager.getLastKnownBlockNumber())
+            );
+        }
     }
 
     public String eth_coinbase() {
@@ -373,7 +377,7 @@ public class EthJsonRpcImpl implements JsonRpc {
         byte[] addressAsByteArray = StringHexToByteArray(address);
         DataWord storageValue = getRepoByJsonBlockId(blockId).
                 getStorageValue(addressAsByteArray, new DataWord(StringHexToByteArray(storageIdx)));
-        return TypeConverter.toJsonHex(storageValue.getData());
+        return storageValue != null ? TypeConverter.toJsonHex(storageValue.getData()) : null;
     }
 
     @Override
@@ -440,6 +444,10 @@ public class EthJsonRpcImpl implements JsonRpc {
     public String eth_sendTransaction(CallArguments args) throws Exception {
         Account account = getAccountFromKeystore(JSonHexToHex(args.from));
 
+        return sendTransaction(args, account);
+    }
+
+    private String sendTransaction(CallArguments args, Account account) {
         if (args.data != null && args.data.startsWith("0x"))
             args.data = args.data.substring(2);
 
@@ -1295,6 +1303,20 @@ public class EthJsonRpcImpl implements JsonRpc {
     @Override
     public String[] personal_listAccounts() {
         return keystore.listStoredKeys();
+    }
+
+    @Override
+    public String personal_signAndSendTransaction(CallArguments tx, String password) {
+        final ECKey key = keystore.loadStoredKey(JSonHexToHex(tx.from).toLowerCase(), password);
+        if (key != null) {
+            final Account account = new Account();
+            account.init(key);
+            return sendTransaction(tx, account);
+        } else {
+            // we can return false or send description message with exception
+            // prefer exception for now
+            throw new RuntimeException("No key was found in keystore for account: " + JSonHexToHex(tx.from));
+        }
     }
 
     /**

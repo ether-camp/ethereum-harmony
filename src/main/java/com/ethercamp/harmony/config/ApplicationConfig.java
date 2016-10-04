@@ -37,6 +37,7 @@ public class ApplicationConfig extends WebMvcConfigurerAdapter {
      * https://github.com/briandilley/jsonrpc4j/issues/69
      */
     @Bean
+    @SuppressWarnings("deprecation")
     public AutoJsonRpcServiceExporter exporter() {
         return new AutoJsonRpcServiceExporter();
     }
