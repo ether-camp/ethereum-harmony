@@ -69,7 +69,7 @@
     <logger level="INFO" name="sync"/>
     <logger level="TRACE" name="notification"/>
     <logger level="ERROR" name="wallet"/>
-    <logger level="INFO" name="net"/>
+    <logger level="ERROR" name="net"/>
     <logger level="INFO" name="db"/>
     <logger level="ERROR" name="peerdiscovery"/>
     <logger level="ERROR" name="peermonitor"/>

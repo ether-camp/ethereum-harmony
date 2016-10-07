@@ -376,7 +376,6 @@ public class BlockchainInfoService implements ApplicationListener {
         };
 
         final Logger root = (Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
-
         Optional.ofNullable(root.getAppender("STDOUT"))
             .ifPresent(stdout -> {
                 stdout.stop();
@@ -397,7 +396,7 @@ public class BlockchainInfoService implements ApplicationListener {
         messagingAppender.setContext(context);
 
         root.addAppender(messagingAppender);
-
+        filter.start();
         messagingAppender.start();
     }
 
