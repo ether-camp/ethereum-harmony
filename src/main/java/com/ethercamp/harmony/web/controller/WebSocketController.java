@@ -21,11 +21,19 @@ package com.ethercamp.harmony.web.controller;
 import com.ethercamp.harmony.dto.*;
 import com.ethercamp.harmony.service.BlockchainInfoService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
 
-import java.util.Queue;
+import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.text.DecimalFormat;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Controller
 public class WebSocketController {
@@ -64,5 +72,41 @@ public class WebSocketController {
     @RequestMapping({"/", "/systemLog", "/peers", "/rpcUsage", "/terminal", "/wallet"})
     public String index() {
         return "index.html";
+    }
+
+    /**
+     * @return logs file to be able to download from browser
+     */
+    @RequestMapping(value = "/logs/{logName}", method = RequestMethod.GET)
+    @ResponseBody
+    public FileSystemResource logFile(@PathVariable("logName") String logName, HttpServletResponse response) {
+        final String fileName = logName + ".log";
+
+        // force file downloading, otherwise line breaks will gone in web view
+        response.setContentType("text/plain");
+        response.setHeader("Content-Disposition", "attachment; filename=" + fileName);
+
+        return new FileSystemResource(new File("logs/" + fileName));
+    }
+
+    @RequestMapping(value = "/logs", method = RequestMethod.GET)
+    @ResponseBody
+    public String listLogFiles() {
+        final File logsLocation = new File("logs");
+
+        return "<html><body>"
+                + Arrays.asList(logsLocation.listFiles()).stream()
+                    .map(f -> "<a href='logs/" + f.getName() + "'>" + f.getName() + "</a> " + readableFileSize(f.length()))
+                    .collect(Collectors.joining("<br>"))
+
+                + "</body></html>";
+    }
+
+    // for human readable size
+    private String readableFileSize(long size) {
+        if (size <= 0) return "0";
+        final String[] units = new String[]{"B", "kB", "MB", "GB", "TB"};
+        int digitGroups = (int) (Math.log10(size) / Math.log10(1024));
+        return new DecimalFormat("#,##0.#").format(size / Math.pow(1024, digitGroups)) + " " + units[digitGroups];
     }
 }
