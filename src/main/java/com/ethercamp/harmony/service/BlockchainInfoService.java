@@ -392,6 +392,14 @@ public class BlockchainInfoService implements ApplicationListener {
         messagingAppender.start();
     }
 
+    public String getConfigDump() {
+        return systemProperties.dump();
+    }
+
+    public String getGenesisDump() {
+        return systemProperties.getGenesis().toString();
+    }
+
     static class BlockchainConsts {
 
         static final Map<String, String> GENESIS_BLOCK_HASH_MAP = new HashMap<>();

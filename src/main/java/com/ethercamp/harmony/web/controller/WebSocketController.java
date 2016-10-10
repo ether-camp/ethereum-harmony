@@ -93,13 +93,31 @@ public class WebSocketController {
     @ResponseBody
     public String listLogFiles() {
         final File logsLocation = new File("logs");
+        final File[] files = logsLocation.listFiles();
+        if (files == null) {
+            return "No logs found";
+        }
 
         return "<html><body>"
-                + Arrays.asList(logsLocation.listFiles()).stream()
+                + Arrays.asList(files).stream()
                     .map(f -> "<a href='logs/" + f.getName() + "'>" + f.getName() + "</a> " + readableFileSize(f.length()))
                     .collect(Collectors.joining("<br>"))
 
                 + "</body></html>";
+    }
+
+    @RequestMapping(value = "/config", method = RequestMethod.GET)
+    @ResponseBody
+    public String showConfig() {
+        return blockchainInfoService.getConfigDump()
+                .replaceAll("\n", "<br>");
+    }
+
+    @RequestMapping(value = "/genesis", method = RequestMethod.GET)
+    @ResponseBody
+    public String showGenesis() {
+        return blockchainInfoService.getGenesisDump()
+                .replaceAll("\n", "<br>");
     }
 
     // for human readable size
