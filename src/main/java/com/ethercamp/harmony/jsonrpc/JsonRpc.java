@@ -21,6 +21,7 @@ package com.ethercamp.harmony.jsonrpc;
 import com.ethercamp.harmony.util.AppConst;
 import com.googlecode.jsonrpc4j.JsonRpcService;
 import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.Value;
 import org.ethereum.core.Block;
@@ -47,6 +48,8 @@ public interface JsonRpc {
         private final String highestBlock;
     }
 
+    @NoArgsConstructor
+    @AllArgsConstructor
     class CallArguments {
         public String from;
         public String to;

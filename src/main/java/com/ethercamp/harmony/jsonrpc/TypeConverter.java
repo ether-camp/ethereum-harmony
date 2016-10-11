@@ -49,7 +49,7 @@ public class TypeConverter {
     }
 
     public static byte[] StringHexToByteArray(String x) {
-        return Hex.decode(fromHex(x));
+        return ByteUtil.hexStringToBytes(fromHex(x));
     }
 
     public static long HexToLong(String x) {

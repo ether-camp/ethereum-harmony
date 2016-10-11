@@ -32,6 +32,7 @@ import org.ethereum.crypto.ECKey;
 import org.ethereum.db.ByteArrayWrapper;
 import org.ethereum.facade.Ethereum;
 import org.ethereum.listener.EthereumListenerAdapter;
+import org.ethereum.sync.SyncManager;
 import org.ethereum.util.ByteUtil;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -91,6 +92,9 @@ public class WalletService {
     Environment env;
 
     @Autowired
+    SyncManager syncManager;
+
+    @Autowired
     protected JdbcTemplate jdbcTemplate;
 
     EmbeddedDatabase wordsDatabase;
@@ -117,13 +121,18 @@ public class WalletService {
 
         ethereum.addListener(new EthereumListenerAdapter() {
             @Override
-            public void onPendingTransactionsReceived(List<Transaction> list) {
-                handlePendingTransactionsReceived(list);
-            }
+            public void onSyncDone() {
+                ethereum.addListener(new EthereumListenerAdapter() {
+                    @Override
+                    public void onPendingTransactionsReceived(List<Transaction> list) {
+                        handlePendingTransactionsReceived(list);
+                    }
 
-            @Override
-            public void onBlock(BlockSummary blockSummary) {
-                handleBlock(blockSummary);
+                    @Override
+                    public void onBlock(BlockSummary blockSummary) {
+                        handleBlock(blockSummary);
+                    }
+                });
             }
         });
     }
@@ -135,11 +144,13 @@ public class WalletService {
                         .collect(Collectors.toList()),
                 (info) -> {
                     pendingSendTransactions.remove(info.getHash());
-                    clientMessageService.sendToTopic("/topic/confirmTransaction", new WalletConfirmTransactionDTO(
-                            info.getHash(),
-                            info.getAmount(),
-                            info.getSending()
-                    ));
+                    if (!syncManager.isSyncDone()) {
+                        clientMessageService.sendToTopic("/topic/confirmTransaction", new WalletConfirmTransactionDTO(
+                                info.getHash(),
+                                info.getAmount(),
+                                info.getSending()
+                        ));
+                    }
                 },
                 (info) -> pendingReceiveTransactions.remove(info.getHash()));
     }

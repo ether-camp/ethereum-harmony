@@ -21,8 +21,10 @@ package com.ethercamp.harmony.jsonrpc;
 import com.ethercamp.harmony.keystore.Keystore;
 import com.ethercamp.harmony.util.ErrorCodes;
 import com.ethercamp.harmony.util.HarmonyException;
+import javassist.bytecode.ByteArray;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.map.LRUMap;
 import org.ethereum.config.SystemProperties;
 import org.ethereum.core.*;
 import org.ethereum.crypto.ECKey;
@@ -42,7 +44,6 @@ import org.ethereum.solidity.compiler.SolidityCompiler;
 import org.ethereum.sync.SyncManager;
 import org.ethereum.util.BuildInfo;
 import org.ethereum.util.ByteUtil;
-import org.ethereum.util.LRUMap;
 import org.ethereum.vm.DataWord;
 import org.ethereum.vm.LogInfo;
 import org.spongycastle.util.encoders.*;
@@ -60,6 +61,7 @@ import java.util.stream.Collectors;
 import static com.ethercamp.harmony.jsonrpc.TypeConverter.*;
 import static org.ethereum.util.ByteUtil.EMPTY_BYTE_ARRAY;
 import static org.ethereum.util.ByteUtil.bigIntegerToBytes;
+import static org.ethereum.util.ByteUtil.longToBytes;
 
 /**
  * @author Anton Nashatyrev
@@ -164,7 +166,7 @@ public class EthJsonRpcImpl implements JsonRpc {
 
     AtomicInteger filterCounter = new AtomicInteger(1);
     Map<Integer, Filter> installedFilters = new Hashtable<>();
-    Map<ByteArrayWrapper, TransactionReceipt> pendingReceipts = Collections.synchronizedMap(new LRUMap<>(0, 1024));
+    Map<ByteArrayWrapper, TransactionReceipt> pendingReceipts = Collections.synchronizedMap(new LRUMap<>(1024));
 
     @PostConstruct
     private void init() {
@@ -451,46 +453,49 @@ public class EthJsonRpcImpl implements JsonRpc {
         if (args.data != null && args.data.startsWith("0x"))
             args.data = args.data.substring(2);
 
-        Transaction tx = new Transaction(
+        // convert zero to empty byte array
+        // TEMP, until decide for better behavior
+        final BigInteger valueBigInt = args.value != null ? StringHexToBigInteger(args.value) : BigInteger.ZERO;
+        final byte[] value = !valueBigInt.equals(BigInteger.ZERO) ? ByteUtil.bigIntegerToBytes(valueBigInt) : EMPTY_BYTE_ARRAY;
+
+        final Transaction tx = new Transaction(
                 args.nonce != null ? StringHexToByteArray(args.nonce) : bigIntegerToBytes(pendingState.getRepository().getNonce(account.getAddress())),
                 args.gasPrice != null ? StringHexToByteArray(args.gasPrice) : ByteUtil.longToBytesNoLeadZeroes(eth.getGasPrice()),
                 args.gas != null ? StringHexToByteArray(args.gas) : ByteUtil.longToBytes(90_000),
                 args.to != null ? StringHexToByteArray(args.to) : EMPTY_BYTE_ARRAY,
-                args.value != null ? StringHexToByteArray(args.value) : EMPTY_BYTE_ARRAY,
+                value,
                 args.data != null ? StringHexToByteArray(args.data) : EMPTY_BYTE_ARRAY);
+
         tx.sign(account.getEcKey());
 
-        eth.submitTransaction(tx);
+        validateAndSubmit(tx);
 
         return TypeConverter.toJsonHex(tx.getHash());
     }
 
     public String eth_sendTransactionArgs(String from, String to, String gas,
                                       String gasPrice, String value, String data, String nonce) throws Exception {
-        Transaction tx = new Transaction(
-                TypeConverter.StringHexToByteArray(nonce),
-                TypeConverter.StringHexToByteArray(gasPrice),
-                TypeConverter.StringHexToByteArray(gas),
-                TypeConverter.StringHexToByteArray(to), /*receiveAddress*/
-                TypeConverter.StringHexToByteArray(value),
-                TypeConverter.StringHexToByteArray(data));
 
-        Account account = getAccountFromKeystore(from);
+        final Account account = getAccountFromKeystore(from);
 
-        tx.sign(account.getEcKey());
-
-        eth.submitTransaction(tx);
-
-        return TypeConverter.toJsonHex(tx.getHash());
+        return sendTransaction(new CallArguments(from, to, gas, gasPrice, value, data, nonce), account);
     }
 
     public String eth_sendRawTransaction(String rawData) throws Exception {
         Transaction tx = new Transaction(StringHexToByteArray(rawData));
 
         tx.rlpParse();
-        eth.submitTransaction(tx);
+        validateAndSubmit(tx);
 
         return TypeConverter.toJsonHex(tx.getHash());
+    }
+
+    protected void validateAndSubmit(Transaction tx) {
+        if (tx.getValue().length > 0 && tx.getValue()[0] == 0) {
+            throw new RuntimeException("Field 'value' should not have leading zero");
+        }
+
+        validateAndSubmit(tx);
     }
 
     protected TransactionReceipt createCallTxAndExecute(CallArguments args, Block block) throws Exception {
@@ -578,27 +583,20 @@ public class EthJsonRpcImpl implements JsonRpc {
     }
 
     public TransactionResultDTO eth_getTransactionByHash(String transactionHash) throws Exception {
-        byte[] txHash = StringHexToByteArray(transactionHash);
-        Block block = null;
+        final byte[] txHash = StringHexToByteArray(transactionHash);
 
-        TransactionInfo txInfo = blockchain.getTransactionInfo(txHash);
-
+        final TransactionInfo txInfo = blockchain.getTransactionInfo(txHash);
         if (txInfo == null) {
-            TransactionReceipt receipt = pendingReceipts.get(new ByteArrayWrapper(txHash));
-
-            if (receipt == null) {
-                return null;
-            }
-            txInfo = new TransactionInfo(receipt);
-        } else {
-            block = blockchain.getBlockByHash(txInfo.getBlockHash());
-            // need to return txes only from main chain
-            Block mainBlock = blockchain.getBlockByNumber(block.getNumber());
-            if (!Arrays.equals(block.getHash(), mainBlock.getHash())) {
-                return null;
-            }
-            txInfo.setTransaction(block.getTransactionsList().get(txInfo.getIndex()));
+            return null;
         }
+
+        final Block block = blockchain.getBlockByHash(txInfo.getBlockHash());
+        // need to return txes only from main chain
+        final Block mainBlock = blockchain.getBlockByNumber(block.getNumber());
+        if (!Arrays.equals(block.getHash(), mainBlock.getHash())) {
+            return null;
+        }
+        txInfo.setTransaction(block.getTransactionsList().get(txInfo.getIndex()));
 
         return new TransactionResultDTO(block, txInfo.getIndex(), txInfo.getReceipt().getTransaction());
     }
@@ -623,29 +621,19 @@ public class EthJsonRpcImpl implements JsonRpc {
     }
 
     public TransactionReceiptDTO eth_getTransactionReceipt(String transactionHash) throws Exception {
-        byte[] hash = TypeConverter.StringHexToByteArray(transactionHash);
+        final byte[] hash = TypeConverter.StringHexToByteArray(transactionHash);
 
-        TransactionReceipt pendingReceipt = pendingReceipts.get(new ByteArrayWrapper(hash));
+        final TransactionInfo txInfo = blockchain.getTransactionInfo(hash);
 
-        TransactionInfo txInfo;
-        Block block;
+        if (txInfo == null)
+            return null;
 
-        if (pendingReceipt != null) {
-            txInfo = new TransactionInfo(pendingReceipt);
-            block = null;
-        } else {
-            txInfo = blockchain.getTransactionInfo(hash);
+        final Block block = blockchain.getBlockByHash(txInfo.getBlockHash());
+        final Block mainBlock = blockchain.getBlockByNumber(block.getNumber());
 
-            if (txInfo == null)
-                return null;
-
-            block = blockchain.getBlockByHash(txInfo.getBlockHash());
-
-            // need to return txes only from main chain
-            Block mainBlock = blockchain.getBlockByNumber(block.getNumber());
-            if (!Arrays.equals(block.getHash(), mainBlock.getHash())) {
-                return null;
-            }
+        // need to return txes only from main chain
+        if (!Arrays.equals(block.getHash(), mainBlock.getHash())) {
+            return null;
         }
 
         return new TransactionReceiptDTO(block, txInfo);
