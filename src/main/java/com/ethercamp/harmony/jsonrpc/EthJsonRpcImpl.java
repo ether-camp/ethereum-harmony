@@ -495,7 +495,7 @@ public class EthJsonRpcImpl implements JsonRpc {
             throw new RuntimeException("Field 'value' should not have leading zero");
         }
 
-        validateAndSubmit(tx);
+        eth.submitTransaction(tx);
     }
 
     protected TransactionReceipt createCallTxAndExecute(CallArguments args, Block block) throws Exception {
