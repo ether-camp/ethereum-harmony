@@ -30,6 +30,8 @@ import org.ethereum.core.Transaction;
 import org.ethereum.vm.LogInfo;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 import static com.ethercamp.harmony.jsonrpc.TypeConverter.toJsonHex;
 
@@ -317,8 +319,8 @@ public interface JsonRpc {
 //    String admin_stopNatSpec();
 //    String admin_getContractInfo();
 //    String admin_httpGet();
-//    String admin_nodeInfo();
-//    String admin_peers();
+    Map<String, ?> admin_nodeInfo() throws Exception;
+    List<Map<String, ?>> admin_peers();
 //    String admin_datadir();
 //    String net_addPeer();
 

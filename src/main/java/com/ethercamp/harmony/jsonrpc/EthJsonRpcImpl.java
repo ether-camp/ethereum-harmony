@@ -21,7 +21,7 @@ package com.ethercamp.harmony.jsonrpc;
 import com.ethercamp.harmony.keystore.Keystore;
 import com.ethercamp.harmony.util.ErrorCodes;
 import com.ethercamp.harmony.util.HarmonyException;
-import javassist.bytecode.ByteArray;
+import com.google.common.collect.ImmutableMap;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.map.LRUMap;
@@ -38,6 +38,7 @@ import org.ethereum.listener.EthereumListenerAdapter;
 import org.ethereum.manager.WorldManager;
 import org.ethereum.mine.BlockMiner;
 import org.ethereum.net.client.ConfigCapabilities;
+import org.ethereum.net.rlpx.discover.NodeManager;
 import org.ethereum.net.server.ChannelManager;
 import org.ethereum.net.server.PeerServer;
 import org.ethereum.solidity.compiler.SolidityCompiler;
@@ -49,6 +50,7 @@ import org.ethereum.vm.LogInfo;
 import org.spongycastle.util.encoders.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import javax.annotation.PostConstruct;
 import java.lang.reflect.Modifier;
@@ -61,7 +63,6 @@ import java.util.stream.Collectors;
 import static com.ethercamp.harmony.jsonrpc.TypeConverter.*;
 import static org.ethereum.util.ByteUtil.EMPTY_BYTE_ARRAY;
 import static org.ethereum.util.ByteUtil.bigIntegerToBytes;
-import static org.ethereum.util.ByteUtil.longToBytes;
 
 /**
  * @author Anton Nashatyrev
@@ -135,6 +136,9 @@ public class EthJsonRpcImpl implements JsonRpc {
 
     @Autowired
     ChannelManager channelManager;
+
+    @Autowired
+    NodeManager nodeManager;
 
     @Autowired
     CompositeEthereumListener compositeEthereumListener;
@@ -527,24 +531,24 @@ public class EthJsonRpcImpl implements JsonRpc {
             return null;
         boolean isPending = ByteUtil.byteArrayToLong(block.getNonce()) == 0;
         BlockResult br = new BlockResult();
-        br.number = isPending ? null : TypeConverter.toJsonHex(block.getNumber());
-        br.hash = isPending ? null : TypeConverter.toJsonHex(block.getHash());
-        br.parentHash = TypeConverter.toJsonHex(block.getParentHash());
-        br.nonce = isPending ? null : TypeConverter.toJsonHex(block.getNonce());
-        br.sha3Uncles= TypeConverter.toJsonHex(block.getUnclesHash());
-        br.logsBloom = isPending ? null : TypeConverter.toJsonHex(block.getLogBloom());
-        br.transactionsRoot = TypeConverter.toJsonHex(block.getTxTrieRoot());
-        br.stateRoot = TypeConverter.toJsonHex(block.getStateRoot());
-        br.receiptsRoot = TypeConverter.toJsonHex(block.getReceiptsRoot());
-        br.miner = isPending ? null : TypeConverter.toJsonHex(block.getCoinbase());
-        br.difficulty = TypeConverter.toJsonHex(block.getDifficulty());
-        br.totalDifficulty = TypeConverter.toJsonHex(blockchain.getTotalDifficulty());
+        br.number = isPending ? null : toJsonHex(block.getNumber());
+        br.hash = isPending ? null : toJsonHex(block.getHash());
+        br.parentHash = toJsonHex(block.getParentHash());
+        br.nonce = isPending ? null : toJsonHex(block.getNonce());
+        br.sha3Uncles= toJsonHex(block.getUnclesHash());
+        br.logsBloom = isPending ? null : toJsonHex(block.getLogBloom());
+        br.transactionsRoot = toJsonHex(block.getTxTrieRoot());
+        br.stateRoot = toJsonHex(block.getStateRoot());
+        br.receiptsRoot = toJsonHex(block.getReceiptsRoot());
+        br.miner = isPending ? null : toJsonHex(block.getCoinbase());
+        br.difficulty = toJsonHex(block.getDifficultyBI());
+        br.totalDifficulty = toJsonHex(blockchain.getTotalDifficulty());
         if (block.getExtraData() != null)
-            br.extraData = TypeConverter.toJsonHex(block.getExtraData());
-        br.size = TypeConverter.toJsonHex(block.getEncoded().length);
-        br.gasLimit = TypeConverter.toJsonHex(block.getGasLimit());
-        br.gasUsed = TypeConverter.toJsonHex(block.getGasUsed());
-        br.timestamp = TypeConverter.toJsonHex(block.getTimestamp());
+            br.extraData = toJsonHex(block.getExtraData());
+        br.size = toJsonHex(block.getEncoded().length);
+        br.gasLimit = toJsonHex(block.getGasLimit());
+        br.gasUsed = toJsonHex(block.getGasUsed());
+        br.timestamp = toJsonHex(block.getTimestamp());
 
         List<Object> txes = new ArrayList<>();
         if (fullTx) {
@@ -1135,15 +1139,59 @@ public class EthJsonRpcImpl implements JsonRpc {
 //        throw new UnsupportedOperationException("JSON RPC method admin_httpGet not implemented yet");
 //    }
 //
-//    @Override
-//    public String admin_nodeInfo() {
-//        throw new UnsupportedOperationException("JSON RPC method admin_nodeInfo not implemented yet");
-//    }
-//
-//    @Override
-//    public String admin_peers() {
-//        throw new UnsupportedOperationException("JSON RPC method admin_peers not implemented yet");
-//    }
+    @Override
+    public Map<String, ?> admin_nodeInfo() throws Exception {
+        final String nodeId = Hex.toHexString(config.nodeId());
+        final String listenAddr = config.bindIp() + ":" + config.listenPort();
+        final BlockResult lastBlock = eth_getBlockByNumber("latest", false);
+
+        final HashMap<String, Object> result = new HashMap<>();
+        result.put("id", nodeId);
+        result.put("name", web3_clientVersion());
+        result.put("enode", "enode://" + nodeId + "@" + listenAddr);
+        result.put("ip", config.bindIp());
+        result.put("ports", ImmutableMap.of(
+                "discovery", config.listenPort(),
+                "listener", config.listenPort()
+        ));
+        result.put("listenAddr", listenAddr);
+        result.put("protocols", ImmutableMap.of(
+                "eth", ImmutableMap.of(
+                        "network", config.getProperty("peer.networkId", "undefined"),
+                        "difficulty", lastBlock.totalDifficulty,
+                        "genesis", toJsonHex(config.getGenesis().getHash()),
+                        "head", lastBlock.hash
+                )
+        ));
+        return result;
+    }
+
+    @Override
+    public List<Map<String, ?>> admin_peers() {
+        return channelManager.getActivePeers().stream().map(c ->
+                ImmutableMap.of(
+                        "id", toJsonHex(c.getNodeId()),
+                        "name", toJsonHex(c.getNodeStatistics().getClientId()),
+                        "caps", c.getNodeStatistics().capabilities
+                                .stream()
+                                .filter(cap -> c != null)
+                                .map(cap -> StringUtils.capitalize(cap.getName()) + "/" + cap.getVersion())
+                                .collect(Collectors.toList()),
+                        "network", ImmutableMap.of(
+                                "localAddress", config.bindIp(),
+                                "remoteAddress", config.bindIp()),
+                        "protocols", Optional.ofNullable(c.getEthHandler())
+                                .map(ethHandler -> ImmutableMap.of(
+                                        "eth", ImmutableMap.of(
+                                                "version", c.getEthVersion().getCode(),
+                                                "difficulty", toJsonHex(ethHandler.getTotalDifficulty()),
+                                                "head", Optional.ofNullable(ethHandler.getBestKnownBlock())
+                                                        .map(block -> toJsonHex(ethHandler.getBestKnownBlock().getHash()))
+                                                        .orElse(null)
+                                        )))
+                                .orElse(null))
+                ).collect(Collectors.toList());
+    }
 //
 //    @Override
 //    public String admin_datadir() {
