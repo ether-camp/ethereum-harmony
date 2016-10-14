@@ -29,6 +29,7 @@ import org.ethereum.config.SystemProperties;
 import org.ethereum.core.*;
 import org.ethereum.crypto.ECKey;
 import org.ethereum.crypto.HashUtil;
+import org.ethereum.db.BlockStore;
 import org.ethereum.db.ByteArrayWrapper;
 import org.ethereum.core.TransactionInfo;
 import org.ethereum.db.TransactionStore;
@@ -157,6 +158,9 @@ public class EthJsonRpcImpl implements JsonRpc {
 
     @Autowired
     ConfigCapabilities configCapabilities;
+
+    @Autowired
+    BlockStore blockStore;
 
     /**
      * Lowercase hex address as a key.
@@ -542,7 +546,7 @@ public class EthJsonRpcImpl implements JsonRpc {
         br.receiptsRoot = toJsonHex(block.getReceiptsRoot());
         br.miner = isPending ? null : toJsonHex(block.getCoinbase());
         br.difficulty = toJsonHex(block.getDifficultyBI());
-        br.totalDifficulty = toJsonHex(blockchain.getTotalDifficulty());
+        br.totalDifficulty = toJsonHex(blockStore.getTotalDifficultyForHash(block.getHash()));
         if (block.getExtraData() != null)
             br.extraData = toJsonHex(block.getExtraData());
         br.size = toJsonHex(block.getEncoded().length);
