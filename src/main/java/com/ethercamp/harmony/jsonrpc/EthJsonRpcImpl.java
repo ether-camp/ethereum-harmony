@@ -39,6 +39,7 @@ import org.ethereum.listener.EthereumListenerAdapter;
 import org.ethereum.manager.WorldManager;
 import org.ethereum.mine.BlockMiner;
 import org.ethereum.net.client.ConfigCapabilities;
+import org.ethereum.net.rlpx.Node;
 import org.ethereum.net.rlpx.discover.NodeManager;
 import org.ethereum.net.server.ChannelManager;
 import org.ethereum.net.server.PeerServer;
@@ -711,7 +712,7 @@ public class EthJsonRpcImpl implements JsonRpc {
     @Override
     public CompilationResult eth_compileSolidity(String contract) throws Exception {
         SolidityCompiler.Result res = SolidityCompiler.compile(
-                contract.getBytes(), true, SolidityCompiler.Options.ABI, SolidityCompiler.Options.BIN);
+                contract.getBytes(), true, SolidityCompiler.Options.ABI, SolidityCompiler.Options.BIN, SolidityCompiler.Options.INTERFACE);
         if (!res.errors.isEmpty()) {
             throw new RuntimeException("Compilation error: " + res.errors);
         }
@@ -1052,11 +1053,11 @@ public class EthJsonRpcImpl implements JsonRpc {
 //        throw new UnsupportedOperationException("JSON RPC method shh_getMessages not implemented yet");
 //    }
 //
-//    @Override
-//    public boolean admin_addPeer(String enodeUrl) {
-//        eth.connect(new Node(enodeUrl));
-//        return true;
-//    }
+    @Override
+    public boolean admin_addPeer(String enodeUrl) {
+        eth.connect(new Node(enodeUrl));
+        return true;
+    }
 //
 //    @Override
 //    public String admin_exportChain() {

@@ -50,7 +50,7 @@ import java.util.stream.Collectors;
 public class JsonRpcUsageFilter implements Filter {
 
     private static final List<String> EXCLUDE_LOGS = Arrays.asList("eth_getLogs", "eth_getFilterLogs",
-            "personal_newAccount", "personal_importRawKey", "personal_unlockAccount");
+            "personal_newAccount", "personal_importRawKey", "personal_unlockAccount", "personal_signAndSendTransaction");
 
     @Autowired
     JsonRpcUsageService jsonRpcUsageService;

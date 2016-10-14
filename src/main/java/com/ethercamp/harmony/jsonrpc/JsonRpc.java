@@ -300,7 +300,7 @@ public interface JsonRpc {
 //    String shh_getMessages();
 //
 //
-//    boolean admin_addPeer(String s);
+    boolean admin_addPeer(String enode);
 //
 //    String admin_exportChain();
 //    String admin_importChain();
