@@ -544,7 +544,7 @@ public class EthJsonRpcImpl implements JsonRpc {
         br.logsBloom = isPending ? null : toJsonHex(block.getLogBloom());
         br.transactionsRoot = toJsonHex(block.getTxTrieRoot());
         br.stateRoot = toJsonHex(block.getStateRoot());
-        br.receiptsRoot = toJsonHex(block.getReceiptsRoot());
+        br.receiptRoot = toJsonHex(block.getReceiptsRoot());
         br.miner = isPending ? null : toJsonHex(block.getCoinbase());
         br.difficulty = toJsonHex(block.getDifficultyBI());
         br.totalDifficulty = toJsonHex(blockStore.getTotalDifficultyForHash(block.getHash()));

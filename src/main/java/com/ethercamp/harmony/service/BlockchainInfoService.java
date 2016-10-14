@@ -206,7 +206,8 @@ public class BlockchainInfoService implements ApplicationListener {
                     Hex.toHexString(config.nodeId()),
                     serverPort,
                     isPrivateNetwork,
-                    env.getProperty("portCheckerUrl")
+                    env.getProperty("portCheckerUrl"),
+                    config.bindIp()
             ));
 
             final String ANSI_RESET = "\u001B[0m";

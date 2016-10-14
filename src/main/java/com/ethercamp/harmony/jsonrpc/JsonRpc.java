@@ -84,7 +84,7 @@ public interface JsonRpc {
         public String logsBloom; // DATA, 256 Bytes - the bloom filter for the logs of the block. null when its pending block.
         public String transactionsRoot; // DATA, 32 Bytes - the root of the transaction trie of the block.
         public String stateRoot; // DATA, 32 Bytes - the root of the final state trie of the block.
-        public String receiptsRoot; // DATA, 32 Bytes - the root of the receipts trie of the block.
+        public String receiptRoot; // DATA, 32 Bytes - the root of the receipts trie of the block.
         public String miner; // DATA, 20 Bytes - the address of the beneficiary to whom the mining rewards were given.
         public String difficulty; // QUANTITY - integer of the difficulty for this block.
         public String totalDifficulty; // QUANTITY - integer of the total difficulty of the chain until this block.
@@ -107,7 +107,7 @@ public interface JsonRpc {
                     ", logsBloom='" + logsBloom + '\'' +
                     ", transactionsRoot='" + transactionsRoot + '\'' +
                     ", stateRoot='" + stateRoot + '\'' +
-                    ", receiptsRoot='" + receiptsRoot + '\'' +
+                    ", receiptRoot='" + receiptRoot + '\'' +
                     ", miner='" + miner + '\'' +
                     ", difficulty='" + difficulty + '\'' +
                     ", totalDifficulty='" + totalDifficulty + '\'' +

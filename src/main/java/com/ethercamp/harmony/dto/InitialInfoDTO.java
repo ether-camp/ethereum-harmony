@@ -19,7 +19,6 @@
 package com.ethercamp.harmony.dto;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Value;
 
 /**
@@ -46,4 +45,6 @@ public class InitialInfoDTO {
     private boolean privateNetwork;
 
     private final String portCheckerUrl;
+
+    private final String publicIp;
 }
