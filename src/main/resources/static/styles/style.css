@@ -2903,6 +2903,10 @@ fieldset[disabled] .form-control {
     font-family: sans-serif, monospace;
 }
 
+.font-monospace {
+    font-family: monospace;
+}
+
 
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
