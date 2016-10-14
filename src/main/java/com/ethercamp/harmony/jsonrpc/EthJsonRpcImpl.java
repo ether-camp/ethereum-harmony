@@ -57,6 +57,7 @@ import org.springframework.util.StringUtils;
 import javax.annotation.PostConstruct;
 import java.lang.reflect.Modifier;
 import java.math.BigInteger;
+import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -1183,8 +1184,10 @@ public class EthJsonRpcImpl implements JsonRpc {
                                 .map(cap -> StringUtils.capitalize(cap.getName()) + "/" + cap.getVersion())
                                 .collect(Collectors.toList()),
                         "network", ImmutableMap.of(
-                                "localAddress", config.bindIp(),
-                                "remoteAddress", config.bindIp()),
+                                // TODO put local port which initiated connection
+                                "localAddress", config.bindIp() + ":" + c.getInetSocketAddress().getPort(),
+                                "remoteAddress", c.getNode().getHost() + ":" + c.getNode().getPort(),
+                                "hostname", c.getInetSocketAddress().getHostName(),
                         "protocols", Optional.ofNullable(c.getEthHandler())
                                 .map(ethHandler -> ImmutableMap.of(
                                         "eth", ImmutableMap.of(
@@ -1194,7 +1197,7 @@ public class EthJsonRpcImpl implements JsonRpc {
                                                         .map(block -> toJsonHex(ethHandler.getBestKnownBlock().getHash()))
                                                         .orElse(null)
                                         )))
-                                .orElse(null))
+                                .orElse(null)))
                 ).collect(Collectors.toList());
     }
 //
