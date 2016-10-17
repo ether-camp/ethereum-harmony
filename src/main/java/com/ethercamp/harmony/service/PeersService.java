@@ -38,6 +38,7 @@ import org.springframework.util.StringUtils;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
+import java.text.NumberFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -82,8 +83,8 @@ public class PeersService {
                             0l, 0.0,
                             0,
                             true,
-                            null
-                    ));
+                            null,
+                            channel.getEthHandler().getBestKnownBlock().getNumber()));
                 }
             }
         });
@@ -105,14 +106,17 @@ public class PeersService {
         // #2 Convert active peers to DTO
         final List<PeerDTO> resultPeers = ethereum.getChannelManager().getActivePeers()
                 .stream()
-                .map(channel -> createPeerDTO(
-                        channel.getPeerId(),
-                        channel.getNode().getHost(),
-                        channel.getNodeStatistics().lastPongReplyTime.get(),
-                        channel.getPeerStats().getAvgLatency(),
-                        channel.getNodeStatistics().getReputation(),
-                        true,
-                        channel.getNodeStatistics()))
+                .map(channel ->
+                    createPeerDTO(
+                            channel.getPeerId(),
+                            channel.getNode().getHost(),
+                            channel.getNodeStatistics().lastPongReplyTime.get(),
+                            channel.getPeerStats().getAvgLatency(),
+                            channel.getNodeStatistics().getReputation(),
+                            true,
+                            channel.getNodeStatistics(),
+                            channel.getEthHandler().getBestKnownBlock().getNumber())
+                )
                 .collect(Collectors.toList());
 
         // #3 Convert discovered peers to DTO and add to result
@@ -128,15 +132,15 @@ public class PeersService {
                         0.0,
                         nodeStatistics.getReputation(),
                         false,
-                        null
-                ));
+                        null,
+                        0));
             }
         });
 
         clientMessageService.sendToTopic("/topic/peers", resultPeers);
     }
 
-    private String getPeerDetails(NodeStatistics nodeStatistics, String country) {
+    private String getPeerDetails(NodeStatistics nodeStatistics, String country, long maxBlockNumber) {
         final String countryRow = "Country: " + country;
 
         if (nodeStatistics == null || nodeStatistics.getClientId() == null) {
@@ -144,6 +148,7 @@ public class PeersService {
         }
 
         final String delimiter = "\n";
+        final String blockNumber = "Block number: #" + NumberFormat.getNumberInstance(Locale.US).format(maxBlockNumber);
         final String clientId = StringUtils.trimWhitespace(nodeStatistics.getClientId());
         final String details = "Details: " + clientId;
         final String supports = "Supported protocols: " + nodeStatistics.capabilities
@@ -158,14 +163,14 @@ public class PeersService {
             final String os = "OS: " + StringUtils.capitalize(array[2]);
             final String version = "Version: " + array[3];
 
-            return String.join(delimiter, type, os, version, countryRow, "", details, "", supports);
+            return String.join(delimiter, type, os, version, countryRow, "", details, "", supports, "", blockNumber);
         } else {
-            return String.join(delimiter, countryRow, details, supports);
+            return String.join(delimiter, countryRow, details, supports, "", blockNumber);
         }
     }
 
     private PeerDTO createPeerDTO(String peerId, String ip, long lastPing, double avgLatency, int reputation,
-                                  boolean isActive, NodeStatistics nodeStatistics) {
+                                  boolean isActive, NodeStatistics nodeStatistics, long maxBlockNumber) {
         // code or ""
 
         final Optional<Country> country = lookupService.map(service -> service.getCountry(ip));
@@ -185,7 +190,7 @@ public class PeersService {
                 avgLatency,
                 reputation,
                 isActive,
-                getPeerDetails(nodeStatistics, country.map(Country::getName).orElse("Unknown location")));
+                getPeerDetails(nodeStatistics, country.map(Country::getName).orElse("Unknown location"), maxBlockNumber));
     }
 
     /**
