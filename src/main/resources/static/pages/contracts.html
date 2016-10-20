@@ -1,13 +1,20 @@
 <script type="text/ng-template" id="tree_item_renderer.html">
 
-    <div class="font-16 font-monospace">
-        <button ng-click="onExpand(entry)" ng-show="entry.value.container">&gt;</button>
-        <span class="c-white">{{entry.key.decoded}}</span> = <span class="c-white">{{entry.value.decoded || 'null'}}</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="font-monospace c-accent">{{entry.value.type}}</span>
+    <div class="font-16 font-monospace" ng-show="entry.key != null">
+        <button ng-click="onExpand(entry)" ng-show="entry.value.container && entry.value.size > 0">&gt;</button>
+        <span class="c-white">{{entry.key.decoded}}</span> = <span class="c-white">{{entry.valueLabel}}</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="font-monospace c-accent">{{entry.value.type}}</span>
     </div>
 
-    <ul style="list-style-type: none;">
-        <li class="m-l-lg" ng-repeat="data in entry.entries" ng-include="'tree_item_renderer.html'"></li>
+    <ul style="list-style-type: none; margin-left: 0; padding-left: 0">
+        <li class="m-l-lg" ng-repeat="entry in entry.entries" ng-include="'tree_item_renderer.html'"></li>
     </ul>
+
+    <div class="m-l-lg" ng-show="entry.entries.length < entry.totalElements">
+        <a href="#" ng-click="onLoadMore(entry)">more</a>
+        <span>|</span>
+        <a href="#" ng-click="onShowAll(entry)">show all {{entry.total}}</a>
+    </div>
+
 </script>
 
 <section class="content">
@@ -100,9 +107,9 @@
                     <!--</ul>-->
 
 
-                    <ul ng-controller="TreeController" style="list-style-type: none;">
-                        <li ng-repeat="entry in storage.entries" ng-include="'tree_item_renderer.html'"></li>
-                    </ul>
+                    <div ng-controller="TreeController" style="list-style-type: none;" ng-include="'tree_item_renderer.html'" ng-init="init(storage)">
+                        <!--<li ng-repeat="entry in storage.entries" ng-include="'tree_item_renderer.html'"></li>-->
+                    </div>
 
                     <hr>
 

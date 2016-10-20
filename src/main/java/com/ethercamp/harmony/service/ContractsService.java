@@ -21,6 +21,7 @@ package com.ethercamp.harmony.service;
 import com.ethercamp.contrdata.ContractDataService;
 import com.ethercamp.contrdata.contract.Ast;
 import com.ethercamp.contrdata.storage.Path;
+import com.ethercamp.contrdata.storage.StorageEntry;
 import com.ethercamp.contrdata.storage.StoragePage;
 import com.ethercamp.contrdata.storage.dictionary.StorageDictionaryVmHook;
 import com.ethercamp.harmony.dto.ContractInfoDTO;
@@ -42,6 +43,8 @@ import org.ethereum.solidity.compiler.SolidityCompiler;
 import org.ethereum.vm.program.Program;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -109,22 +112,22 @@ public class ContractsService {
 
     public List<ContractInfoDTO> getContracts() {
 
-        final String address = "642cb487cd5631c3c965775c14178d85a476e164";
-        final String src = "" +
-                "contract Foo1 {\n" +
-                "\n" +
-                "        uint32 idCounter = 1;\n" +
-                "        bytes32 public lastError;\n" +
-                "\n" +
-                "        //  function bar(uint[2] xy) {}\n" +
-                "        function baz(uint32 x, bool y) returns(bool r) {\n" +
-                "                        r = x > 32 || y;\n" +
-                "                }\n" +
-                "                //  function sam(bytes name, bool z, uint[] data) {}\n" +
-                "        function sam(bytes strAsBytes, bool someFlag, string str) {}\n" +
-                "}";
-
-        addContract(address, src);
+//        final String address = "642cb487cd5631c3c965775c14178d85a476e164";
+//        final String src = "" +
+//                "contract Foo1 {\n" +
+//                "\n" +
+//                "        uint32 idCounter = 1;\n" +
+//                "        bytes32 public lastError;\n" +
+//                "\n" +
+//                "        //  function bar(uint[2] xy) {}\n" +
+//                "        function baz(uint32 x, bool y) returns(bool r) {\n" +
+//                "                        r = x > 32 || y;\n" +
+//                "                }\n" +
+//                "                //  function sam(bytes name, bool z, uint[] data) {}\n" +
+//                "        function sam(bytes strAsBytes, bool someFlag, string str) {}\n" +
+//                "}";
+//
+//        addContract(address, src);
 //        getContractStorage(address);
 
         return contractsStorage.keys().stream()
@@ -143,7 +146,7 @@ public class ContractsService {
      * @param path - nested level of fields
      * @param pageable - for paging
      */
-    public StoragePage getContractStorage(String address, String path, Pageable pageable) {
+    public Page<StorageEntry> getContractStorage(String address, String path, Pageable pageable) {
         final ContractEntity contract = Optional.ofNullable(contractsStorage.get(Hex.decode(address)))
                 .map(bytes -> contractFormat.decode(bytes))
                 .orElseThrow(() -> new RuntimeException("Contract sources not found"));
@@ -155,10 +158,10 @@ public class ContractsService {
 //        final StoragePage storageEntries = contractDataService.getStorageEntries(addressBytes, 0, 10);
 //        log.info("storageEntries " + storageEntries.getSize());
 
-        final StoragePage contractData = contractDataService.getContractData(address, dataMembers, Path.parse(path), pageable.getPageNumber(), pageable.getPageSize());
+        final StoragePage storagePage = contractDataService.getContractData(address, dataMembers, Path.parse(path), pageable.getPageNumber(), pageable.getPageSize());
 
-        log.info("contractData " + contractData.getSize());
-        return contractData;
+        log.info("contractData " + storagePage.getSize());
+        return new PageImpl<>(storagePage.getEntries(), pageable, storagePage.getTotal());
     }
 
     /**

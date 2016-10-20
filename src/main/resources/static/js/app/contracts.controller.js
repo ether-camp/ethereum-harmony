@@ -5,14 +5,32 @@
 (function() {
     'use strict';
 
+    var PAGE_SIZE = 5;
+    var NULL = 'null';
+
+    function updateEntry(entry) {
+        if (entry.key && entry.value) {
+            if (entry.value.container) {
+                if (entry.value.type.indexOf('mapping(') == 0) {
+                    entry.valueLabel = 'map(size=' + entry.value.size + ')'
+                } else {
+                    entry.valueLabel = entry.value.type + '(size=' + entry.value.size + ')';
+                }
+            } else {
+                entry.valueLabel = entry.value.decoded ? entry.value.decoded : null;
+            }
+        }
+        return entry;
+    }
+
     function ContractsCtrl($scope, $timeout, scrollConfig, $http) {
         console.log('Contracts controller activated.');
-        $scope.contracts = $scope.contracts || [{name: "A", address: "0x123456789"}];
+        $scope.contracts = $scope.contracts || [];
         $scope.scrollConfig = jQuery.extend(true, {}, scrollConfig);
         $scope.isAddingContract = false;
         $scope.isViewingStorage = false;
         $scope.newContract = {};
-        $scope.storage = {};
+        $scope.storage = {entries: [], value: {decoded: ''}};
 
         var remove0x = Utils.Hex.remove0x;
 
@@ -45,18 +63,25 @@
         $scope.onViewStorage = function(item) {
             $scope.isAddingContract = false;
             $scope.isViewingStorage = true;
-            $scope.viewAddress = item.address
+            $scope.viewAddress = item.address;
 
             $http({
                 method: 'GET',
-                url: '/contracts/' + remove0x($scope.viewAddress).toLowerCase()
+                url: 'https://test-state.ether.camp/api/v1/accounts/' + remove0x($scope.viewAddress).toLowerCase() + '/smart-storage',
+                params: {
+                    path: '',
+                    page: 0,
+                    size: PAGE_SIZE
+                }
             }).then(function(result) {
                 $scope.contractStorage = JSON.stringify(result.data, null, 4);
                 console.log(result.data);
-                $scope.storage.entries = result.data.entries
-                    .map(function(e) {
-                        return e;
-                    });
+                // copy values to keep binding working
+                $scope.storage.entries = result.data.content
+                    .map(updateEntry);
+                $scope.storage.size = result.data.size;
+                $scope.storage.number = result.data.number;
+                $scope.storage.totalElements = result.data.totalElements;
             });
         };
 
@@ -116,33 +141,55 @@
 
     angular.module('HarmonyApp')
         .controller('ContractsCtrl', ['$scope', '$timeout', 'scrollConfig', '$http', ContractsCtrl])
-        .controller('TreeController', ['$scope', '$http', function($scope, $http) {
+        .controller('TreeController', ['$scope', '$http', '$attrs', function($scope, $http, $attrs) {
             var remove0x = Utils.Hex.remove0x;
 
-            $scope.onExpand = function(entry) {
-                console.log('Expand ');
-                console.log(entry);
-
-                $http({
+            function load(entry, page, size) {
+                return $http({
                     method: 'GET',
-                    url: '/contracts/' + remove0x($scope.viewAddress).toLowerCase(),
+                    url: 'https://test-state.ether.camp/api/v1/accounts/' + remove0x($scope.viewAddress).toLowerCase() + '/smart-storage',
+                    //url: '/contracts/' + remove0x($scope.viewAddress).toLowerCase(),
                     params: {
-                        path: entry.key.path
+                        path: entry.key ? entry.key.path : "",
+                        page: page,
+                        size: size
                     }
                 }).then(function(result) {
-                    console.log('Expand result ');
-                    console.log(result.data);
-                    entry.entries = result.data.entries;
+                    console.log('Expand result');
+                    console.log(result);
+                    if (result.data.content.length >= entry.totalElements) {
+                        // show all
+                        entry.entries = result.data.content
+                            .map(updateEntry);
+                    } else {
+                        // load more
+                        var newArray = entry.entries || [];
+                        Array.prototype.push.apply(newArray, result.data.content.map(updateEntry));
+                        entry.entries = newArray;
+                        console.log(newArray);
+                    }
                 });
+            }
+
+            $scope.init = function(value) {
+                $scope.entry = value;
+                //load($scope.entry, 0, PAGE_SIZE);
             };
-        }])
-        .directive('ehStorageEntry', function() {
-            return {
-                restrict: 'E',
-                scope: {
-                    entry: '=entry'
-                },
-                templateUrl: 'pages/templates/storage-entry.html'
+
+            $scope.onShowAll = function(entry) {
+                load(entry, 0, 10000);
             };
-        });
+
+            $scope.onLoadMore = function(entry) {
+                load(entry, Math.floor(entry.entries.length / PAGE_SIZE), PAGE_SIZE);
+            };
+
+            $scope.onExpand = function(entry) {
+                console.log('OnExpand');
+                console.log(entry);
+                entry.entries = entry.entries || [];
+                entry.totalElements = entry.totalElements || 0;
+                load(entry, 0, PAGE_SIZE);
+            };
+        }]);
 })();

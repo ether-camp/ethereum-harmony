@@ -280,7 +280,7 @@
             updatePeersSubscription(path == '/peers');
             updateRpcSubscription(path == '/rpcUsage');
             updateWalletSubscription(path == '/wallet');
-            updateContractsSubscription(path == '/contracts');
+            //updateContractsSubscription(path == '/contracts');
         }
 
         function connect() {

@@ -18,10 +18,12 @@
 
 package com.ethercamp.harmony.web.controller;
 
+import com.ethercamp.contrdata.storage.StorageEntry;
 import com.ethercamp.contrdata.storage.StoragePage;
 import com.ethercamp.harmony.dto.ContractInfoDTO;
 import com.ethercamp.harmony.service.ContractsService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,10 +39,10 @@ public class ContractsController {
     ContractsService contractsService;
 
     @RequestMapping("/contracts/{address}")
-    public StoragePage getContractStorage(@PathVariable String address,
-                                          @RequestParam(required = false) String path,
-                                          @RequestParam(required = false, defaultValue = "0") int page,
-                                          @RequestParam(required = false, defaultValue = "5") int size) {
+    public Page<StorageEntry> getContractStorage(@PathVariable String address,
+                                                 @RequestParam(required = false) String path,
+                                                 @RequestParam(required = false, defaultValue = "0") int page,
+                                                 @RequestParam(required = false, defaultValue = "5") int size) {
         return contractsService.getContractStorage(address, path, new PageRequest(page, size));
     }
 
