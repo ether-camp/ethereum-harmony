@@ -20,6 +20,7 @@ package com.ethercamp.harmony.web.controller;
 
 import com.ethercamp.harmony.dto.*;
 import com.ethercamp.harmony.service.BlockchainInfoService;
+import com.ethercamp.harmony.service.ContractsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -40,6 +41,9 @@ public class WebSocketController {
 
     @Autowired
     BlockchainInfoService blockchainInfoService;
+
+    @Autowired
+    ContractsService contractsService;
 
     /**
      * Websocket handlers for immediate result.
@@ -65,11 +69,16 @@ public class WebSocketController {
         return blockchainInfoService.getSystemLogs();
     }
 
+    @MessageMapping("/currentContracts")
+    public List<ContractInfoDTO> getContracts() {
+        return contractsService.getContracts();
+    }
+
     /**
      * Defines request mapping for all site pages.
      * As we have angular routing - we return index.html here.
      */
-    @RequestMapping({"/", "/systemLog", "/peers", "/rpcUsage", "/terminal", "/wallet"})
+    @RequestMapping({"/", "/systemLog", "/peers", "/rpcUsage", "/terminal", "/wallet", "/contracts"})
     public String index() {
         return "index.html";
     }

@@ -56,8 +56,9 @@ import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 import java.util.stream.LongStream;
+
+import static java.util.stream.Collectors.*;
 
 /**
  * Created by Stan Reshetnyk on 11.07.16.
@@ -214,7 +215,10 @@ public class BlockchainInfoService implements ApplicationListener {
             final String ANSI_BLUE = "\u001B[34m";
             System.out.println("EthereumJ database dir location: " + systemProperties.databaseDir());
             System.out.println(ANSI_BLUE + "Server started at http://localhost:" + serverPort + "" + ANSI_RESET);
-            createLogAppenderForMessaging();
+
+            if (config.getConfig().hasPath("logs.keepStdOut") && !config.getConfig().getBoolean("logs.keepStdOut")) {
+                createLogAppenderForMessaging();
+            }
         }
     }
 
@@ -289,7 +293,7 @@ public class BlockchainInfoService implements ApplicationListener {
                 .map(entry -> new MinerDTO(entry.getKey(), entry.getValue()))
                 .sorted((a, b) -> Integer.compare(b.getCount(), a.getCount()))
                 .limit(3)
-                .collect(Collectors.toList());
+                .collect(toList());
         info.getMiners().addAll(minersList);
 
         networkInfo.set(info);
@@ -417,7 +421,7 @@ public class BlockchainInfoService implements ApplicationListener {
     /**
      * Created by Stan Reshetnyk on 09.08.16.
      */
-    public static enum SyncStatus {
+    public enum SyncStatus {
         DISABLED,
         LONG_SYNC,
         SHORT_SYNC

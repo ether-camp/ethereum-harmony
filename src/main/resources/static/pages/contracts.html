@@ -1,0 +1,178 @@
+<script type="text/ng-template" id="tree_item_renderer.html">
+
+    <div class="font-16 font-monospace">
+        <button ng-click="onExpand(entry)" ng-show="entry.value.container">&gt;</button>
+        <span class="c-white">{{entry.key.decoded}}</span> = <span class="c-white">{{entry.value.decoded || 'null'}}</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="font-monospace c-accent">{{entry.value.type}}</span>
+    </div>
+
+    <ul style="list-style-type: none;">
+        <li class="m-l-lg" ng-repeat="data in entry.entries" ng-include="'tree_item_renderer.html'"></li>
+    </ul>
+</script>
+
+<section class="content">
+
+    <div class="container-fluid">
+
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="view-header">
+                    <div class="header-icon">
+                        <i class="pe page-header-icon pe-7s-world"></i>
+                    </div>
+
+                    <div class="header-title">
+                        <h3 class="m-b-xs">Contracts</h3>
+                        <small>
+                            Watch contracts' state
+                        </small>
+                    </div>
+                    <hr>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="row" id="contracts-scroll-container">
+
+        <div class="col-lg-12" ng-cloak>
+
+
+            <div class="panel panel-filled" ng-show="isAddingContract">
+
+                <div class="panel-heading">
+                    Add contact for watching it's storage
+                </div>
+
+                <div class="panel-heading">
+                    <a href="#" ng-click="onBackToList()" class="btn btn-w-md btn-default">Back to list</a>
+                    <span class="m-l-sm"/>
+                    <a href="#" ng-click="onWatchContractConfirmed()" class="btn btn-w-md btn-primary">Add contract</a>
+                </div>
+
+                <div class="panel-body">
+                    <form name="form" novalidate>
+                        <div class="form-group" show-errors>
+                            <label>Address</label>
+                            <input class="form-control" ng-model="newContract.address"
+                                   ethaddress
+                                   ethaddresschecksum
+                                   name="address" required="true" type="text">
+
+                            <div ng-show="form.$submitted || form.address.$touched">
+                                <div ng-show="form.address.$error.required">Address is required</div>
+                                <div ng-show="form.address.$error.ethaddress">Address format is invalid</div>
+                                <div ng-show="form.address.$error.ethaddresschecksum">Checksum address format is invalid</div>
+                            </div>
+                        </div>
+
+                        <div class="form-group" show-errors>
+                            <textarea name="sourceCode" class="form-control" rows="3" ng-model="newContract.sourceCode"
+                                  placeholder="Solidity code"
+                                  autocomplete="off"
+                                  required></textarea>
+
+                            <div ng-show="form.$submitted || form.secret.$touched">
+                                <div ng-show="form.sourceCode.$error.required">Source code is required</div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+
+            <div class="panel panel-filled" ng-show="isViewingStorage">
+
+                <div class="panel-heading">
+                    Contract storage
+                </div>
+
+                <div class="panel-heading">
+                    <a href="#" ng-click="onBackToList()" class="btn btn-w-md btn-default">Back to list</a>
+                </div>
+
+                <div class="panel-body">
+                    <!--<ul>-->
+                        <!--<il ng-repeat="entry in storage.entries">-->
+                            <!--<eh-storage-entry entry="entry" />-->
+                        <!--</il>-->
+                    <!--</ul>-->
+
+
+                    <ul ng-controller="TreeController" style="list-style-type: none;">
+                        <li ng-repeat="entry in storage.entries" ng-include="'tree_item_renderer.html'"></li>
+                    </ul>
+
+                    <hr>
+
+                    <pre>
+                    {{contractStorage}}
+                    </pre>
+                </div>
+            </div>
+
+
+            <div class="panel panel-filled">
+
+                <div class="panel-heading">
+
+                    <a href="#" ng-click="onWatchContract()" class="btn btn-w-md btn-primary"
+                       ng-show="!isAddingContract && !isViewingStorage">
+                        <i class="fa fa-eye m-r-sm"/>
+                        Add contract for watching
+                    </a>
+                </div>
+
+                <div class="panel-body">
+
+                    <div class="table-responsive">
+                        <table class="table peers-table">
+                            <thead>
+                            <tr>
+                                <th>
+                                    Contract Name
+                                </th>
+                                <th>
+                                    Address
+                                </th>
+                                <th>
+                                </th>
+                                <th>
+                                </th>
+                            </tr>
+                            </thead>
+                            <tbody>
+
+                                <tr ng-repeat="item in contracts"
+                                    ng-click="onViewStorage(item)"
+                                    ng-cloak
+                                    ng-class="{'peer-active': item.isActive}"
+                                    class="peer-row">
+                                    <td>
+                                        {{item.name}}
+                                    </td>
+                                    <td class="font-monospace">
+                                        {{item.address}}
+                                    </td>
+                                    <td>
+                                        <a href="#" ng-click="onViewClick(item)">View</a>
+                                    </td>
+                                    <td>
+                                        <a href="#" ng-click="onRemoveClick(item)">Unwatch</a>
+                                    </td>
+                                </tr>
+
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+    </div>
+
+
+    </div>
+</section>

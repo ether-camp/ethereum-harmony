@@ -40,7 +40,8 @@ import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.*;
-import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.*;
 
 /**
  * Service for rendering list of peers and geographic activity in ethereum network.
@@ -101,7 +102,7 @@ public class PeersService {
         final List<Node> nodes = nodeManager.getTable()
                 .getAllNodes().stream()
                 .map(n -> n.getNode())
-                .collect(Collectors.toList());
+                .collect(toList());
 
         // #2 Convert active peers to DTO
         final List<PeerDTO> resultPeers = ethereum.getChannelManager().getActivePeers()
@@ -117,7 +118,7 @@ public class PeersService {
                             channel.getNodeStatistics(),
                             channel.getEthHandler().getBestKnownBlock().getNumber())
                 )
-                .collect(Collectors.toList());
+                .collect(toList());
 
         // #3 Convert discovered peers to DTO and add to result
         nodes.forEach(node -> {
@@ -155,7 +156,7 @@ public class PeersService {
                 .stream()
                 .filter(c -> c != null)
                 .map(c -> StringUtils.capitalize(c.getName()) + ": " + c.getVersion())
-                .collect(Collectors.joining(", "));
+                .collect(joining(", "));
 
         final String[] array = clientId.split("/");
         if (array.length >= 4) {

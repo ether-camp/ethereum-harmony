@@ -62,6 +62,11 @@
             .when('/wallet', {
                 templateUrl : 'pages/wallet.html',
                 controller  : 'WalletCtrl'
+            })
+
+            .when('/contracts', {
+                templateUrl : 'pages/contracts.html',
+                controller  : 'ContractsCtrl'
             });
 
         $locationProvider.html5Mode(true);
@@ -227,6 +232,10 @@
             function() {
                 $stomp.send('/app/getWalletInfo');
             });
+        var updateContractsSubscription  = updateSubscriptionFun('/topic/currentContracts', jsonParseAndBroadcast('contractsListEvent'),
+            function() {
+                $stomp.send('/app/currentContracts');
+            });
 
         /**
          * Listen for page changes and subscribe to page relevant topic only when we stay on that page.
@@ -271,6 +280,7 @@
             updatePeersSubscription(path == '/peers');
             updateRpcSubscription(path == '/rpcUsage');
             updateWalletSubscription(path == '/wallet');
+            updateContractsSubscription(path == '/contracts');
         }
 
         function connect() {

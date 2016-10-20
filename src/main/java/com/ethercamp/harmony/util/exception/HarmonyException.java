@@ -16,7 +16,7 @@
  * along with Ethereum Harmony.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.ethercamp.harmony.util;
+package com.ethercamp.harmony.util.exception;
 
 /**
  * Created by Stan Reshetnyk on 29.07.16.

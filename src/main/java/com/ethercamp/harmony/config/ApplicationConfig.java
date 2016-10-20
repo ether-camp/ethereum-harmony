@@ -20,8 +20,11 @@ package com.ethercamp.harmony.config;
 
 import com.ethercamp.harmony.web.filter.JsonRpcUsageFilter;
 import com.googlecode.jsonrpc4j.spring.AutoJsonRpcServiceExporter;
+import org.ethereum.datasource.KeyValueDataSource;
+import org.ethereum.datasource.LevelDbDataSource;
 import org.springframework.boot.context.embedded.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.filter.HiddenHttpMethodFilter;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
@@ -30,6 +33,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter
  * Created by Stan Reshetnyk on 18.07.16.
  */
 @Configuration
+@ComponentScan("com.ethercamp")
 public class ApplicationConfig extends WebMvcConfigurerAdapter {
 
     /**
@@ -60,4 +64,5 @@ public class ApplicationConfig extends WebMvcConfigurerAdapter {
     public JsonRpcUsageFilter rpcUsageFilter() {
         return new JsonRpcUsageFilter();
     }
+
 }

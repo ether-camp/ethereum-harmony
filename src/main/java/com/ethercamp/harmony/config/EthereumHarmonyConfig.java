@@ -21,21 +21,21 @@ import java.io.*;
  * Created by Stan Reshetnyk on 08.09.16.
  */
 @Configuration
-@EnableTransactionManagement
+//@EnableTransactionManagement
 @ComponentScan(
         basePackages = "org.ethereum",
         excludeFilters = @ComponentScan.Filter(NoAutoscan.class))
 public class EthereumHarmonyConfig extends CommonConfig {
 
-    @Autowired
-    Environment environment;
-
-    @Bean
-    @Override
-    public SystemProperties systemProperties() {
-        final SystemProperties props = new SystemProperties();
-        props.setDataBaseDir(environment.getProperty("database.dir"));
-
-        return props;
-    }
+//    @Autowired
+//    Environment environment;
+//
+//    @Bean
+//    @Override
+//    public SystemProperties systemProperties() {
+//        final SystemProperties props = new SystemProperties();
+//        props.setDataBaseDir(environment.getProperty("database.dir"));
+//
+//        return props;
+//    }
 }
