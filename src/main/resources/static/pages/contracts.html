@@ -1,15 +1,21 @@
 <script type="text/ng-template" id="tree_item_renderer.html">
 
     <div class="font-16 font-monospace" ng-show="entry.key != null">
-        <button ng-click="onExpand(entry)" ng-show="entry.value.container && entry.value.size > 0">&gt;</button>
-        <span class="c-white">{{entry.key.decoded}}</span> = <span class="c-white">{{entry.valueLabel}}</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="font-monospace c-accent">{{entry.value.type}}</span>
+        <div style="width: 15px; display: inline-block;">
+            <a ng-click="onExpand(entry)"
+               href="#"
+               ng-show="entry.expandable">
+                <i class="fa" ng-class="{'fa-plus-square-o': !entry.expanded, 'fa-minus-square-o': entry.expanded}"/>
+            </a>
+        </div>
+        <span class="c-text">{{entry.key.decoded}}</span> = <span ng-class="{'c-text': entry.isCompositeObject, 'c-white': !entry.isCompositeObject}">{{entry.valueLabel}}</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="font-monospace c-accent">{{entry.value.type}}</span>
     </div>
 
-    <ul style="list-style-type: none; margin-left: 0; padding-left: 0">
+    <ul style="list-style-type: none; margin-left: 0; padding-left: 0" ng-show="entry.expanded">
         <li class="m-l-lg" ng-repeat="entry in entry.entries" ng-include="'tree_item_renderer.html'"></li>
     </ul>
 
-    <div class="m-l-lg" ng-show="entry.entries.length < entry.totalElements">
+    <div class="m-l-lg" ng-show="(entry.entries.length < entry.totalElements) && entry.expanded">
         <a href="#" ng-click="onLoadMore(entry)">more</a>
         <span>|</span>
         <a href="#" ng-click="onShowAll(entry)">show all {{entry.total}}</a>
@@ -100,22 +106,13 @@
                 </div>
 
                 <div class="panel-body">
-                    <!--<ul>-->
-                        <!--<il ng-repeat="entry in storage.entries">-->
-                            <!--<eh-storage-entry entry="entry" />-->
-                        <!--</il>-->
-                    <!--</ul>-->
-
 
                     <div ng-controller="TreeController" style="list-style-type: none;" ng-include="'tree_item_renderer.html'" ng-init="init(storage)">
-                        <!--<li ng-repeat="entry in storage.entries" ng-include="'tree_item_renderer.html'"></li>-->
                     </div>
 
-                    <hr>
-
-                    <pre>
-                    {{contractStorage}}
-                    </pre>
+                    <!--<pre>-->
+                    <!--{{contractStorage}}-->
+                    <!--</pre>-->
                 </div>
             </div>
 

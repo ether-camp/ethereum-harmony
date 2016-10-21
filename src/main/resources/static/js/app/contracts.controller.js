@@ -6,19 +6,35 @@
     'use strict';
 
     var PAGE_SIZE = 5;
-    var NULL = 'null';
+    var NULL = '<empty>';
 
     function updateEntry(entry) {
         if (entry.key && entry.value) {
+            var isStruct = entry.value.typeKind == 'struct';
+            entry.isCompositeObject = entry.value.container || isStruct;
+
+            // value label
             if (entry.value.container) {
                 if (entry.value.type.indexOf('mapping(') == 0) {
-                    entry.valueLabel = 'map(size=' + entry.value.size + ')'
+                    entry.valueLabel = '(size = ' + entry.value.size + ')'
                 } else {
-                    entry.valueLabel = entry.value.type + '(size=' + entry.value.size + ')';
+                    entry.valueLabel = /*entry.value.type + */'(size = ' + entry.value.size + ')';
                 }
+            } else if (isStruct) {
+                entry.valueLabel = entry.value.type;
             } else {
-                entry.valueLabel = entry.value.decoded ? entry.value.decoded : null;
+                entry.valueLabel = entry.value.decoded ? entry.value.decoded : NULL;
             }
+
+            // if need to show expand button
+            if (entry.value.container && entry.value.size > 0) {
+                entry.expandable = true;
+            } else if (isStruct) {
+                entry.expandable = true;
+            } else {
+                entry.expandable = false;
+            }
+
         }
         return entry;
     }
@@ -141,6 +157,10 @@
 
     angular.module('HarmonyApp')
         .controller('ContractsCtrl', ['$scope', '$timeout', 'scrollConfig', '$http', ContractsCtrl])
+
+        /**
+         * Controller for rendering contract storage in expandable tree view.
+         */
         .controller('TreeController', ['$scope', '$http', '$attrs', function($scope, $http, $attrs) {
             var remove0x = Utils.Hex.remove0x;
 
@@ -172,6 +192,7 @@
             }
 
             $scope.init = function(value) {
+                value.expanded = true;
                 $scope.entry = value;
                 //load($scope.entry, 0, PAGE_SIZE);
             };
@@ -190,6 +211,7 @@
                 entry.entries = entry.entries || [];
                 entry.totalElements = entry.totalElements || 0;
                 load(entry, 0, PAGE_SIZE);
+                entry.expanded = !entry.expanded;
             };
         }]);
 })();
