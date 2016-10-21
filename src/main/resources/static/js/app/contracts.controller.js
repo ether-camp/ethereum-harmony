@@ -39,7 +39,7 @@
         return entry;
     }
 
-    function ContractsCtrl($scope, $timeout, scrollConfig, $http) {
+    function ContractsCtrl($scope, $timeout, scrollConfig, $http, jsonrpc) {
         console.log('Contracts controller activated.');
         $scope.contracts = $scope.contracts || [];
         $scope.scrollConfig = jQuery.extend(true, {}, scrollConfig);
@@ -74,29 +74,43 @@
         $scope.onBackToList = function() {
             $scope.isAddingContract = false;
             $scope.isViewingStorage = false;
+            $scope.storage.entries = [];
         };
 
         $scope.onViewStorage = function(item) {
             $scope.isAddingContract = false;
             $scope.isViewingStorage = true;
-            $scope.viewAddress = item.address;
+            $scope.storage.address = item.address;
+            $scope.storage.balanceString = 'n/a';
+            $scope.storage.contractName = item.name;
 
+            // #1 Load balance
+            jsonrpc.request('eth_getBalance', [$scope.storage.address, 'latest'])
+                .then(function(value) {
+                    var ethRate = Math.pow(10, 18);
+                    var cutTo = Math.pow(10, 0);
+                    var convertHexToEth = function(value) { return new BigNumber(remove0x(value), 16).dividedBy(ethRate / cutTo).floor().dividedBy(cutTo).toNumber(); }
+
+                    $scope.storage.balanceString = Utils.Format.numberWithCommas(convertHexToEth(value));
+                });
+
+            // #2 Load fields
             $http({
                 method: 'GET',
-                url: 'https://test-state.ether.camp/api/v1/accounts/' + remove0x($scope.viewAddress).toLowerCase() + '/smart-storage',
+                url: '/contracts/' + remove0x($scope.storage.address).toLowerCase() + '/storage',
                 params: {
-                    path: '',
+                    path: '',           // root of contract
                     page: 0,
                     size: PAGE_SIZE
                 }
             }).then(function(result) {
-                $scope.contractStorage = JSON.stringify(result.data, null, 4);
+                console.log('Initial contract fields');
                 console.log(result.data);
                 // copy values to keep binding working
                 $scope.storage.entries = result.data.content
                     .map(updateEntry);
-                $scope.storage.size = result.data.size;
-                $scope.storage.number = result.data.number;
+                //$scope.storage.size = result.data.size;
+                //$scope.storage.number = result.data.number;
                 $scope.storage.totalElements = result.data.totalElements;
             });
         };
@@ -156,7 +170,7 @@
     }
 
     angular.module('HarmonyApp')
-        .controller('ContractsCtrl', ['$scope', '$timeout', 'scrollConfig', '$http', ContractsCtrl])
+        .controller('ContractsCtrl', ['$scope', '$timeout', 'scrollConfig', '$http', 'jsonrpc', ContractsCtrl])
 
         /**
          * Controller for rendering contract storage in expandable tree view.
@@ -167,27 +181,28 @@
             function load(entry, page, size) {
                 return $http({
                     method: 'GET',
-                    url: 'https://test-state.ether.camp/api/v1/accounts/' + remove0x($scope.viewAddress).toLowerCase() + '/smart-storage',
-                    //url: '/contracts/' + remove0x($scope.viewAddress).toLowerCase(),
+                    url: '/contracts/' + remove0x($scope.storage.address).toLowerCase() + '/storage',
+                    //url: '/contracts/' + remove0x($scope.storage.address).toLowerCase(),
                     params: {
                         path: entry.key ? entry.key.path : "",
                         page: page,
                         size: size
                     }
                 }).then(function(result) {
-                    console.log('Expand result');
+                    console.log('Load addition result');
                     console.log(result);
-                    if (result.data.content.length >= entry.totalElements) {
-                        // show all
-                        entry.entries = result.data.content
-                            .map(updateEntry);
-                    } else {
-                        // load more
-                        var newArray = entry.entries || [];
-                        Array.prototype.push.apply(newArray, result.data.content.map(updateEntry));
-                        entry.entries = newArray;
-                        console.log(newArray);
+                    var loadedEntries = result.data.content;
+                    var newArray = entry.entries || [];
+
+                    if (loadedEntries.length >= entry.totalElements) {
+                        // cut already existed fields if this is result of Show All request
+                        // then we append only not existing ones and update view smoothly
+                        loadedEntries = loadedEntries.slice(newArray.length);
                     }
+
+                    Array.prototype.push.apply(newArray, loadedEntries.map(updateEntry));
+                    // set new array object to fire binding
+                    entry.entries = newArray;
                 });
             }
 

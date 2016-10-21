@@ -38,7 +38,7 @@ public class ContractsController {
     @Autowired
     ContractsService contractsService;
 
-    @RequestMapping("/contracts/{address}")
+    @RequestMapping("/contracts/{address}/storage")
     public Page<StorageEntry> getContractStorage(@PathVariable String address,
                                                  @RequestParam(required = false) String path,
                                                  @RequestParam(required = false, defaultValue = "0") int page,

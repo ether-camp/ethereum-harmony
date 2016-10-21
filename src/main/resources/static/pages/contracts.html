@@ -8,7 +8,7 @@
                 <i class="fa" ng-class="{'fa-plus-square-o': !entry.expanded, 'fa-minus-square-o': entry.expanded}"/>
             </a>
         </div>
-        <span class="c-text">{{entry.key.decoded}}</span> = <span ng-class="{'c-text': entry.isCompositeObject, 'c-white': !entry.isCompositeObject}">{{entry.valueLabel}}</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="font-monospace c-accent">{{entry.value.type}}</span>
+        <span class="c-text font-16">{{entry.key.decoded}}</span> = <span ng-class="{'c-text': entry.isCompositeObject, 'storage-entry-value': !entry.isCompositeObject}" class="font-16">{{entry.valueLabel}}</span><i class="m-l-sm font-monospace c-accent">{{entry.value.typeKind || entry.value.type}}</i>
     </div>
 
     <ul style="list-style-type: none; margin-left: 0; padding-left: 0" ng-show="entry.expanded">
@@ -97,8 +97,10 @@
 
             <div class="panel panel-filled" ng-show="isViewingStorage">
 
-                <div class="panel-heading">
-                    Contract storage
+                <div class="panel-heading flex flex-justify-between">
+                    <h3>{{storage.contractName}}</h3>
+                    <!--<h3 class="font-monospace c-text">{{storage.address}}</h4>-->
+                    <h3>Balance: {{storage.balanceString}} ETH</h3>
                 </div>
 
                 <div class="panel-heading">
@@ -107,7 +109,9 @@
 
                 <div class="panel-body">
 
-                    <div ng-controller="TreeController" style="list-style-type: none;" ng-include="'tree_item_renderer.html'" ng-init="init(storage)">
+                    <div class="storage-backgroud">
+                        <div ng-controller="TreeController" style="list-style-type: none;" ng-include="'tree_item_renderer.html'" ng-init="init(storage)">
+                        </div>
                     </div>
 
                     <!--<pre>-->

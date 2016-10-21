@@ -3019,3 +3019,22 @@ input[type="number"] {
 .suggestion-item {
     padding: 5px 0 5px 5px !important;
 }
+
+.storage-entry-type {
+    color: #c4660f;
+}
+
+.storage-entry-value {
+    color: #cccccc;
+}
+
+.storage-backgroud {
+    padding-bottom: 10px;
+    padding-top: 10px;
+    background-color: #222222;
+    border-radius: 5px;
+}
+
+.flex-justify-between {
+    justify-content: space-between;
+}

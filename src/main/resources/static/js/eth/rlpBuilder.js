@@ -44,6 +44,17 @@ var Utils = (function() {
             add0x:          add0x,
             remove0x:       remove0x,
             isHexAddress:   isHexAddress
+        },
+
+        Format: {
+            /**
+             * @example 1000 -> "1,000"
+             */
+            numberWithCommas: function numberWithCommas(x) {
+                var arr = x.toString().split('.');
+                var arr1 = arr[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                return arr.length == 1 ? arr1 : arr1 + '.' + arr[1];
+            }
         }
     }
 })();
