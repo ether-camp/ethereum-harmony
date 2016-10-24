@@ -16,6 +16,7 @@
     </ul>
 
     <div class="m-l-lg" ng-show="(entry.entries.length < entry.totalElements) && entry.expanded">
+        <span class="m-l-md"></span>
         <a href="#" ng-click="onLoadMore(entry)">more</a>
         <span>|</span>
         <a href="#" ng-click="onShowAll(entry)">show all {{entry.total}}</a>
@@ -37,7 +38,7 @@
                     <div class="header-title">
                         <h3 class="m-b-xs">Contracts</h3>
                         <small>
-                            Watch contracts' state
+                            Watch contracts' storage fields
                         </small>
                     </div>
                     <hr>
@@ -58,10 +59,9 @@
                     Add contact for watching it's storage
                 </div>
 
-                <div class="panel-heading">
+                <div class="panel-heading flex flex-justify-between">
                     <a href="#" ng-click="onBackToList()" class="btn btn-w-md btn-default">Back to list</a>
-                    <span class="m-l-sm"/>
-                    <a href="#" ng-click="onWatchContractConfirmed()" class="btn btn-w-md btn-primary">Add contract</a>
+                    <!--<span class="m-l-sm"/>-->
                 </div>
 
                 <div class="panel-body">
@@ -70,7 +70,6 @@
                             <label>Address</label>
                             <input class="form-control" ng-model="newContract.address"
                                    ethaddress
-                                   ethaddresschecksum
                                    name="address" required="true" type="text">
 
                             <div ng-show="form.$submitted || form.address.$touched">
@@ -81,14 +80,60 @@
                         </div>
 
                         <div class="form-group" show-errors>
-                            <textarea name="sourceCode" class="form-control" rows="3" ng-model="newContract.sourceCode"
-                                  placeholder="Solidity code"
-                                  autocomplete="off"
-                                  required></textarea>
+                            <form name="form">
+                            <div class="row">
 
-                            <div ng-show="form.$submitted || form.secret.$touched">
-                                <div ng-show="form.sourceCode.$error.required">Source code is required</div>
+                                <div class="col-lg-6">
+
+                                        <div class="form-group">
+                                            <label>Solidity code</label>
+
+                                            <textarea name="sourceCode"
+                                                      class="form-control" rows="3"
+                                                      ng-model="newContract.sourceCode"
+                                                      placeholder=""
+                                                      autocomplete="off">
+                                            </textarea>
+                                        </div>
+                                </div>
+
+                                <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Solidity files</label>
+
+                                            <input id="fileInput" type="file" name="contracts" multiple="true"
+                                                   style="visibility: hidden; height: 1px" />
+                                            <a href="#"
+                                               ng-click="onAddFile()"
+                                               class="btn btn-w-md btn-default">Attach file</a>
+
+                                            <div ng-repeat="file in files">
+                                                {{file.name}}
+                                                <a href="#" ng-click="onRemoveFile(file)">remove</a>
+                                            </div>
+
+                                        </div>
+
+                                        <!--<div class="form-group">-->
+                                            <!--<a href="#"-->
+                                               <!--ng-click="onUploadFiles()"-->
+                                               <!--class="btn btn-w-md btn-primary">Add attached files</a>-->
+                                        <!--</div>-->
+
+                                </div>
+
                             </div>
+
+                            <div class="form-group flex flex-justify-center">
+                                <a href="#"
+                                   ng-click="onFinalAddFiles()"
+                                   class="btn btn-w-md btn-primary">Add pasted code or attached file(s)</a>
+                            </div>
+                            </form>
+
+                            <!--<div ng-show="form.$submitted || form.secret.$touched">-->
+                                <!--<div ng-show="form.sourceCode.$error.required">Source code is required</div>-->
+                            <!--</div>-->
                         </div>
                     </form>
                 </div>
@@ -110,13 +155,9 @@
                 <div class="panel-body">
 
                     <div class="storage-backgroud">
-                        <div ng-controller="TreeController" style="list-style-type: none;" ng-include="'tree_item_renderer.html'" ng-init="init(storage)">
+                        <div ng-controller="TreeController" style="list-style-type: none;margin-left: -17px;" ng-include="'tree_item_renderer.html'" ng-init="init(storage)">
                         </div>
                     </div>
-
-                    <!--<pre>-->
-                    <!--{{contractStorage}}-->
-                    <!--</pre>-->
                 </div>
             </div>
 

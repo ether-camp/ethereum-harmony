@@ -25,6 +25,7 @@ import com.ethercamp.contrdata.storage.StorageEntry;
 import com.ethercamp.contrdata.storage.StoragePage;
 import com.ethercamp.contrdata.storage.dictionary.StorageDictionaryVmHook;
 import com.ethercamp.harmony.dto.ContractInfoDTO;
+import com.ethercamp.harmony.service.contracts.Source;
 import com.ethercamp.harmony.util.exception.ContractException;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -45,9 +46,9 @@ import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
@@ -55,6 +56,7 @@ import java.nio.charset.Charset;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import static java.lang.String.format;
 import static java.util.Arrays.stream;
@@ -76,6 +78,7 @@ public class ContractsService {
 
     private static final Pattern FUNC_HASHES_PATTERN = Pattern.compile("(PUSH4\\s+0x)([0-9a-fA-F]{2,8})(\\s+DUP2)?(\\s+EQ\\s+PUSH2)");
     private static final Pattern SOLIDITY_HEADER_PATTERN = Pattern.compile("^\\s{0,}PUSH1\\s+0x60\\s+PUSH1\\s+0x40\\s+MSTORE.+");
+    private static final Charset UTF_8 = Charset.forName("UTF-8");
 
     @Autowired
     StorageDictionaryVmHook storageDictionaryVmHook;
@@ -100,43 +103,22 @@ public class ContractsService {
         return true;
     }
 
-    public boolean addContract(String address, String src) {
-        final String name = getContractName(address, src);
-        final CompilationResult result = compileAbi(src.getBytes(Charset.forName("UTF-8")));
-        final String abi = getValidatedAbi(address, name, result);
-        final String dataMembers = compileAst(src.getBytes()).getContractAllDataMembers(name).toJson();
-
-        contractsStorage.put(Hex.decode(address), contractFormat.encode(new ContractEntity(name, src)));
-        return true;
+    public ContractInfoDTO addContract(String address, String src) {
+        return compileAndSave(address, Arrays.asList(src));
     }
 
     public List<ContractInfoDTO> getContracts() {
-
-//        final String address = "642cb487cd5631c3c965775c14178d85a476e164";
-//        final String src = "" +
-//                "contract Foo1 {\n" +
-//                "\n" +
-//                "        uint32 idCounter = 1;\n" +
-//                "        bytes32 public lastError;\n" +
-//                "\n" +
-//                "        //  function bar(uint[2] xy) {}\n" +
-//                "        function baz(uint32 x, bool y) returns(bool r) {\n" +
-//                "                        r = x > 32 || y;\n" +
-//                "                }\n" +
-//                "                //  function sam(bytes name, bool z, uint[] data) {}\n" +
-//                "        function sam(bytes strAsBytes, bool someFlag, string str) {}\n" +
-//                "}";
-//
-//        addContract(address, src);
-//        getContractStorage(address);
-
         return contractsStorage.keys().stream()
                 .map(a -> {
-                    final byte[] loadedBytes = contractsStorage.get(a);
-                    final ContractEntity contract = contractFormat.decode(loadedBytes);
+                    final ContractEntity contract = loadContract(a);
                     return new ContractInfoDTO(Hex.toHexString(a), contract.getName());
                 })
                 .collect(toList());
+    }
+
+    private ContractEntity loadContract(byte[] address) {
+        final byte[] loadedBytes = contractsStorage.get(address);
+        return contractFormat.decode(loadedBytes);
     }
 
     /**
@@ -272,6 +254,35 @@ public class ContractsService {
         return new ObjectMapper().readValue(rawJson, CompilationResult.class);
     }
 
+    public ContractInfoDTO uploadContract(String address, MultipartFile[] files) {
+        return compileAndSave(address, Source.toPlain(files));
+    }
+
+    private ContractInfoDTO compileAndSave(String address, List<String> files) {
+        return files.stream()
+                .flatMap(src -> {
+                    final CompilationResult result = compileAbi(src.getBytes());
+
+                    return result.getContracts().entrySet().stream()
+                            .flatMap(entry -> {
+                                try {
+                                    final String name = entry.getKey();
+                                    final String abi = getValidatedAbi(address, name, result);
+                                    final String dataMembers = compileAst(src.getBytes()).getContractAllDataMembers(name).toJson();
+
+                                    final ContractEntity contract = new ContractEntity(name, src, dataMembers, abi);
+                                    contractsStorage.put(Hex.decode(address), contractFormat.encode(contract));
+
+                                    return Stream.of(new ContractInfoDTO(address, name));
+                                } catch (Exception e) {
+                                    return Stream.empty();
+                                }
+                            });
+                })
+                .findAny()
+                .orElseThrow(() -> validationError("target contract source not found within uploaded sources."));
+    }
+
     @Data
     @NoArgsConstructor
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -312,6 +323,8 @@ public class ContractsService {
 
         private String name;
         private String src;
+        private String dataMembers;
+        private String abi;
 
     }
 
@@ -331,7 +344,7 @@ public class ContractsService {
         public byte[] encode(T entity) {
             try {
                 final String json = mapper.writeValueAsString(entity);
-                return json.getBytes(Charset.forName("UTF-8"));
+                return json.getBytes(UTF_8);
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             }
@@ -339,7 +352,7 @@ public class ContractsService {
 
         public T decode(byte[] bytes) {
             try {
-                return mapper.readValue(new String(bytes, Charset.forName("UTF-8")), type);
+                return mapper.readValue(new String(bytes, UTF_8), type);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

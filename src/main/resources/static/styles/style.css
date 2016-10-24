@@ -3038,3 +3038,11 @@ input[type="number"] {
 .flex-justify-between {
     justify-content: space-between;
 }
+
+.flex-justify-center {
+    justify-content: center;
+}
+
+.verticalLine {
+    border-left: thick solid #ffffff;
+}

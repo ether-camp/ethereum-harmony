@@ -20,18 +20,26 @@ package com.ethercamp.harmony.web.controller;
 
 import com.ethercamp.contrdata.storage.StorageEntry;
 import com.ethercamp.contrdata.storage.StoragePage;
+import com.ethercamp.harmony.dto.ActionStatus;
 import com.ethercamp.harmony.dto.ContractInfoDTO;
 import com.ethercamp.harmony.service.ContractsService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+
+import static com.ethercamp.harmony.dto.ActionStatus.createErrorStatus;
+import static com.ethercamp.harmony.dto.ActionStatus.createSuccessStatus;
+import static org.apache.commons.lang3.StringUtils.lowerCase;
 
 /**
  * Created by Stan Reshetnyk on 18.10.16.
  */
+@Slf4j
 @RestController
 public class ContractsController {
 
@@ -47,8 +55,14 @@ public class ContractsController {
     }
 
     @RequestMapping(value = "/contracts/add", method = RequestMethod.POST)
-    public boolean addContract(@RequestBody WatchContractDTO watchContract) {
-        return contractsService.addContract(watchContract.address, watchContract.sourceCode);
+    public ActionStatus<ContractInfoDTO> addContractSources(@RequestBody WatchContractDTO watchContract) {
+        try {
+            ContractInfoDTO contract = contractsService.addContract(watchContract.address, watchContract.sourceCode);
+            return createSuccessStatus(contract);
+        } catch (Exception e) {
+            log.warn("Contract's source uploading error: ", e);
+            return createErrorStatus(e.getMessage());
+        }
     }
 
     @RequestMapping("/contracts/list")
@@ -59,6 +73,20 @@ public class ContractsController {
     @RequestMapping(value = "/contracts/{address}/delete", method = RequestMethod.POST)
     public boolean stopWatchingContract(@PathVariable String address) {
         return contractsService.deleteContract(address);
+    }
+
+    @RequestMapping(value = "/contracts/{address}/files", method = RequestMethod.POST)
+    public ActionStatus<ContractInfoDTO> uploadContractFiles(
+            @PathVariable String address,
+            @RequestParam("files") MultipartFile[] contracts) {
+
+        try {
+            ContractInfoDTO contract = contractsService.uploadContract(lowerCase(address), contracts);
+            return createSuccessStatus(contract);
+        } catch (Exception e) {
+            log.warn("Contract's source uploading error: ", e);
+            return createErrorStatus(e.getMessage());
+        }
     }
 
     private static class WatchContractDTO {

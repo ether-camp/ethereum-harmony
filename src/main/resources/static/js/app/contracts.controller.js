@@ -39,6 +39,18 @@
         return entry;
     }
 
+    function showErrorToastr(topMessage, bottomMessage) {
+        toastr.clear()
+        toastr.options = {
+            "positionClass": "toast-top-right",
+            "closeButton": true,
+            "progressBar": true,
+            "showEasing": "swing",
+            "timeOut": "4000"
+        };
+        toastr.error('<strong>' + topMessage + '</strong> <br/><small>' + bottomMessage + '</small>');
+    }
+
     function ContractsCtrl($scope, $timeout, scrollConfig, $http, jsonrpc) {
         console.log('Contracts controller activated.');
         $scope.contracts = $scope.contracts || [];
@@ -47,6 +59,10 @@
         $scope.isViewingStorage = false;
         $scope.newContract = {};
         $scope.storage = {entries: [], value: {decoded: ''}};
+
+        // file upload
+        $scope.files = [];
+        $scope.allowFileUpload = false;
 
         var remove0x = Utils.Hex.remove0x;
 
@@ -63,12 +79,9 @@
 
         $scope.onWatchContract = function() {
             $scope.newContract = {};
+            $scope.files = [];
             $scope.isAddingContract = true;
             $scope.isViewingStorage = false;
-        };
-
-        $scope.onWatchContractConfirmed = function() {
-            $scope.onBackToList();
         };
 
         $scope.onBackToList = function() {
@@ -140,17 +153,95 @@
             }
         };
 
-        $scope.onWatchContractConfirmed = function() {
+        $scope.onAddSourceCode = function() {
+            console.log('onAddSourceCode');
             $http({
                 method: 'POST',
                 url: '/contracts/add',
                 data: {
                     address: remove0x($scope.newContract.address).toLowerCase(),
                     sourceCode: $scope.newContract.sourceCode
+                }})
+                .success(function(result) {
+                    console.log('Add source result');
+                    console.log(result);
+                    if (result && result.success) {
+                        return $scope.loadContracts().then($scope.onBackToList);
+                    } else {
+                        showErrorToastr('Upload failed', result.errorMessage || 'Unknown error');
+                    }
+                })
+        };
+
+        $scope.onAddFile = function() {
+            $('#fileInput').click();
+        };
+
+        $('#fileInput').on('change', function(event) {
+
+            event.preventDefault();
+            var files = event.target.files;
+
+            console.log('onAddFileEvent');
+            console.log(files);
+
+            var newArray = $scope.files.slice(0);
+            Array.prototype.push.apply(newArray, files);
+            $scope.files = newArray;
+            $scope.allowFileUpload = $scope.files.length > 0;
+            event.target.value = '';
+        });
+
+        $scope.onRemoveFile = function(file) {
+            var newArray = $scope.files.slice(0);
+            var index = newArray.indexOf(file);
+            if (index > -1) {
+                newArray.splice(index, 1);
+            }
+            $scope.files = newArray;
+            $scope.allowFileUpload = $scope.files.length > 0;
+        };
+
+        $scope.onUploadFiles = function() {
+            var formData = new FormData();
+            $scope.files.forEach(function(f) {
+                formData.append('files', f);
+            });
+
+            $http.post(
+                '/contracts/' + remove0x($scope.newContract.address).toLowerCase() + '/files',
+                formData,
+                {
+                    withCredentials: false,
+                    headers: {
+                        'Content-Type': undefined
+                    },
+                    transformRequest: angular.identity
                 }
-            })
-                .then($scope.loadContracts)
-                .then($scope.onBackToList);
+            ).success(function(result) {
+                console.log('Upload complete');
+                console.log(result);
+                if (result && !result.success) {
+                    showErrorToastr('Upload failed', result.errorMessage || 'Unknown error');
+                } else {
+                    return $scope.loadContracts().then($scope.onBackToList);
+                }
+            });
+        };
+
+        $scope.onFinalAddFiles = function() {
+            if (!$scope.form.$valid) {
+                showErrorToastr('FORM VALIDATION', 'Please fill address.');
+                return;
+            }
+
+            if ($scope.files.length > 0) {
+                $scope.onUploadFiles();
+            } else if ($scope.newContract.sourceCode) {
+                $scope.onAddSourceCode();
+            } else {
+                showErrorToastr('FORM VALIDATION', 'Please fill either contract source code or attach it\'s file.');
+            }
         };
 
         $scope.loadContracts();
