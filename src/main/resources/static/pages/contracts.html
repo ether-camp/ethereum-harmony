@@ -28,7 +28,7 @@
 
     <div class="font-16 font-monospace storage-entry-div">
         <div class="entry-icon-div"/>
-        <span class="c-text font-16">{{entry.key.decoded}}</span> = <span class="font-16 storage-entry-value">{{entry.valueLabel}}</span><span class="m-l-sm font-monospace c-accent">{{entry.type1Label}}</span> (<a href="#" ng-click="onSwitchString(entry)">{{entry.type2Label}}</a>)
+        <span class="c-text font-16">{{entry.key.decoded}}</span> = <span class="font-16 storage-entry-value">{{entry.valueLabel}}</span>&nbsp;<i class="font-monospace c-accent">{{entry.type1Label}}</i>&nbsp;(<a href="#" ng-click="onSwitchString(entry)">{{entry.type2Label}}</a>)
     </div>
 </script>
 
@@ -36,7 +36,7 @@
 
     <div class="font-16 font-monospace storage-entry-div">
         <div class="entry-icon-div"/>
-        <span class="c-text font-16">{{entry.key.decoded}}</span> = <span class="font-16 storage-entry-value">{{entry.valueLabel}}</span><span class="m-l-sm font-monospace c-accent">{{entry.value.typeKind || entry.value.type}}</span>
+        <span class="c-text font-16">{{entry.key.decoded}}</span> = <span class="font-16 storage-entry-value">{{entry.valueLabel}}</span>&nbsp;<i class="font-monospace c-accent">{{entry.value.typeKind || entry.value.type}}</i>
     </div>
 </script>
 

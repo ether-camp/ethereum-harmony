@@ -89,6 +89,7 @@
     <logger level="ERROR" name="gas"/>
     <logger level="ERROR" name="vmtrace"/>
     <logger level="ERROR" name="execute"/>
+    <logger level="INFO" name="import-contract"/>
 
 
 </configuration>

@@ -5,7 +5,7 @@
 (function() {
     'use strict';
 
-    var PAGE_SIZE = 10;
+    var PAGE_SIZE = 30;
     var NULL = '<empty>';
 
     function isBytesAreString(data) {

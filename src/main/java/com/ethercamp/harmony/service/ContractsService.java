@@ -241,7 +241,7 @@ public class ContractsService {
         }
     }
 
-    public String getAsm(String code) {
+    private String getAsm(String code) {
         if (isBlank(code)) return StringUtils.EMPTY;
 
         try {
