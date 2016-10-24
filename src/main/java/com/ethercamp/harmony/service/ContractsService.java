@@ -113,6 +113,7 @@ public class ContractsService {
                     final ContractEntity contract = loadContract(a);
                     return new ContractInfoDTO(Hex.toHexString(a), contract.getName());
                 })
+                .sorted((c1, c2) -> c1.getName().compareToIgnoreCase(c2.getName()))
                 .collect(toList());
     }
 

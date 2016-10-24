@@ -1,18 +1,18 @@
 <script type="text/ng-template" id="tree_item_renderer.html">
 
-    <div class="font-16 font-monospace" ng-show="entry.key != null">
-        <div style="width: 15px; display: inline-block;">
+    <div class="font-16 font-monospace storage-entry-div" ng-show="entry.key != null">
+        <div class="entry-icon-div">
             <a ng-click="onExpand(entry)"
                href="#"
                ng-show="entry.expandable">
                 <i class="fa" ng-class="{'fa-plus-square-o': !entry.expanded, 'fa-minus-square-o': entry.expanded}"/>
             </a>
         </div>
-        <span class="c-text font-16">{{entry.key.decoded}}</span> = <span ng-class="{'c-text': entry.isCompositeObject, 'storage-entry-value': !entry.isCompositeObject}" class="font-16">{{entry.valueLabel}}</span><i class="m-l-sm font-monospace c-accent">{{entry.value.typeKind || entry.value.type}}</i>
+        <span class="c-text font-16">{{entry.key.decoded}}</span> = <span class="font-16 storage-entry-value">{{entry.valueLabel}}</span><i class="m-l-sm font-monospace c-accent">{{entry.value.typeKind || entry.value.type}}</i>
     </div>
 
     <ul style="list-style-type: none; margin-left: 0; padding-left: 0" ng-show="entry.expanded">
-        <li class="m-l-lg" ng-repeat="entry in entry.entries" ng-include="'tree_item_renderer.html'"></li>
+        <li class="m-l-lg" ng-repeat="entry in entry.entries" ng-include="entry.template"></li>
     </ul>
 
     <div class="m-l-lg" ng-show="(entry.entries.length < entry.totalElements) && entry.expanded">
@@ -22,6 +22,22 @@
         <a href="#" ng-click="onShowAll(entry)">show all {{entry.total}}</a>
     </div>
 
+</script>
+
+<script type="text/ng-template" id="tree_string_renderer.html">
+
+    <div class="font-16 font-monospace storage-entry-div">
+        <div class="entry-icon-div"/>
+        <span class="c-text font-16">{{entry.key.decoded}}</span> = <span class="font-16 storage-entry-value">{{entry.valueLabel}}</span><span class="m-l-sm font-monospace c-accent">{{entry.type1Label}}</span> (<a href="#" ng-click="onSwitchString(entry)">{{entry.type2Label}}</a>)
+    </div>
+</script>
+
+<script type="text/ng-template" id="tree_value_renderer.html">
+
+    <div class="font-16 font-monospace storage-entry-div">
+        <div class="entry-icon-div"/>
+        <span class="c-text font-16">{{entry.key.decoded}}</span> = <span class="font-16 storage-entry-value">{{entry.valueLabel}}</span><span class="m-l-sm font-monospace c-accent">{{entry.value.typeKind || entry.value.type}}</span>
+    </div>
 </script>
 
 <section class="content">

@@ -3026,13 +3026,34 @@ input[type="number"] {
 
 .storage-entry-value {
     color: #cccccc;
+    word-wrap: break-word;
+}
+
+.entry-icon-div {
+    width: 13px;
+    display: inline-block;
+    margin-top: 5px;
+}
+
+.storage-entry-div:hover {
+    background-color: #444444;
 }
 
 .storage-backgroud {
     padding-bottom: 10px;
     padding-top: 10px;
+    padding-right: 10px;
+    padding-left: 0;
     background-color: #222222;
     border-radius: 5px;
+}
+
+.storage-entry-div {
+    word-break: break-all;
+}
+
+.storage-entry-div span {
+    /*display: inline-block;*/
 }
 
 .flex-justify-between {

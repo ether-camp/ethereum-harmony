@@ -5,13 +5,53 @@
 (function() {
     'use strict';
 
-    var PAGE_SIZE = 5;
+    var PAGE_SIZE = 10;
     var NULL = '<empty>';
 
+    function isBytesAreString(data) {
+        var isString = false;
+
+        // check leading non zero characters
+        if (/^[^(00)][0-9a-f]{62}/gi.test(data)) {
+            // check trailing zero characters with string length byte
+            isString = /(00)+[0-9a-f]{2}?$/gi.test(data);
+
+            // check if all characters (except last byte) are printable ascii
+            if (!isString) {
+                // remove trailing zeroes and string length (if exists).
+                var bytes = data.replace(/(00)*[0-9a-f]{2}?$/gi, '').match(/.{2}/g);
+                isString = !_.find(bytes, function (byte) {
+                    return !isPrintableAscii(byte);
+                });
+            }
+        }
+
+        return isString;
+    }
+
+    function isPrintableAscii(hexCode) {
+        (typeof hexCode == 'string') && (hexCode = parseInt(hexCode, 16));
+        return (hexCode >= 32) && (hexCode < 127);
+    }
+
+    function bytesToString(data) {
+        var result = '';
+        var bytes = data.replace(/(00)*(00[0-9a-f]{2})?$/gi, '').match(/.{2}/g);
+        bytes.forEach(function (byte) {
+            result += String.fromCharCode(parseInt(byte, 16));
+        });
+
+        return result;
+    }
+
+    /**
+     * Function which fills entry with easy to bind properties.
+     */
     function updateEntry(entry) {
         if (entry.key && entry.value) {
             var isStruct = entry.value.typeKind == 'struct';
             entry.isCompositeObject = entry.value.container || isStruct;
+            entry.template = 'tree_item_renderer.html';
 
             // value label
             if (entry.value.container) {
@@ -24,6 +64,16 @@
                 entry.valueLabel = entry.value.type;
             } else {
                 entry.valueLabel = entry.value.decoded ? entry.value.decoded : NULL;
+                var isString = isBytesAreString(entry.value.decoded);
+                if (isString) {
+                    entry.type1Label = 'string';
+                    entry.type2Label = entry.value.type;
+                    entry.valueLabel = '"' + bytesToString(entry.value.decoded) + '"';
+                    entry.isConverted = true;
+                    entry.template = 'tree_string_renderer.html';
+                } else {
+                    entry.template = 'tree_value_renderer.html';
+                }
             }
 
             // if need to show expand button
@@ -318,6 +368,19 @@
                 entry.totalElements = entry.totalElements || 0;
                 load(entry, 0, PAGE_SIZE);
                 entry.expanded = !entry.expanded;
+            };
+
+            $scope.onSwitchString = function(entry) {
+                entry.isConverted = !entry.isConverted;
+                if (entry.isConverted) {
+                    entry.type1Label = 'string';
+                    entry.type2Label = entry.value.type;
+                    entry.valueLabel = '"' + bytesToString(entry.value.decoded) + '"';
+                } else {
+                    entry.type1Label = entry.value.type;
+                    entry.type2Label = 'string';
+                    entry.valueLabel = entry.value.decoded;
+                }
             };
         }]);
 })();

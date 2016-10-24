@@ -19,7 +19,6 @@
 package com.ethercamp.harmony.web.controller;
 
 import com.ethercamp.contrdata.storage.StorageEntry;
-import com.ethercamp.contrdata.storage.StoragePage;
 import com.ethercamp.harmony.dto.ActionStatus;
 import com.ethercamp.harmony.dto.ContractInfoDTO;
 import com.ethercamp.harmony.service.ContractsService;
