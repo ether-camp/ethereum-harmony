@@ -56,14 +56,11 @@ import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-import static java.lang.String.format;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
@@ -74,6 +71,9 @@ import static org.ethereum.util.ByteUtil.toHexString;
 import com.ethercamp.harmony.dto.ContractObjects.*;
 
 /**
+ * Viewing contract storage variables.
+ * Depends on contract-data project.
+ *
  * This class operates with hex address in lowercase without 0x.
  *
  * Created by Stan Reshetnyk on 17.10.16.
@@ -98,12 +98,13 @@ public class ContractsService {
     @Autowired
     Ethereum ethereum;
 
-    LevelDbDataSource contractsStorage = new LevelDbDataSource("contractsStorage");
+    KeyValueDataSource contractsStorage;
 
     ObjectToBytesFormat<ContractEntity> contractFormat = new ObjectToBytesFormat<>(ContractEntity.class);
 
     @PostConstruct
     public void init() {
+        contractsStorage = new LevelDbDataSource("contractsStorage");
         contractsStorage.init();
     }
 
@@ -126,9 +127,13 @@ public class ContractsService {
                 .collect(toList());
     }
 
-    private ContractEntity loadContract(byte[] address) {
-        final byte[] loadedBytes = contractsStorage.get(address);
-        return contractFormat.decode(loadedBytes);
+    public ContractInfoDTO uploadContract(String address, MultipartFile[] files) {
+        return compileAndSave(address, Source.toPlain(files));
+    }
+
+    public IndexStatusDTO getIndexStatus() throws IOException {
+        return new IndexStatusDTO(
+                FileUtils.sizeOfDirectory(new File(config.databaseDir() + "/storageDict")));
     }
 
     /**
@@ -142,39 +147,10 @@ public class ContractsService {
         final ContractEntity contract = Optional.ofNullable(contractsStorage.get(Hex.decode(address)))
                 .map(bytes -> contractFormat.decode(bytes))
                 .orElseThrow(() -> new RuntimeException("Contract sources not found"));
-        final CompilationResult result = compileAbi(contract.src.getBytes());
-        final String abi = getValidatedAbi(address, contract.getName(), result);
-        final String dataMembers = compileAst(contract.src.getBytes()).getContractAllDataMembers(contract.getName()).toJson();
 
-//        final byte[] addressBytes = Hex.decode(address);
-//        final StoragePage storageEntries = contractDataService.getStorageEntries(addressBytes, 0, 10);
-//        log.info("storageEntries " + storageEntries.getSize());
+        final StoragePage storagePage = contractDataService.getContractData(address, contract.getDataMembers(), Path.parse(path), pageable.getPageNumber(), pageable.getPageSize());
 
-        final StoragePage storagePage = contractDataService.getContractData(address, dataMembers, Path.parse(path), pageable.getPageNumber(), pageable.getPageSize());
-
-        log.info("contractData " + storagePage.getSize());
         return new PageImpl<>(storagePage.getEntries(), pageable, storagePage.getTotal());
-    }
-
-    /**
-     * Find target contract name from several ones in sources.
-     */
-    private String getContractName(String address, String src) {
-        final CompilationResult result = compileAbi(src.getBytes());
-        for (String name : result.getContracts().keySet()) {
-
-            try {
-                final String abi = getValidatedAbi(address, name, result);
-                final String dataMembers = compileAst(src.getBytes()).getContractAllDataMembers(name).toJson();
-
-                return name;
-
-            } catch (ContractException e) {
-                log.debug(format("contract '%s' verifying:", name), e);
-            }
-        }
-
-        throw ContractException.validationError("target contract source not found within uploaded sources.");
     }
 
     private String getValidatedAbi(String address, String contractName, CompilationResult result) {
@@ -202,9 +178,7 @@ public class ContractsService {
                 throw validationError("incorrect code version: function with hash '%s' not found.", funcHash);
             }
         });
-//
         return abi;
-
     }
 
     private static Set<String> extractFuncHashes(String asm) {
@@ -219,7 +193,6 @@ public class ContractsService {
         return result;
     }
 
-    // TODO: join two compilations to one method
     private static CompilationResult compileAbi(byte[] source) throws ContractException {
         try {
             SolidityCompiler.Result result = SolidityCompiler.compile(source, true, SolidityCompiler.Options.ABI);
@@ -260,14 +233,10 @@ public class ContractsService {
         }
     }
 
-    private static CompilationResult parseCompilationResult(String rawJson) throws IOException {
-        return new ObjectMapper().readValue(rawJson, CompilationResult.class);
-    }
-
-    public ContractInfoDTO uploadContract(String address, MultipartFile[] files) {
-        return compileAndSave(address, Source.toPlain(files));
-    }
-
+    /**
+     * Try to compile each file and check if it's interface matches to asm functions hashes at the contract
+     * @return contract from matched file
+     */
     private ContractInfoDTO compileAndSave(String address, List<String> files) {
         return files.stream()
                 .flatMap(src -> {
@@ -293,9 +262,13 @@ public class ContractsService {
                 .orElseThrow(() -> validationError("target contract source not found within uploaded sources."));
     }
 
-    public IndexStatusDTO getIndexStatus() throws IOException {
-        return new IndexStatusDTO(
-                FileUtils.sizeOfDirectory(new File(config.databaseDir() + "/storageDict")));
+    private ContractEntity loadContract(byte[] address) {
+        final byte[] loadedBytes = contractsStorage.get(address);
+        return contractFormat.decode(loadedBytes);
+    }
+
+    private static CompilationResult parseCompilationResult(String rawJson) throws IOException {
+        return new ObjectMapper().readValue(rawJson, CompilationResult.class);
     }
 
     @Data
