@@ -208,7 +208,8 @@ public class BlockchainInfoService implements ApplicationListener {
                     serverPort,
                     isPrivateNetwork,
                     env.getProperty("portCheckerUrl"),
-                    config.bindIp()
+                    config.bindIp(),
+                    env.getProperty("feature.contract.enabled", "false").equalsIgnoreCase("true")
             ));
 
             final String ANSI_RESET = "\u001B[0m";

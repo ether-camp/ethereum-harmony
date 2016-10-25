@@ -24,7 +24,6 @@ import com.ethercamp.contrdata.storage.Path;
 import com.ethercamp.contrdata.storage.StorageEntry;
 import com.ethercamp.contrdata.storage.StoragePage;
 import com.ethercamp.contrdata.storage.dictionary.StorageDictionaryVmHook;
-import com.ethercamp.harmony.dto.ContractInfoDTO;
 import com.ethercamp.harmony.service.contracts.Source;
 import com.ethercamp.harmony.util.exception.ContractException;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -35,9 +34,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.ethereum.config.SystemProperties;
 import org.ethereum.core.CallTransaction;
+import org.ethereum.datasource.KeyValueDataSource;
 import org.ethereum.datasource.LevelDbDataSource;
 import org.ethereum.facade.Ethereum;
 import org.ethereum.solidity.compiler.SolidityCompiler;
@@ -51,8 +53,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.PostConstruct;
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -66,6 +71,7 @@ import static org.apache.commons.lang3.StringUtils.*;
 import static org.ethereum.solidity.compiler.ContractException.compilationError;
 import static org.ethereum.solidity.compiler.ContractException.validationError;
 import static org.ethereum.util.ByteUtil.toHexString;
+import com.ethercamp.harmony.dto.ContractObjects.*;
 
 /**
  * This class operates with hex address in lowercase without 0x.
@@ -85,6 +91,9 @@ public class ContractsService {
 
     @Autowired
     ContractDataService contractDataService;
+
+    @Autowired
+    SystemProperties config;
 
     @Autowired
     Ethereum ethereum;
@@ -282,6 +291,11 @@ public class ContractsService {
                 })
                 .findAny()
                 .orElseThrow(() -> validationError("target contract source not found within uploaded sources."));
+    }
+
+    public IndexStatusDTO getIndexStatus() throws IOException {
+        return new IndexStatusDTO(
+                FileUtils.sizeOfDirectory(new File(config.databaseDir() + "/storageDict")));
     }
 
     @Data

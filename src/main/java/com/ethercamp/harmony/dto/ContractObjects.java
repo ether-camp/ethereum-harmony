@@ -24,12 +24,26 @@ import lombok.Value;
 /**
  * Created by Stan Reshetnyk on 18.10.16.
  */
-@Value
-@AllArgsConstructor
-public class ContractInfoDTO {
+public class ContractObjects {
 
-    private final String address;
+    @Value
+    @AllArgsConstructor
+    public static class ContractInfoDTO {
 
-    private final String name;
+        private final String address;
 
+        private final String name;
+
+    }
+
+    @Value
+    @AllArgsConstructor
+    public static class IndexStatusDTO {
+
+        private final long indexSize;
+
+//        private final long databaseSize;
+    }
 }
+
+

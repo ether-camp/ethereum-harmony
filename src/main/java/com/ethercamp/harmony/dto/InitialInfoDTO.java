@@ -42,9 +42,11 @@ public class InitialInfoDTO {
 
     private final Integer rpcPort;
 
-    private boolean privateNetwork;
+    private final boolean privateNetwork;
 
     private final String portCheckerUrl;
 
     private final String publicIp;
+
+    private final boolean featureContracts;
 }

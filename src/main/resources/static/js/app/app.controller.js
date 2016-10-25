@@ -382,6 +382,7 @@
                 vm.data.rpcPort = info.rpcPort;
                 vm.data.publicIp = info.publicIp;
                 vm.data.portCheckerUrl = info.portCheckerUrl;
+                vm.data.featureContracts = info.featureContracts;
             }, 10);
 
             console.log('App version ' + info.appVersion + ', info.privateNetwork: ' + info.privateNetwork);

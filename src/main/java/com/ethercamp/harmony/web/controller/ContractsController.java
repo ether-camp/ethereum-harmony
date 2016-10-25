@@ -20,7 +20,7 @@ package com.ethercamp.harmony.web.controller;
 
 import com.ethercamp.contrdata.storage.StorageEntry;
 import com.ethercamp.harmony.dto.ActionStatus;
-import com.ethercamp.harmony.dto.ContractInfoDTO;
+import com.ethercamp.harmony.dto.ContractObjects.*;
 import com.ethercamp.harmony.service.ContractsService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -87,6 +87,19 @@ public class ContractsController {
             return createErrorStatus(e.getMessage());
         }
     }
+
+    @RequestMapping("/contracts/indexStatus")
+    public ActionStatus<IndexStatusDTO> getIndexStatus() {
+        try {
+            IndexStatusDTO result = contractsService.getIndexStatus();
+            return createSuccessStatus(result);
+        } catch (Exception e) {
+            log.warn("Contract's index status error: ", e);
+            return createErrorStatus(e.getMessage());
+        }
+    }
+
+
 
     private static class WatchContractDTO {
 

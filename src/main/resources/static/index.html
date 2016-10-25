@@ -184,7 +184,7 @@
                     <a href="/wallet">Wallet</a>
                 </li>
 
-                <li ng-class="{active: vm.data.currentPage == '/terminal'}">
+                <li ng-class="{active: vm.data.currentPage == '/terminal'}" ng-show="vm.data.featureContracts" ng-cloak>
                     <a href="/contracts">Contracts</a>
                 </li>
 
@@ -269,7 +269,7 @@
 <script src="js/app/util/generateWord.js"></script>
 
 <script src="js/app/app.controller.js"></script>
-<script src="js/app/data.factory.js"></script>
+<script src="js/app/rest.factory.js"></script>
 <script src="js/app/home.controller.js"></script>
 <script src="js/app/wallet.controller.js"></script>
 <script src="js/app/systemLog.controller.js"></script>

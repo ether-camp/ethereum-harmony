@@ -22,7 +22,9 @@ import com.ethercamp.harmony.dto.*;
 import com.ethercamp.harmony.service.BlockchainInfoService;
 import com.ethercamp.harmony.service.ContractsService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.http.HttpRequest;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.text.DecimalFormat;
@@ -43,7 +46,8 @@ public class WebSocketController {
     BlockchainInfoService blockchainInfoService;
 
     @Autowired
-    ContractsService contractsService;
+    private Environment env;
+
 
     /**
      * Websocket handlers for immediate result.
@@ -69,17 +73,16 @@ public class WebSocketController {
         return blockchainInfoService.getSystemLogs();
     }
 
-    @MessageMapping("/currentContracts")
-    public List<ContractInfoDTO> getContracts() {
-        return contractsService.getContracts();
-    }
-
     /**
      * Defines request mapping for all site pages.
      * As we have angular routing - we return index.html here.
      */
     @RequestMapping({"/", "/systemLog", "/peers", "/rpcUsage", "/terminal", "/wallet", "/contracts"})
-    public String index() {
+    public String index(HttpServletRequest request) {
+        final boolean contractsEnabled = env.getProperty("feature.contract.enabled", "false").equalsIgnoreCase("true");
+        if (!contractsEnabled && request.getRequestURI().equalsIgnoreCase("/contracts")) {
+            return "error.html";
+        }
         return "index.html";
     }
 

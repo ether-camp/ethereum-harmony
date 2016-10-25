@@ -101,7 +101,7 @@
         toastr.error('<strong>' + topMessage + '</strong> <br/><small>' + bottomMessage + '</small>');
     }
 
-    function ContractsCtrl($scope, $timeout, scrollConfig, $http, jsonrpc) {
+    function ContractsCtrl($scope, $timeout, scrollConfig, $http, jsonrpc, restService) {
         console.log('Contracts controller activated.');
         $scope.contracts = $scope.contracts || [];
         $scope.scrollConfig = jQuery.extend(true, {}, scrollConfig);
@@ -109,6 +109,7 @@
         $scope.isViewingStorage = false;
         $scope.newContract = {};
         $scope.storage = {entries: [], value: {decoded: ''}};
+        $scope.indexSizeString = 'n/a';
 
         // file upload
         $scope.files = [];
@@ -119,6 +120,12 @@
         $scope.$on('$destroy', function() {
             console.log('Contracts controller exited.');
         });
+
+        $timeout(function() {
+            restService.Contracts.getIndexStatus().then(function(result) {
+                $scope.indexSizeString = filesize(result.indexSize);
+            });
+        }, 100);
 
         /**
          * Resize table to fit all available space.
@@ -311,7 +318,7 @@
     }
 
     angular.module('HarmonyApp')
-        .controller('ContractsCtrl', ['$scope', '$timeout', 'scrollConfig', '$http', 'jsonrpc', ContractsCtrl])
+        .controller('ContractsCtrl', ['$scope', '$timeout', 'scrollConfig', '$http', 'jsonrpc', 'restService', ContractsCtrl])
 
         /**
          * Controller for rendering contract storage in expandable tree view.
