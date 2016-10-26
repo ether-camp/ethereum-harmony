@@ -3039,7 +3039,7 @@ input[type="number"] {
     background-color: #333333;
 }
 
-.storage-backgroud {
+.storage-background {
     padding-bottom: 10px;
     padding-top: 10px;
     padding-right: 10px;
@@ -3067,3 +3067,13 @@ input[type="number"] {
 .verticalLine {
     border-left: thick solid #ffffff;
 }
+
+/*input.ng-invalid {*/
+    /*!*background:#F84072;*!*/
+    /*border: 2px red solid;*/
+/*}*/
+
+/*input.ng-untouched {*/
+    /*!*background:#F84072;*!*/
+    /*border: 0px black solid !important;*/
+/*}*/

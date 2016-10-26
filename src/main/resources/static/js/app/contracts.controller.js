@@ -139,6 +139,11 @@
             $scope.files = [];
             $scope.isAddingContract = true;
             $scope.isViewingStorage = false;
+
+            // reset form validation
+            $scope.$broadcast('show-errors-reset');
+            $scope.form.$setUntouched();
+            $scope.form.$setPristine();
         };
 
         $scope.onBackToList = function() {
@@ -287,6 +292,10 @@
         };
 
         $scope.onFinalAddFiles = function() {
+            // force showing validation
+            $scope.form.$setSubmitted();
+            $scope.$broadcast('show-errors-check-validity');
+
             if (!$scope.form.$valid) {
                 showErrorToastr('FORM VALIDATION', 'Please fill address.');
                 return;

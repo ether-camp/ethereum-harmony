@@ -3,6 +3,7 @@
 
     // Angular modules definition
     var mainApp = angular.module('HarmonyApp', [
+        'ui.bootstrap.showErrors',      // form validation extension
         'ngRoute',                      // sub page navigation
         'angular-jsonrpc-client',       // json-rpc communication
         'ngStomp',                      // websocket communication
