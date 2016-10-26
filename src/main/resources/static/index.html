@@ -28,29 +28,31 @@
     </script>
 
     <script src="js/vendor/stomp.js"></script>
-    <script src="bower_components/jquery/dist/jquery.js"></script>
-    <script src="bower_components/bootstrap/dist/js/bootstrap.js"></script>
-    <script src="bower_components/angular/angular.js"></script>
-    <script src="bower_components/angular-route/angular-route.js"></script>
-    <script src="bower_components/angular-animate/angular-animate.js"></script>
-    <script src="bower_components/sockjs-client/dist/sockjs-0.3.4.min.js"></script>
-    <script src="bower_components/filesize/lib/filesize.min.js"></script>
-    <script src="bower_components/PACE/pace.min.js"></script>
-    <script src="bower_components/toastr/toastr.min.js"></script>
-    <script src="bower_components/moment/moment.js"></script>
-    <script src="bower_components/malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.js"></script>
-    <script src="bower_components/ng-scrollbars/dist/scrollbars.min.js"></script>
-    <script src="bower_components/underscore/underscore-min.js"></script>
-    <script src="bower_components/d3/d3.min.js"></script>
-    <script src="bower_components/bignumber.js/bignumber.min.js"></script>
-    <!--<script src="bower_components/bignumber.js/bignumber.min.js"></script>-->
+    <script src="webjars/jquery/2.2.4/jquery.js"></script>
+    <script src="webjars/bootstrap/3.3.6/dist/js/bootstrap.js"></script>
+
+    <script src="webjars/angular/1.5.8/angular.js"></script>
+    <script src="webjars/angular-route/1.5.8/angular-route.js"></script>
+    <script src="webjars/angular-animate/1.5.8/angular-animate.js"></script>
+
+    <script src="webjars/sockjs-client/1.1.1/dist/sockjs-1.1.1.min.js"></script>
+    <script src="webjars/filesize/3.2.1/lib/filesize.min.js"></script>
+    <script src="webjars/pace/1.0.2/pace.min.js"></script>
+    <script src="webjars/toastr/2.1.2/toastr.min.js"></script>
+    <script src="webjars/moment/2.14.1/moment.js"></script>
+    <script src="webjars/malihu-custom-scrollbar-plugin/3.1.5/jquery.mCustomScrollbar.js"></script>
+    <script src="webjars/ng-scrollbars/0.0.10/dist/scrollbars.min.js"></script>
+    <script src="webjars/underscore/1.8.3/underscore-min.js"></script>
+    <script src="webjars/d3/3.5.17/d3.min.js"></script>
+    <script src="webjars/bignumber.js/2.4.0/bignumber.min.js"></script>
+    <!--<script src="webjars/bignumber.js/bignumber.min.js"></script>-->
 
     <!-- Vendor styles -->
-    <link rel="stylesheet" href="bower_components/font-awesome/css/font-awesome.css"/>
-    <link rel="stylesheet" href="bower_components/animate.css/animate.css"/>
-    <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css"/>
-    <link rel="stylesheet" href="bower_components/toastr/toastr.min.css"/>
-    <link rel="stylesheet" href="bower_components/malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.css"/>
+    <link rel="stylesheet" href="webjars/font-awesome/4.6.3/css/font-awesome.css"/>
+    <link rel="stylesheet" href="webjars/animate.css/3.5.2/animate.css"/>
+    <link rel="stylesheet" href="webjars/bootstrap/3.3.6/dist/css/bootstrap.css"/>
+    <link rel="stylesheet" href="webjars/toastr/2.1.2/toastr.min.css"/>
+    <link rel="stylesheet" href="webjars/malihu-custom-scrollbar-plugin/3.1.5/jquery.mCustomScrollbar.css"/>
 
     <!-- App styles -->
     <link rel="stylesheet" href="styles/pe-icons/pe-icon-7-stroke.css"/>
@@ -184,7 +186,7 @@
                     <a href="/wallet">Wallet</a>
                 </li>
 
-                <li ng-class="{active: vm.data.currentPage == '/terminal'}" ng-show="vm.data.featureContracts" ng-cloak>
+                <li ng-class="{active: vm.data.currentPage == '/contracts'}" ng-show="vm.data.featureContracts" ng-cloak>
                     <a href="/contracts">Contracts</a>
                 </li>
 
