@@ -501,7 +501,10 @@ public class EthJsonRpcImpl implements JsonRpc {
 
     protected void validateAndSubmit(Transaction tx) {
         if (tx.getValue().length > 0 && tx.getValue()[0] == 0) {
-            throw new RuntimeException("Field 'value' should not have leading zero");
+            // zero value should be sent as empty byte array
+            // otherwise tx will be accepted by core, but never included in block
+//            throw new RuntimeException("Field 'value' should not have leading zero");
+            log.warn("Transaction might use incorrect zero value");
         }
 
         eth.submitTransaction(tx);
