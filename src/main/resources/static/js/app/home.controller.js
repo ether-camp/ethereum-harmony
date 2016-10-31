@@ -153,6 +153,7 @@
                             .text(success ? 'v' : 'x')
                             .css('color', success ? 'green' : 'red');
                         $scope.vm.data.publicIp = address;
+                        $scope.vm.data.publicIpLabel = 'Public IP'
                     }
                 }
 

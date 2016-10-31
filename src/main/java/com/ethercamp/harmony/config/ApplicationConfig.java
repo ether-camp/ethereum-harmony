@@ -18,41 +18,31 @@
 
 package com.ethercamp.harmony.config;
 
-import com.ethercamp.harmony.jsonrpc.JsonRpc;
-import com.ethercamp.harmony.jsonrpc.JsonRpcImpl;
-import com.ethercamp.harmony.util.AppConst;
 import com.ethercamp.harmony.web.filter.JsonRpcUsageFilter;
-import com.googlecode.jsonrpc4j.spring.JsonServiceExporter;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.googlecode.jsonrpc4j.spring.AutoJsonRpcServiceExporter;
 import org.springframework.boot.context.embedded.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.filter.HiddenHttpMethodFilter;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
 /**
  * Created by Stan Reshetnyk on 18.07.16.
  */
 @Configuration
+@ComponentScan("com.ethercamp")
 public class ApplicationConfig extends WebMvcConfigurerAdapter {
 
-    @Autowired
-    JsonRpc jsonRpc;
-
     /**
-     * Configuration for publishing all service methods as JSON-RPC
+     * Export bean which will find our json-rpc bean with @JsonRpcService and publish it.
+     * https://github.com/briandilley/jsonrpc4j/issues/69
      */
-    @Bean(name = AppConst.JSON_RPC_PATH)
-    public JsonServiceExporter rpc() {
-        JsonServiceExporter ret = new JsonServiceExporter();
-        ret.setService(jsonRpc);
-        ret.setServiceInterface(JsonRpc.class);
-        return ret;
-    }
-
     @Bean
-    public JsonRpc harmonyJsonRpc() {
-        return new JsonRpcImpl();
+    @SuppressWarnings("deprecation")
+    public AutoJsonRpcServiceExporter exporter() {
+        return new AutoJsonRpcServiceExporter();
     }
 
     /**
@@ -72,5 +62,13 @@ public class ApplicationConfig extends WebMvcConfigurerAdapter {
     @Bean
     public JsonRpcUsageFilter rpcUsageFilter() {
         return new JsonRpcUsageFilter();
+    }
+
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        if (!registry.hasMappingForPattern("/webjars/**")) {
+            registry.addResourceHandler("/webjars/**").addResourceLocations(
+                    "classpath:/META-INF/resources/webjars/");
+        }
     }
 }

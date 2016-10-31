@@ -50,9 +50,12 @@ import java.util.stream.Collectors;
 public class JsonRpcUsageFilter implements Filter {
 
     private static final List<String> EXCLUDE_LOGS = Arrays.asList("eth_getLogs", "eth_getFilterLogs",
-            "personal_newAccount", "personal_importRawKey", "personal_unlockAccount");
+            "personal_newAccount", "personal_importRawKey", "personal_unlockAccount", "personal_signAndSendTransaction");
+
     @Autowired
     JsonRpcUsageService jsonRpcUsageService;
+
+    final ObjectMapper mapper = new ObjectMapper();
 
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
@@ -62,29 +65,23 @@ public class JsonRpcUsageFilter implements Filter {
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         if ((request instanceof HttpServletRequest) || !(response instanceof HttpServletResponse)) {
-            HttpServletRequest httpRequest = (HttpServletRequest) request;
+            final HttpServletRequest httpRequest = (HttpServletRequest) request;
+            final HttpServletResponse httpResponse = (HttpServletResponse) response;
 
             if (AppConst.JSON_RPC_PATH.equals(httpRequest.getRequestURI())) {
-                final ObjectMapper mapper = new ObjectMapper();
 
                 try {
                     final ResettableStreamHttpServletRequest wrappedRequest = new ResettableStreamHttpServletRequest(
-                            (HttpServletRequest) request);
+                            httpRequest);
 
                     final String body = IOUtils.toString(wrappedRequest.getReader());
-
-                    // read request for log later
-                    final JsonNode json = mapper.readTree(body);
-                    final String methodName = json.get("method").asText();
-                    final List<String> params = new ArrayList<>();
-                    json.get("params").forEach(n -> params.add(n.asText()));
 
                     wrappedRequest.resetInputStream();
 
                     if (response.getCharacterEncoding() == null) {
                         response.setCharacterEncoding("UTF-8");
                     }
-                    HttpServletResponseCopier responseCopier = new HttpServletResponseCopier((HttpServletResponse) response);
+                    final HttpServletResponseCopier responseCopier = new HttpServletResponseCopier(httpResponse);
 
                     try {
                         chain.doFilter(wrappedRequest, responseCopier);
@@ -93,17 +90,24 @@ public class JsonRpcUsageFilter implements Filter {
                         // read response for stats and log
                         final byte[] copy = responseCopier.getCopy();
                         final String responseText = new String(copy, response.getCharacterEncoding());
-                        jsonRpcUsageService.methodInvoked(methodName, responseText);
 
-                        if (log.isInfoEnabled()) {
-                            // passwords could be sent here
-                            if (!EXCLUDE_LOGS.contains(methodName)) {
-                                log.info(methodName + "(" + params.stream().collect(Collectors.joining(", ")) + "): " + responseText);
-                            } else {
-                                // logging is handled manually in service
+                        final JsonNode json = mapper.readTree(body);
+                        final JsonNode responseJson = mapper.readTree(responseText);
+
+                        if (json.isArray()) {
+                            for (int i = 0; i < json.size(); i++) {
+                                notifyInvocation(json.get(i), responseJson.get(i));
                             }
+                        } else {
+                            notifyInvocation(json, responseJson);
+                        }
+
+                        // According to spec, JSON-RPC 2 should return status 200 in case of error
+                        if (httpResponse.getStatus() == 500) {
+                            httpResponse.setStatus(200);
                         }
                     }
+
                 } catch (IOException e) {
                     log.error("Error parsing JSON-RPC request", e);
                 }
@@ -114,6 +118,40 @@ public class JsonRpcUsageFilter implements Filter {
             throw new RuntimeException("JsonRpcUsageFilter supports only HTTP requests.");
         }
     }
+
+    private void notifyInvocation(JsonNode requestJson, JsonNode responseJson) throws IOException {
+        final String responseText = mapper.writeValueAsString(responseJson);
+        final String methodName = requestJson.get("method").asText();
+        final List<JsonNode> params = new ArrayList<>();
+        requestJson.get("params").forEach(n -> params.add(n));
+
+        jsonRpcUsageService.methodInvoked(methodName, responseText);
+
+        if (log.isInfoEnabled()) {
+            // passwords could be sent here
+            if (!EXCLUDE_LOGS.contains(methodName)) {
+                log.info(methodName + "(" + params.stream()
+                        .map(n -> n.asText())
+                        .collect(Collectors.joining(", ")) + "): " + responseText);
+            } else {
+                // logging is handled manually in service
+            }
+        }
+    }
+
+    private String dumpToString(JsonNode n) {
+        if (n.isTextual()) {
+            return n.asText();
+        } else {
+            try {
+                return mapper.writeValueAsString(n);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+    }
+
 
     @Override
     public void destroy() {

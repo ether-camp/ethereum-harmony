@@ -18,7 +18,10 @@
 
 package com.ethercamp.harmony.jsonrpc;
 
+import com.ethercamp.harmony.util.AppConst;
+import com.googlecode.jsonrpc4j.JsonRpcService;
 import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.Value;
 import org.ethereum.core.Block;
@@ -27,12 +30,15 @@ import org.ethereum.core.Transaction;
 import org.ethereum.vm.LogInfo;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 import static com.ethercamp.harmony.jsonrpc.TypeConverter.toJsonHex;
 
 /**
  * Created by Anton Nashatyrev on 25.11.2015.
  */
+@JsonRpcService(AppConst.JSON_RPC_PATH)
 public interface JsonRpc {
 
     @Value
@@ -44,6 +50,8 @@ public interface JsonRpc {
         private final String highestBlock;
     }
 
+    @NoArgsConstructor
+    @AllArgsConstructor
     class CallArguments {
         public String from;
         public String to;
@@ -76,7 +84,7 @@ public interface JsonRpc {
         public String logsBloom; // DATA, 256 Bytes - the bloom filter for the logs of the block. null when its pending block.
         public String transactionsRoot; // DATA, 32 Bytes - the root of the transaction trie of the block.
         public String stateRoot; // DATA, 32 Bytes - the root of the final state trie of the block.
-        public String receiptsRoot; // DATA, 32 Bytes - the root of the receipts trie of the block.
+        public String receiptRoot; // DATA, 32 Bytes - the root of the receipts trie of the block.
         public String miner; // DATA, 20 Bytes - the address of the beneficiary to whom the mining rewards were given.
         public String difficulty; // QUANTITY - integer of the difficulty for this block.
         public String totalDifficulty; // QUANTITY - integer of the total difficulty of the chain until this block.
@@ -99,7 +107,7 @@ public interface JsonRpc {
                     ", logsBloom='" + logsBloom + '\'' +
                     ", transactionsRoot='" + transactionsRoot + '\'' +
                     ", stateRoot='" + stateRoot + '\'' +
-                    ", receiptsRoot='" + receiptsRoot + '\'' +
+                    ", receiptRoot='" + receiptRoot + '\'' +
                     ", miner='" + miner + '\'' +
                     ", difficulty='" + difficulty + '\'' +
                     ", totalDifficulty='" + totalDifficulty + '\'' +
@@ -212,7 +220,7 @@ public interface JsonRpc {
     String net_peerCount();
     boolean net_listening();
     String eth_protocolVersion();
-    SyncingResult eth_syncing();
+    Object eth_syncing();
     String eth_coinbase();
     boolean eth_mining();
 //    String eth_hashrate();
@@ -292,7 +300,7 @@ public interface JsonRpc {
 //    String shh_getMessages();
 //
 //
-//    boolean admin_addPeer(String s);
+    boolean admin_addPeer(String enode);
 //
 //    String admin_exportChain();
 //    String admin_importChain();
@@ -311,8 +319,8 @@ public interface JsonRpc {
 //    String admin_stopNatSpec();
 //    String admin_getContractInfo();
 //    String admin_httpGet();
-//    String admin_nodeInfo();
-//    String admin_peers();
+    Map<String, ?> admin_nodeInfo() throws Exception;
+    List<Map<String, ?>> admin_peers();
 //    String admin_datadir();
 //    String net_addPeer();
 
@@ -343,4 +351,5 @@ public interface JsonRpc {
 
     String[] personal_listAccounts();
     String[] ethj_listAvailableMethods();
+    String personal_signAndSendTransaction(CallArguments tx, String password);
 }

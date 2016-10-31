@@ -2903,6 +2903,10 @@ fieldset[disabled] .form-control {
     font-family: sans-serif, monospace;
 }
 
+.font-monospace {
+    font-family: monospace;
+}
+
 
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
@@ -3015,3 +3019,61 @@ input[type="number"] {
 .suggestion-item {
     padding: 5px 0 5px 5px !important;
 }
+
+.storage-entry-type {
+    color: #c4660f;
+}
+
+.storage-entry-value {
+    color: #cccccc;
+    word-wrap: break-word;
+}
+
+.entry-icon-div {
+    width: 13px;
+    display: inline-block;
+    margin-top: 5px;
+}
+
+.storage-entry-div:hover {
+    background-color: #333333;
+}
+
+.storage-background {
+    padding-bottom: 10px;
+    padding-top: 10px;
+    padding-right: 10px;
+    padding-left: 0;
+    background-color: #222222;
+    border-radius: 5px;
+}
+
+.storage-entry-div {
+    word-break: break-all;
+}
+
+.storage-entry-div span {
+    /*display: inline-block;*/
+}
+
+.flex-justify-between {
+    justify-content: space-between;
+}
+
+.flex-justify-center {
+    justify-content: center;
+}
+
+.verticalLine {
+    border-left: thick solid #ffffff;
+}
+
+/*input.ng-invalid {*/
+    /*!*background:#F84072;*!*/
+    /*border: 2px red solid;*/
+/*}*/
+
+/*input.ng-untouched {*/
+    /*!*background:#F84072;*!*/
+    /*border: 0px black solid !important;*/
+/*}*/

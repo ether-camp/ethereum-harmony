@@ -7,15 +7,6 @@
 (function() {
     'use strict';
 
-    /**
-     * @example 1000 -> "1,000"
-     */
-    function numberWithCommas(x) {
-        var arr = x.toString().split('.');
-        var arr1 = arr[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-        return arr.length == 1 ? arr1 : arr1 + '.' + arr[1];
-    }
-
     function hexToInt(hexValue) {
         return parseInt(remove0x(hexValue), 16);
     }
@@ -108,7 +99,7 @@
                 var convertToEth = function(value) { return new BigNumber('' + value).dividedBy(ethRate / cutTo).floor().dividedBy(cutTo); }
 
                 $scope.totalAmount = convertToEth(data.totalAmount).toNumber();
-                $scope.totalAmountString = numberWithCommas($scope.totalAmount);
+                $scope.totalAmountString = Utils.Format.numberWithCommas($scope.totalAmount);
 
                 data.addresses.forEach(function(a) {
                     a.publicAddress = EthUtil.toChecksumAddress(a.publicAddress);
@@ -117,11 +108,11 @@
                     var pendingAmount = convertToEth(a.pendingAmount);
 
                     a.amount = amount.toNumber();
-                    a.amountString = numberWithCommas(a.amount);
+                    a.amountString = Utils.Format.numberWithCommas(a.amount);
                     var pendingAmountNumber = pendingAmount.toNumber();
                     if (pendingAmountNumber != 0) {
                         var sign = pendingAmountNumber > 0 ? '+' : '';
-                        a.pendingAmountString = '(' + sign + numberWithCommas(pendingAmountNumber) + ')';
+                        a.pendingAmountString = '(' + sign + Utils.Format.numberWithCommas(pendingAmountNumber) + ')';
                     } else {
                         a.pendingAmountString = '';
                     }
@@ -135,7 +126,7 @@
             }).then(function(result) {
                 try {
                     var price = result.data.price.usd;
-                    $scope.totalAmountUSD = numberWithCommas($scope.totalAmount * price);
+                    $scope.totalAmountUSD = Utils.Format.numberWithCommas($scope.totalAmount * price);
                 } catch (e) {
                     // silent
                     console.log('Problem loading market value of ETH. ' + e)

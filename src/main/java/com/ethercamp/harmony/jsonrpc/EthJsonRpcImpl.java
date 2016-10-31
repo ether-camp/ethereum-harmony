@@ -19,15 +19,17 @@
 package com.ethercamp.harmony.jsonrpc;
 
 import com.ethercamp.harmony.keystore.Keystore;
-import com.ethercamp.harmony.service.BlockchainInfoService;
 import com.ethercamp.harmony.util.ErrorCodes;
-import com.ethercamp.harmony.util.HarmonyException;
+import com.ethercamp.harmony.util.exception.HarmonyException;
+import com.google.common.collect.ImmutableMap;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.map.LRUMap;
 import org.ethereum.config.SystemProperties;
 import org.ethereum.core.*;
 import org.ethereum.crypto.ECKey;
 import org.ethereum.crypto.HashUtil;
+import org.ethereum.db.BlockStore;
 import org.ethereum.db.ByteArrayWrapper;
 import org.ethereum.core.TransactionInfo;
 import org.ethereum.db.TransactionStore;
@@ -37,6 +39,8 @@ import org.ethereum.listener.EthereumListenerAdapter;
 import org.ethereum.manager.WorldManager;
 import org.ethereum.mine.BlockMiner;
 import org.ethereum.net.client.ConfigCapabilities;
+import org.ethereum.net.rlpx.Node;
+import org.ethereum.net.rlpx.discover.NodeManager;
 import org.ethereum.net.server.ChannelManager;
 import org.ethereum.net.server.PeerServer;
 import org.ethereum.solidity.compiler.SolidityCompiler;
@@ -47,8 +51,9 @@ import org.apache.commons.collections4.map.LRUMap;
 import org.ethereum.vm.DataWord;
 import org.ethereum.vm.LogInfo;
 import org.spongycastle.util.encoders.*;
-import org.spongycastle.util.encoders.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import javax.annotation.PostConstruct;
 import java.lang.reflect.Modifier;
@@ -66,9 +71,10 @@ import static org.ethereum.util.ByteUtil.bigIntegerToBytes;
  * @author Anton Nashatyrev
  */
 @Slf4j(topic = "jsonrpc")
-// cant put @Component definition as this class will conflict with class in core
+@Service
+// renamed to not conflict with class from core
 // wait for core class to be removed
-public class JsonRpcImpl implements JsonRpc {
+public class EthJsonRpcImpl implements JsonRpc {
 
     private static final String BLOCK_LATEST = "latest";
 
@@ -135,6 +141,9 @@ public class JsonRpcImpl implements JsonRpc {
     ChannelManager channelManager;
 
     @Autowired
+    NodeManager nodeManager;
+
+    @Autowired
     CompositeEthereumListener compositeEthereumListener;
 
     @Autowired
@@ -151,6 +160,9 @@ public class JsonRpcImpl implements JsonRpc {
 
     @Autowired
     ConfigCapabilities configCapabilities;
+
+    @Autowired
+    BlockStore blockStore;
 
     /**
      * Lowercase hex address as a key.
@@ -317,12 +329,16 @@ public class JsonRpcImpl implements JsonRpc {
                 .toString();
     }
 
-    public SyncingResult eth_syncing(){
-        return new SyncingResult(
-                TypeConverter.toJsonHex(initialBlockNumber),
-                TypeConverter.toJsonHex(blockchain.getBestBlock().getNumber()),
-                TypeConverter.toJsonHex(syncManager.getLastKnownBlockNumber())
-        );
+    public Object eth_syncing() {
+        if (syncManager.isSyncDone()) {
+            return false;
+        } else {
+            return new SyncingResult(
+                    TypeConverter.toJsonHex(initialBlockNumber),
+                    TypeConverter.toJsonHex(blockchain.getBestBlock().getNumber()),
+                    TypeConverter.toJsonHex(syncManager.getLastKnownBlockNumber())
+            );
+        }
     }
 
     public String eth_coinbase() {
@@ -373,7 +389,7 @@ public class JsonRpcImpl implements JsonRpc {
         byte[] addressAsByteArray = StringHexToByteArray(address);
         DataWord storageValue = getRepoByJsonBlockId(blockId).
                 getStorageValue(addressAsByteArray, new DataWord(StringHexToByteArray(storageIdx)));
-        return TypeConverter.toJsonHex(storageValue.getData());
+        return storageValue != null ? TypeConverter.toJsonHex(storageValue.getData()) : null;
     }
 
     @Override
@@ -432,7 +448,7 @@ public class JsonRpcImpl implements JsonRpc {
         Account account = getAccountFromKeystore(ha);
 
         ECKey.ECDSASignature signature = account.getEcKey().sign(Hex.decode(JSonHexToHex(messageHash)));
-        byte[] signatureBytes = Base64.decode(signature.toBase64());
+        byte[] signatureBytes = signature.toByteArray();
 
         return TypeConverter.toJsonHex(signatureBytes);
     }
@@ -440,49 +456,59 @@ public class JsonRpcImpl implements JsonRpc {
     public String eth_sendTransaction(CallArguments args) throws Exception {
         Account account = getAccountFromKeystore(JSonHexToHex(args.from));
 
+        return sendTransaction(args, account);
+    }
+
+    private String sendTransaction(CallArguments args, Account account) {
         if (args.data != null && args.data.startsWith("0x"))
             args.data = args.data.substring(2);
 
-        Transaction tx = new Transaction(
+        // convert zero to empty byte array
+        // TEMP, until decide for better behavior
+        final BigInteger valueBigInt = args.value != null ? StringHexToBigInteger(args.value) : BigInteger.ZERO;
+        final byte[] value = !valueBigInt.equals(BigInteger.ZERO) ? ByteUtil.bigIntegerToBytes(valueBigInt) : EMPTY_BYTE_ARRAY;
+
+        final Transaction tx = new Transaction(
                 args.nonce != null ? StringHexToByteArray(args.nonce) : bigIntegerToBytes(pendingState.getRepository().getNonce(account.getAddress())),
                 args.gasPrice != null ? StringHexToByteArray(args.gasPrice) : ByteUtil.longToBytesNoLeadZeroes(eth.getGasPrice()),
                 args.gas != null ? StringHexToByteArray(args.gas) : ByteUtil.longToBytes(90_000),
                 args.to != null ? StringHexToByteArray(args.to) : EMPTY_BYTE_ARRAY,
-                args.value != null ? StringHexToByteArray(args.value) : EMPTY_BYTE_ARRAY,
+                value,
                 args.data != null ? StringHexToByteArray(args.data) : EMPTY_BYTE_ARRAY);
+
         tx.sign(account.getEcKey());
 
-        eth.submitTransaction(tx);
+        validateAndSubmit(tx);
 
         return TypeConverter.toJsonHex(tx.getHash());
     }
 
     public String eth_sendTransactionArgs(String from, String to, String gas,
                                       String gasPrice, String value, String data, String nonce) throws Exception {
-        Transaction tx = new Transaction(
-                TypeConverter.StringHexToByteArray(nonce),
-                TypeConverter.StringHexToByteArray(gasPrice),
-                TypeConverter.StringHexToByteArray(gas),
-                TypeConverter.StringHexToByteArray(to), /*receiveAddress*/
-                TypeConverter.StringHexToByteArray(value),
-                TypeConverter.StringHexToByteArray(data));
 
-        Account account = getAccountFromKeystore(from);
+        final Account account = getAccountFromKeystore(from);
 
-        tx.sign(account.getEcKey());
-
-        eth.submitTransaction(tx);
-
-        return TypeConverter.toJsonHex(tx.getHash());
+        return sendTransaction(new CallArguments(from, to, gas, gasPrice, value, data, nonce), account);
     }
 
     public String eth_sendRawTransaction(String rawData) throws Exception {
         Transaction tx = new Transaction(StringHexToByteArray(rawData));
 
         tx.rlpParse();
-        eth.submitTransaction(tx);
+        validateAndSubmit(tx);
 
         return TypeConverter.toJsonHex(tx.getHash());
+    }
+
+    protected void validateAndSubmit(Transaction tx) {
+        if (tx.getValue().length > 0 && tx.getValue()[0] == 0) {
+            // zero value should be sent as empty byte array
+            // otherwise tx will be accepted by core, but never included in block
+//            throw new RuntimeException("Field 'value' should not have leading zero");
+            log.warn("Transaction might use incorrect zero value");
+        }
+
+        eth.submitTransaction(tx);
     }
 
     protected TransactionReceipt createCallTxAndExecute(CallArguments args, Block block) throws Exception {
@@ -514,24 +540,24 @@ public class JsonRpcImpl implements JsonRpc {
             return null;
         boolean isPending = ByteUtil.byteArrayToLong(block.getNonce()) == 0;
         BlockResult br = new BlockResult();
-        br.number = isPending ? null : TypeConverter.toJsonHex(block.getNumber());
-        br.hash = isPending ? null : TypeConverter.toJsonHex(block.getHash());
-        br.parentHash = TypeConverter.toJsonHex(block.getParentHash());
-        br.nonce = isPending ? null : TypeConverter.toJsonHex(block.getNonce());
-        br.sha3Uncles= TypeConverter.toJsonHex(block.getUnclesHash());
-        br.logsBloom = isPending ? null : TypeConverter.toJsonHex(block.getLogBloom());
-        br.transactionsRoot = TypeConverter.toJsonHex(block.getTxTrieRoot());
-        br.stateRoot = TypeConverter.toJsonHex(block.getStateRoot());
-        br.receiptsRoot = TypeConverter.toJsonHex(block.getReceiptsRoot());
-        br.miner = isPending ? null : TypeConverter.toJsonHex(block.getCoinbase());
-        br.difficulty = TypeConverter.toJsonHex(block.getDifficulty());
-        br.totalDifficulty = TypeConverter.toJsonHex(blockchain.getTotalDifficulty());
+        br.number = isPending ? null : toJsonHex(block.getNumber());
+        br.hash = isPending ? null : toJsonHex(block.getHash());
+        br.parentHash = toJsonHex(block.getParentHash());
+        br.nonce = isPending ? null : toJsonHex(block.getNonce());
+        br.sha3Uncles= toJsonHex(block.getUnclesHash());
+        br.logsBloom = isPending ? null : toJsonHex(block.getLogBloom());
+        br.transactionsRoot = toJsonHex(block.getTxTrieRoot());
+        br.stateRoot = toJsonHex(block.getStateRoot());
+        br.receiptRoot = toJsonHex(block.getReceiptsRoot());
+        br.miner = isPending ? null : toJsonHex(block.getCoinbase());
+        br.difficulty = toJsonHex(block.getDifficultyBI());
+        br.totalDifficulty = toJsonHex(blockStore.getTotalDifficultyForHash(block.getHash()));
         if (block.getExtraData() != null)
-            br.extraData = TypeConverter.toJsonHex(block.getExtraData());
-        br.size = TypeConverter.toJsonHex(block.getEncoded().length);
-        br.gasLimit = TypeConverter.toJsonHex(block.getGasLimit());
-        br.gasUsed = TypeConverter.toJsonHex(block.getGasUsed());
-        br.timestamp = TypeConverter.toJsonHex(block.getTimestamp());
+            br.extraData = toJsonHex(block.getExtraData());
+        br.size = toJsonHex(block.getEncoded().length);
+        br.gasLimit = toJsonHex(block.getGasLimit());
+        br.gasUsed = toJsonHex(block.getGasUsed());
+        br.timestamp = toJsonHex(block.getTimestamp());
 
         List<Object> txes = new ArrayList<>();
         if (fullTx) {
@@ -570,27 +596,20 @@ public class JsonRpcImpl implements JsonRpc {
     }
 
     public TransactionResultDTO eth_getTransactionByHash(String transactionHash) throws Exception {
-        byte[] txHash = StringHexToByteArray(transactionHash);
-        Block block = null;
+        final byte[] txHash = StringHexToByteArray(transactionHash);
 
-        TransactionInfo txInfo = blockchain.getTransactionInfo(txHash);
-
+        final TransactionInfo txInfo = blockchain.getTransactionInfo(txHash);
         if (txInfo == null) {
-            TransactionReceipt receipt = pendingReceipts.get(new ByteArrayWrapper(txHash));
-
-            if (receipt == null) {
-                return null;
-            }
-            txInfo = new TransactionInfo(receipt);
-        } else {
-            block = blockchain.getBlockByHash(txInfo.getBlockHash());
-            // need to return txes only from main chain
-            Block mainBlock = blockchain.getBlockByNumber(block.getNumber());
-            if (!Arrays.equals(block.getHash(), mainBlock.getHash())) {
-                return null;
-            }
-            txInfo.setTransaction(block.getTransactionsList().get(txInfo.getIndex()));
+            return null;
         }
+
+        final Block block = blockchain.getBlockByHash(txInfo.getBlockHash());
+        // need to return txes only from main chain
+        final Block mainBlock = blockchain.getBlockByNumber(block.getNumber());
+        if (!Arrays.equals(block.getHash(), mainBlock.getHash())) {
+            return null;
+        }
+        txInfo.setTransaction(block.getTransactionsList().get(txInfo.getIndex()));
 
         return new TransactionResultDTO(block, txInfo.getIndex(), txInfo.getReceipt().getTransaction());
     }
@@ -615,29 +634,19 @@ public class JsonRpcImpl implements JsonRpc {
     }
 
     public TransactionReceiptDTO eth_getTransactionReceipt(String transactionHash) throws Exception {
-        byte[] hash = TypeConverter.StringHexToByteArray(transactionHash);
+        final byte[] hash = TypeConverter.StringHexToByteArray(transactionHash);
 
-        TransactionReceipt pendingReceipt = pendingReceipts.get(new ByteArrayWrapper(hash));
+        final TransactionInfo txInfo = blockchain.getTransactionInfo(hash);
 
-        TransactionInfo txInfo;
-        Block block;
+        if (txInfo == null)
+            return null;
 
-        if (pendingReceipt != null) {
-            txInfo = new TransactionInfo(pendingReceipt);
-            block = null;
-        } else {
-            txInfo = blockchain.getTransactionInfo(hash);
+        final Block block = blockchain.getBlockByHash(txInfo.getBlockHash());
+        final Block mainBlock = blockchain.getBlockByNumber(block.getNumber());
 
-            if (txInfo == null)
-                return null;
-
-            block = blockchain.getBlockByHash(txInfo.getBlockHash());
-
-            // need to return txes only from main chain
-            Block mainBlock = blockchain.getBlockByNumber(block.getNumber());
-            if (!Arrays.equals(block.getHash(), mainBlock.getHash())) {
-                return null;
-            }
+        // need to return txes only from main chain
+        if (!Arrays.equals(block.getHash(), mainBlock.getHash())) {
+            return null;
         }
 
         return new TransactionReceiptDTO(block, txInfo);
@@ -707,7 +716,7 @@ public class JsonRpcImpl implements JsonRpc {
     @Override
     public CompilationResult eth_compileSolidity(String contract) throws Exception {
         SolidityCompiler.Result res = SolidityCompiler.compile(
-                contract.getBytes(), true, SolidityCompiler.Options.ABI, SolidityCompiler.Options.BIN);
+                contract.getBytes(), true, SolidityCompiler.Options.ABI, SolidityCompiler.Options.BIN, SolidityCompiler.Options.INTERFACE);
         if (!res.errors.isEmpty()) {
             throw new RuntimeException("Compilation error: " + res.errors);
         }
@@ -1048,11 +1057,11 @@ public class JsonRpcImpl implements JsonRpc {
 //        throw new UnsupportedOperationException("JSON RPC method shh_getMessages not implemented yet");
 //    }
 //
-//    @Override
-//    public boolean admin_addPeer(String enodeUrl) {
-//        eth.connect(new Node(enodeUrl));
-//        return true;
-//    }
+    @Override
+    public boolean admin_addPeer(String enodeUrl) {
+        eth.connect(new Node(enodeUrl));
+        return true;
+    }
 //
 //    @Override
 //    public String admin_exportChain() {
@@ -1139,15 +1148,61 @@ public class JsonRpcImpl implements JsonRpc {
 //        throw new UnsupportedOperationException("JSON RPC method admin_httpGet not implemented yet");
 //    }
 //
-//    @Override
-//    public String admin_nodeInfo() {
-//        throw new UnsupportedOperationException("JSON RPC method admin_nodeInfo not implemented yet");
-//    }
-//
-//    @Override
-//    public String admin_peers() {
-//        throw new UnsupportedOperationException("JSON RPC method admin_peers not implemented yet");
-//    }
+    @Override
+    public Map<String, ?> admin_nodeInfo() throws Exception {
+        final String nodeId = Hex.toHexString(config.nodeId());
+        final String listenAddr = config.bindIp() + ":" + config.listenPort();
+        final BlockResult lastBlock = eth_getBlockByNumber("latest", false);
+
+        final HashMap<String, Object> result = new HashMap<>();
+        result.put("id", nodeId);
+        result.put("name", web3_clientVersion());
+        result.put("enode", "enode://" + nodeId + "@" + listenAddr);
+        result.put("ip", config.bindIp());
+        result.put("ports", ImmutableMap.of(
+                "discovery", config.listenPort(),
+                "listener", config.listenPort()
+        ));
+        result.put("listenAddr", listenAddr);
+        result.put("protocols", ImmutableMap.of(
+                "eth", ImmutableMap.of(
+                        "network", config.getProperty("peer.networkId", "undefined"),
+                        "difficulty", lastBlock.totalDifficulty,
+                        "genesis", toJsonHex(config.getGenesis().getHash()),
+                        "head", lastBlock.hash
+                )
+        ));
+        return result;
+    }
+
+    @Override
+    public List<Map<String, ?>> admin_peers() {
+        return channelManager.getActivePeers().stream().map(c ->
+                ImmutableMap.of(
+                        "id", toJsonHex(c.getNodeId()),
+                        "name", toJsonHex(c.getNodeStatistics().getClientId()),
+                        "caps", c.getNodeStatistics().capabilities
+                                .stream()
+                                .filter(cap -> c != null)
+                                .map(cap -> StringUtils.capitalize(cap.getName()) + "/" + cap.getVersion())
+                                .collect(Collectors.toList()),
+                        "network", ImmutableMap.of(
+                                // TODO put local port which initiated connection
+                                "localAddress", config.bindIp() + ":" + c.getInetSocketAddress().getPort(),
+                                "remoteAddress", c.getNode().getHost() + ":" + c.getNode().getPort(),
+                                "hostname", c.getInetSocketAddress().getHostName(),
+                        "protocols", Optional.ofNullable(c.getEthHandler())
+                                .map(ethHandler -> ImmutableMap.of(
+                                        "eth", ImmutableMap.of(
+                                                "version", c.getEthVersion().getCode(),
+                                                "difficulty", toJsonHex(ethHandler.getTotalDifficulty()),
+                                                "head", Optional.ofNullable(ethHandler.getBestKnownBlock())
+                                                        .map(block -> toJsonHex(ethHandler.getBestKnownBlock().getHash()))
+                                                        .orElse(null)
+                                        )))
+                                .orElse(null)))
+                ).collect(Collectors.toList());
+    }
 //
 //    @Override
 //    public String admin_datadir() {
@@ -1297,6 +1352,20 @@ public class JsonRpcImpl implements JsonRpc {
         return keystore.listStoredKeys();
     }
 
+    @Override
+    public String personal_signAndSendTransaction(CallArguments tx, String password) {
+        final ECKey key = keystore.loadStoredKey(JSonHexToHex(tx.from).toLowerCase(), password);
+        if (key != null) {
+            final Account account = new Account();
+            account.init(key);
+            return sendTransaction(tx, account);
+        } else {
+            // we can return false or send description message with exception
+            // prefer exception for now
+            throw new RuntimeException("No key was found in keystore for account: " + JSonHexToHex(tx.from));
+        }
+    }
+
     /**
      * List method names for client side terminal competition.
      * @return array in format: `["methodName arg1 arg2", "methodName2"]`
@@ -1307,7 +1376,7 @@ public class JsonRpcImpl implements JsonRpc {
                 .map(method -> method.getName())
                 .collect(Collectors.toSet());
 
-        return Arrays.asList(JsonRpcImpl.class.getMethods()).stream()
+        return Arrays.asList(EthJsonRpcImpl.class.getMethods()).stream()
                 .filter(method -> Modifier.isPublic(method.getModifiers()))
                 .filter(method -> !ignore.contains(method.getName()))
                 .map(method -> {

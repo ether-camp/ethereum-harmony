@@ -21,45 +21,21 @@ import java.io.*;
  * Created by Stan Reshetnyk on 08.09.16.
  */
 @Configuration
-@EnableTransactionManagement
+//@EnableTransactionManagement
 @ComponentScan(
         basePackages = "org.ethereum",
         excludeFilters = @ComponentScan.Filter(NoAutoscan.class))
 public class EthereumHarmonyConfig extends CommonConfig {
 
-    @Autowired
-    Environment environment;
-
-    @Bean
-    @Override
-    public SystemProperties systemProperties() {
-        final String genesisFile = environment.getProperty("genesisFile");
-
-        // Override genesis loading because core doesn't allow setting absolute path
-        final SystemProperties props = new SystemProperties() {
-            private Genesis genesis;
-
-            @Override
-            public Genesis getGenesis() {
-                if (genesis != null) {
-                    return genesis;
-                }
-                if (genesisFile != null) {
-                    try (InputStream is = new FileInputStream(new File(genesisFile))) {
-                        genesis = GenesisLoader.loadGenesis(this, is);
-                    } catch (Exception e) {
-                        System.err.println("Genesis block configuration is corrupted or not found " + genesisFile);
-                        e.printStackTrace();
-                        System.exit(-1);
-                    }
-                } else {
-                    genesis = super.getGenesis();
-                }
-                return genesis;
-            }
-        };
-        props.setDataBaseDir(environment.getProperty("database.dir"));
-
-        return props;
-    }
+//    @Autowired
+//    Environment environment;
+//
+//    @Bean
+//    @Override
+//    public SystemProperties systemProperties() {
+//        final SystemProperties props = new SystemProperties();
+//        props.setDataBaseDir(environment.getProperty("database.dir"));
+//
+//        return props;
+//    }
 }

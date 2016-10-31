@@ -21,9 +21,8 @@ package com.ethercamp.harmony.service;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.PatternLayout;
-import ch.qos.logback.classic.filter.LevelFilter;
+import ch.qos.logback.classic.filter.ThresholdFilter;
 import ch.qos.logback.classic.spi.LoggingEvent;
-import ch.qos.logback.core.ConsoleAppender;
 import ch.qos.logback.core.UnsynchronizedAppenderBase;
 
 import org.slf4j.LoggerFactory;
@@ -57,8 +56,9 @@ import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 import java.util.stream.LongStream;
+
+import static java.util.stream.Collectors.*;
 
 /**
  * Created by Stan Reshetnyk on 11.07.16.
@@ -199,7 +199,7 @@ public class BlockchainInfoService implements ApplicationListener {
             }
 
             initialInfo.set(new InitialInfoDTO(
-                    env.getProperty("ethereumJ.version"),
+                    config.projectVersion() + "-" + config.projectVersionModifier(),
                     env.getProperty("app.version"),
                     networkName,
                     blockHash.orElse(null),
@@ -207,14 +207,19 @@ public class BlockchainInfoService implements ApplicationListener {
                     Hex.toHexString(config.nodeId()),
                     serverPort,
                     isPrivateNetwork,
-                    env.getProperty("portCheckerUrl")
+                    env.getProperty("portCheckerUrl"),
+                    config.bindIp(),
+                    env.getProperty("feature.contract.enabled", "false").equalsIgnoreCase("true")
             ));
 
             final String ANSI_RESET = "\u001B[0m";
             final String ANSI_BLUE = "\u001B[34m";
             System.out.println("EthereumJ database dir location: " + systemProperties.databaseDir());
             System.out.println(ANSI_BLUE + "Server started at http://localhost:" + serverPort + "" + ANSI_RESET);
-            createLogAppenderForMessaging();
+
+            if (!config.getConfig().hasPath("logs.keepStdOut") || !config.getConfig().getBoolean("logs.keepStdOut")) {
+                createLogAppenderForMessaging();
+            }
         }
     }
 
@@ -289,7 +294,7 @@ public class BlockchainInfoService implements ApplicationListener {
                 .map(entry -> new MinerDTO(entry.getKey(), entry.getValue()))
                 .sorted((a, b) -> Integer.compare(b.getCount(), a.getCount()))
                 .limit(3)
-                .collect(Collectors.toList());
+                .collect(toList());
         info.getMiners().addAll(minersList);
 
         networkInfo.set(info);
@@ -341,14 +346,6 @@ public class BlockchainInfoService implements ApplicationListener {
         return 0;
     }
 
-    // for better logs
-    private String readableFileSize(long size) {
-        if (size <= 0) return "0";
-        final String[] units = new String[]{"B", "kB", "MB", "GB", "TB"};
-        int digitGroups = (int) (Math.log10(size) / Math.log10(1024));
-        return new DecimalFormat("#,##0.#").format(size / Math.pow(1024, digitGroups)) + " " + units[digitGroups];
-    }
-
     /**
      * 1. Create log appender, which will subscribe to loggers, we are interested in.
      * Appender will send logs to messaging topic then (for delivering to client side).
@@ -377,27 +374,36 @@ public class BlockchainInfoService implements ApplicationListener {
         };
 
         final Logger root = (Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
-
         Optional.ofNullable(root.getAppender("STDOUT"))
-            .ifPresent(stdout -> stdout.stop());
+            .ifPresent(stdout -> {
+                stdout.stop();
+                stdout.clearAllFilters();
 
-        final LevelFilter filter = new LevelFilter();
-        filter.setLevel(Level.INFO);
+                ThresholdFilter filter = new ThresholdFilter();
+                filter.setLevel(Level.ERROR.toString());
+                stdout.addFilter(filter);
+                filter.start();
+                stdout.start();
+            });
+
+
+        final ThresholdFilter filter = new ThresholdFilter();
+        filter.setLevel(Level.INFO.toString());
         messagingAppender.addFilter(filter); // No effect of this
         messagingAppender.setName("ClientMessagingAppender");
         messagingAppender.setContext(context);
 
         root.addAppender(messagingAppender);
-
+        filter.start();
         messagingAppender.start();
+    }
 
-        final ConsoleAppender stdoutAppender = new ConsoleAppender<>();
-        final LevelFilter errorFilter = new LevelFilter();
-        errorFilter.setLevel(Level.ERROR);
-        stdoutAppender.addFilter(errorFilter);
-        stdoutAppender.setContext(context);
-        root.addAppender(stdoutAppender);
-        stdoutAppender.start();
+    public String getConfigDump() {
+        return systemProperties.dump();
+    }
+
+    public String getGenesisDump() {
+        return systemProperties.getGenesis().toString();
     }
 
     static class BlockchainConsts {
@@ -416,7 +422,7 @@ public class BlockchainInfoService implements ApplicationListener {
     /**
      * Created by Stan Reshetnyk on 09.08.16.
      */
-    public static enum SyncStatus {
+    public enum SyncStatus {
         DISABLED,
         LONG_SYNC,
         SHORT_SYNC

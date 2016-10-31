@@ -22,31 +22,28 @@ import lombok.AllArgsConstructor;
 import lombok.Value;
 
 /**
- * Created by Stan Reshetnyk on 13.07.16.
+ * Created by Stan Reshetnyk on 18.10.16.
  */
-@Value
-@AllArgsConstructor
-public class InitialInfoDTO {
+public class ContractObjects {
 
-    private final String ethereumJVersion;
+    @Value
+    @AllArgsConstructor
+    public static class ContractInfoDTO {
 
-    private final String appVersion;
+        private final String address;
 
-    private final String networkName;
+        private final String name;
 
-    private final String genesisHash;
+    }
 
-    private final Long serverStartTime;
+    @Value
+    @AllArgsConstructor
+    public static class IndexStatusDTO {
 
-    private final String nodeId;
+        private final long indexSize;
 
-    private final Integer rpcPort;
-
-    private final boolean privateNetwork;
-
-    private final String portCheckerUrl;
-
-    private final String publicIp;
-
-    private final boolean featureContracts;
+//        private final long databaseSize;
+    }
 }
+
+

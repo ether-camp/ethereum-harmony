@@ -18,12 +18,17 @@
 
 package com.ethercamp.harmony.jsonrpc;
 
+import lombok.Value;
+import lombok.experimental.NonFinal;
 import org.ethereum.core.Block;
 import org.ethereum.core.Transaction;
+
+import static com.ethercamp.harmony.jsonrpc.TypeConverter.toJsonHex;
 
 /**
  * Created by Ruben on 8/1/2016.
  */
+@Value
 public class TransactionResultDTO {
 
     public String hash;
@@ -39,18 +44,18 @@ public class TransactionResultDTO {
     public String value;
     public String input;
 
-    public TransactionResultDTO (Block b, int index, Transaction tx) {
-        hash =  TypeConverter.toJsonHex(tx.getHash());
-        nonce = TypeConverter.toJsonHex(tx.getNonce());
-        blockHash = b == null ? null : TypeConverter.toJsonHex(b.getHash());
-        blockNumber = b == null ? null : TypeConverter.toJsonHex(b.getNumber());
-        transactionIndex = b == null ? null : TypeConverter.toJsonHex(index);
-        from= TypeConverter.toJsonHex(tx.getSender());
-        to = tx.getReceiveAddress() == null ? null : TypeConverter.toJsonHex(tx.getReceiveAddress());
-        gas = TypeConverter.toJsonHex(tx.getGasLimit());
-        gasPrice = TypeConverter.toJsonHex(tx.getGasPrice());
-        value = TypeConverter.toJsonHex(tx.getValue());
-        input  = tx.getData() != null ? TypeConverter.toJsonHex(tx.getData()) : null;
+    public TransactionResultDTO(Block b, int index, Transaction tx) {
+        hash =  toJsonHex(tx.getHash());
+        nonce = toJsonHex(tx.getNonce());
+        blockHash = toJsonHex(b.getHash());
+        blockNumber = toJsonHex(b.getNumber());
+        transactionIndex = toJsonHex(index);
+        from= toJsonHex(tx.getSender());
+        to = tx.getReceiveAddress() == null ? null : toJsonHex(tx.getReceiveAddress());
+        gas = toJsonHex(tx.getGasLimit());
+        gasPrice = toJsonHex(tx.getGasPrice());
+        value = toJsonHex(tx.getValue());
+        input  = tx.getData() != null ? toJsonHex(tx.getData()) : null;
     }
 
     @Override

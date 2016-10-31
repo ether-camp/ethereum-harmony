@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
 
+    <!-- point logback to properties, to read Spring variables -->
+    <property resource="application.properties" />
+
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/state.log</file>
+        <file>${logs.dir}/state.log</file>
         <!--
                 <append>true</append>
                 <withJansi>true</withJansi>
@@ -15,7 +18,7 @@
         </encoder>
 
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>logs/state-%d{yyyy-MM-dd_HH}.%i.log</fileNamePattern>
+            <fileNamePattern>${logs.dir}/state-%d{yyyy-MM-dd_HH}.%i.log</fileNamePattern>
             <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
                 <maxFileSize>100MB</maxFileSize>
             </timeBasedFileNamingAndTriggeringPolicy>
@@ -69,7 +72,7 @@
     <logger level="INFO" name="sync"/>
     <logger level="TRACE" name="notification"/>
     <logger level="ERROR" name="wallet"/>
-    <logger level="INFO" name="net"/>
+    <logger level="ERROR" name="net"/>
     <logger level="INFO" name="db"/>
     <logger level="ERROR" name="peerdiscovery"/>
     <logger level="ERROR" name="peermonitor"/>
@@ -86,6 +89,7 @@
     <logger level="ERROR" name="gas"/>
     <logger level="ERROR" name="vmtrace"/>
     <logger level="ERROR" name="execute"/>
+    <logger level="INFO" name="import-contract"/>
 
 
 </configuration>

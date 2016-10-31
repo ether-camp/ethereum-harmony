@@ -3,6 +3,7 @@
 
     // Angular modules definition
     var mainApp = angular.module('HarmonyApp', [
+        'ui.bootstrap.showErrors',      // form validation extension
         'ngRoute',                      // sub page navigation
         'angular-jsonrpc-client',       // json-rpc communication
         'ngStomp',                      // websocket communication
@@ -62,6 +63,11 @@
             .when('/wallet', {
                 templateUrl : 'pages/wallet.html',
                 controller  : 'WalletCtrl'
+            })
+
+            .when('/contracts', {
+                templateUrl : 'pages/contracts.html',
+                controller  : 'ContractsCtrl'
             });
 
         $locationProvider.html5Mode(true);
@@ -202,7 +208,8 @@
             rpcPort:            'n/a',
             isPrivateNetwork:   false,
 
-            publicIp:           ' '
+            publicIp:           ' ',
+            publicIpLabel:      'IP'
         };
 
         function jsonParseAndBroadcast(event) {
@@ -225,6 +232,10 @@
         var updateWalletSubscription     = updateSubscriptionFun('/topic/getWalletInfo', jsonParseAndBroadcast('walletInfoEvent'),
             function() {
                 $stomp.send('/app/getWalletInfo');
+            });
+        var updateContractsSubscription  = updateSubscriptionFun('/topic/currentContracts', jsonParseAndBroadcast('contractsListEvent'),
+            function() {
+                $stomp.send('/app/currentContracts');
             });
 
         /**
@@ -270,6 +281,7 @@
             updatePeersSubscription(path == '/peers');
             updateRpcSubscription(path == '/rpcUsage');
             updateWalletSubscription(path == '/wallet');
+            //updateContractsSubscription(path == '/contracts');
         }
 
         function connect() {
@@ -369,7 +381,9 @@
                 vm.data.serverStartTime = moment(info.serverStartTime).format('DD-MMM-YYYY, HH:mm');
                 vm.data.nodeId = info.nodeId ? '0x' + info.nodeId.substr(0, 6) : 'n/a';
                 vm.data.rpcPort = info.rpcPort;
+                vm.data.publicIp = info.publicIp;
                 vm.data.portCheckerUrl = info.portCheckerUrl;
+                vm.data.featureContracts = info.featureContracts;
             }, 10);
 
             console.log('App version ' + info.appVersion + ', info.privateNetwork: ' + info.privateNetwork);
