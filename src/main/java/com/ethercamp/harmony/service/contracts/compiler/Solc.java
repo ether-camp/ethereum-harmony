@@ -1,7 +1,6 @@
 package com.ethercamp.harmony.service.contracts.compiler;
 
 import org.ethereum.config.SystemProperties;
-import org.ethereum.solcJ.SolcVersion;
 
 import java.io.*;
 import java.nio.file.Files;
