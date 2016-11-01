@@ -42,7 +42,9 @@ public class ContractsTests {
 
     private static final String ADDRESS = "0C37520af9B346D413d90805E86064B47642478E".toLowerCase();
 
-    private static final String SRC = "contract Foo {\n" +
+    private static final String SRC = "" +
+            "pragma solidity ^0.4.3;" +
+            "contract Foo {\n" +
             "\n" +
             "        uint32 idCounter = 1;\n" +
             "        bytes32 public lastError;\n" +
