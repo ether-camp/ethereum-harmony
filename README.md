@@ -29,8 +29,6 @@ Ethereum network private peer. Based on EthereumJ implementation.
 
 ## Prerequisites Installed: 
 * Java 8
-* Node JS
-* Bower
 
 .
 
@@ -38,7 +36,6 @@ Ethereum network private peer. Based on EthereumJ implementation.
 
 * `git clone https://github.com/ether-camp/ethereum-harmony`
 * `cd ethereum-harmony`
-* only on updates: `bower install`
 * Run Service: `gradlew bootRun`  ( live by default or any [other environment](#options) )
 
 Navigate to `http://localhost:8080`
