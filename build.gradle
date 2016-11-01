@@ -157,7 +157,7 @@ task runClassic << { bootRunWithNetworkConfig('classic') }
 
 def bootRunWithNetworkConfig(String name) {
     bootRun.jvmArgs = bootRun.jvmArgs + ('-Dethereumj.conf.res=' + name + '.conf') + ('-Ddatabase.name=database-' + name)
-//    tasks.extractSolc.execute()
+    tasks.extractSolc.execute()
     tasks.compileJava.execute()
     tasks.bootRun.execute()
 }
