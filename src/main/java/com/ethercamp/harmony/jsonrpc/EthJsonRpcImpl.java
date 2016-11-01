@@ -447,9 +447,20 @@ public class EthJsonRpcImpl implements JsonRpc {
         Account account = getAccountFromKeystore(ha);
 
         ECKey.ECDSASignature signature = account.getEcKey().sign(Hex.decode(JSonHexToHex(messageHash)));
-        byte[] signatureBytes = signature.toByteArray();
+        byte[] signatureBytes = toByteArray(signature);
 
         return TypeConverter.toJsonHex(signatureBytes);
+    }
+
+    public byte[] toByteArray(ECKey.ECDSASignature signature) {
+        final byte fixedV = signature.v >= 27
+                ? (byte) (signature.v - 27)
+                :signature.v;
+
+        return ByteUtil.merge(
+                ByteUtil.bigIntegerToBytes(signature.r),
+                ByteUtil.bigIntegerToBytes(signature.s),
+                new byte[]{fixedV});
     }
 
     public String eth_sendTransaction(CallArguments args) throws Exception {

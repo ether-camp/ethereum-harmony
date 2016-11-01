@@ -25,6 +25,10 @@ repositories {
     maven { url "https://repo.spring.io/libs-snapshot" }
 }
 
+configurations {
+    solcJar
+}
+
 dependencies {
     compile "org.springframework.boot:spring-boot-starter-web"
     compile "org.springframework.boot:spring-boot-starter-actuator"
@@ -37,8 +41,10 @@ dependencies {
 
 //    compile "com.google.guava:guava:19.0"
 
+    compile "org.ethereum:solcJ-all:0.4.3"                   // Solidity Compiler win/mac/linux binaries
+
     // don't forget to adjust {ethereumJ.version} in application.properties
-    compile ("org.ethereum:ethereumj-core:1.4.0-SNAPSHOT") {
+    compile ("org.ethereum:ethereumj-core:1.3.6-RELEASE") {
         changing = true
 
         exclude group: "log4j"
@@ -82,7 +88,7 @@ dependencies {
     compile("org.webjars.npm:bignumber.js:2.4.0")
 
 
-
+    solcJar "org.ethereum:solcJ-all:0.4.3"
 
     testCompile "junit:junit"
     testCompile "org.springframework:spring-test"
@@ -151,13 +157,21 @@ task runClassic << { bootRunWithNetworkConfig('classic') }
 
 def bootRunWithNetworkConfig(String name) {
     bootRun.jvmArgs = bootRun.jvmArgs + ('-Dethereumj.conf.res=' + name + '.conf') + ('-Ddatabase.name=database-' + name)
+//    tasks.extractSolc.execute()
     tasks.compileJava.execute()
     tasks.bootRun.execute()
 }
-
 
 task webjar(type: Jar, dependsOn: "jar") {
     from(fileTree("dist")) {
         into "META-INF/resources"
     }
 }
+
+task extractSolc(type: Copy) {
+    from zipTree(configurations.solcJar.singleFile)
+    into 'src/main/resources/solcJ-all'
+}
+
+compileJava.dependsOn extractSolc
+
