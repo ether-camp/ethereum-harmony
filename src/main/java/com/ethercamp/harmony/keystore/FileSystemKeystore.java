@@ -22,7 +22,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.ethereum.crypto.ECKey;
 import org.ethereum.net.swarm.Util;
 import org.spongycastle.util.encoders.Hex;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,6 +45,9 @@ import java.util.stream.Collectors;
 @Component
 @Slf4j(topic = "keystore")
 public class FileSystemKeystore implements Keystore {
+
+    @Value("${keystore.dir?:#{null}}")
+    public String keystoreDir;
 
     public KeystoreFormat keystoreFormat = new KeystoreFormat();
 
@@ -140,7 +146,11 @@ public class FileSystemKeystore implements Keystore {
     /**
      * @return platform dependent path to Ethereum folder
      */
-    protected Path getKeyStoreLocation() {
+    public Path getKeyStoreLocation() {
+        if (keystoreDir != null) {
+            return Paths.get(keystoreDir);
+        }
+
         final String keystoreDir = "keystore";
         final String osName = System.getProperty("os.name").toLowerCase();
 
