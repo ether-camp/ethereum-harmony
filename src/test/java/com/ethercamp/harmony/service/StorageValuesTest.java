@@ -43,29 +43,24 @@ public class StorageValuesTest {
 
     private static final String contractSrc =
             "pragma solidity ^0.4.2;\n" +
-                    "\n" +
-                    "contract Blockchat {\n" +
-                    "\n" +
-                    "        mapping(address => string) private mailbox;\n" +
-                    "\n" +
-                    "        event Mailed(address from, string message);\n" +
-                    "        event Read(address from, string message);\n" +
-                    "\n" +
-                    "        function mail(address receiver, string message) {\n" +
-                    "                if (bytes(mailbox[receiver]).length > 0) {\n" +
-                    "                        throw;\n" +
-                    "                }\n" +
-                    "                mailbox[receiver] = message;\n" +
-                    "                Mailed(receiver, message);\n" +
-                    "        }\n" +
-                    "\n" +
-                    "        function read() returns(string message) {\n" +
-                    "                message = mailbox[msg.sender];\n" +
-                    "                Read(msg.sender, message);\n" +
-                    "                mailbox[msg.sender] = \"\";\n" +
-                    "                return message;\n" +
-                    "        }\n" +
-                    "}   ";
+            "contract Calculator {" +
+            "  int public result;" +  // public field can be accessed by calling 'result' function
+            "  function add(int num) {" +
+            "    result = result + num;" +
+            "  }" +
+            "  function sub(int num) {" +
+            "    result = result - num;" +
+            "  }" +
+            "  function mul(int num) {" +
+            "    result = result * num;" +
+            "  }" +
+            "  function div(int num) {" +
+            "    result = result / num;" +
+            "  }" +
+            "  function clear() {" +
+            "    result = 0;" +
+            "  }" +
+            "}";
 
     @Test
     public void blockchain_shouldWork() throws Exception {

@@ -728,7 +728,7 @@ public class EthJsonRpcImpl implements JsonRpc {
     public CompilationResult eth_compileSolidity(String contract) throws Exception {
         SolidityCompiler.Result res = SolidityCompiler.compile(
                 contract.getBytes(), true, SolidityCompiler.Options.ABI, SolidityCompiler.Options.BIN, SolidityCompiler.Options.INTERFACE);
-        if (!res.errors.isEmpty()) {
+        if (res.isFailed()) {
             throw new RuntimeException("Compilation error: " + res.errors);
         }
         org.ethereum.solidity.compiler.CompilationResult result = org.ethereum.solidity.compiler.CompilationResult.parse(res.output);
