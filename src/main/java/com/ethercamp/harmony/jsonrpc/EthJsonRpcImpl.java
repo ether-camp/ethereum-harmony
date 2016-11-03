@@ -19,6 +19,7 @@
 package com.ethercamp.harmony.jsonrpc;
 
 import com.ethercamp.harmony.keystore.Keystore;
+import com.ethercamp.harmony.service.contracts.compiler.SolidityCompiler;
 import com.ethercamp.harmony.util.ErrorCodes;
 import com.ethercamp.harmony.util.exception.HarmonyException;
 import com.google.common.collect.ImmutableMap;
@@ -43,11 +44,9 @@ import org.ethereum.net.rlpx.Node;
 import org.ethereum.net.rlpx.discover.NodeManager;
 import org.ethereum.net.server.ChannelManager;
 import org.ethereum.net.server.PeerServer;
-import org.ethereum.solidity.compiler.SolidityCompiler;
 import org.ethereum.sync.SyncManager;
 import org.ethereum.util.BuildInfo;
 import org.ethereum.util.ByteUtil;
-import org.apache.commons.collections4.map.LRUMap;
 import org.ethereum.vm.DataWord;
 import org.ethereum.vm.LogInfo;
 import org.spongycastle.util.encoders.*;
@@ -728,7 +727,7 @@ public class EthJsonRpcImpl implements JsonRpc {
     public CompilationResult eth_compileSolidity(String contract) throws Exception {
         SolidityCompiler.Result res = SolidityCompiler.compile(
                 contract.getBytes(), true, SolidityCompiler.Options.ABI, SolidityCompiler.Options.BIN, SolidityCompiler.Options.INTERFACE);
-        if (!res.errors.isEmpty()) {
+        if (res.isFailed()) {
             throw new RuntimeException("Compilation error: " + res.errors);
         }
         org.ethereum.solidity.compiler.CompilationResult result = org.ethereum.solidity.compiler.CompilationResult.parse(res.output);

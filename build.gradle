@@ -174,4 +174,5 @@ task extractSolc(type: Copy) {
 }
 
 compileJava.dependsOn extractSolc
+compileTestJava.dependsOn extractSolc
 
