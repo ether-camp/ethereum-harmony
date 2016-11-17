@@ -23,6 +23,7 @@ import com.ethercamp.harmony.util.ErrorCodes;
 import com.ethercamp.harmony.util.exception.HarmonyException;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.map.LRUMap;
@@ -61,6 +62,7 @@ import javax.annotation.PostConstruct;
 import java.lang.reflect.Modifier;
 import java.math.BigInteger;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -187,11 +189,14 @@ public class EthJsonRpcImpl implements JsonRpc {
 
     volatile Block miningBlock;
 
+    volatile SettableFuture<MinerIfc.MiningResult> miningTask;
+
     final MinerIfc externalMiner = new MinerIfc() {
         @Override
-        public ListenableFuture<Long> mine(Block block) {
+        public ListenableFuture<MiningResult> mine(Block block) {
             miningBlock = block;
-            return null;
+            miningTask = SettableFuture.create();
+            return miningTask;
         }
 
         @Override
@@ -199,6 +204,8 @@ public class EthJsonRpcImpl implements JsonRpc {
             return false;
         }
     };
+
+    boolean minerInitialized = false;
 
     @PostConstruct
     private void init() {
@@ -1001,13 +1008,17 @@ public class EthJsonRpcImpl implements JsonRpc {
 
     @Override
     public List<Object> eth_getWork() {
-        if (miningBlock == null) {
+        if (!minerInitialized) {
+            minerInitialized = true;
             // this should initialize miningBlock
             blockMiner.setExternalMiner(externalMiner);
         }
 
         final Block block = miningBlock;
 
+        if (block == null) {
+            throw new RuntimeException("Mining block is not ready");
+        }
         final EthashAlgo ethash = new EthashAlgo();
         final byte[] blockHash = sha3(block.getHeader().getEncodedWithoutNonce());
         final byte[] seedHash = ethash.getSeedHash(block.getNumber());
@@ -1032,11 +1043,12 @@ public class EthJsonRpcImpl implements JsonRpc {
 
             final Block block = miningBlocks.remove(new ByteArrayWrapper(header));
 
-            if (block != null) {
-                block.setNonce(longToBytes(nonce));
-                block.setMixHash(digest);
+            if (block != null && miningTask != null) {
+//                block.setNonce(longToBytes(nonce));
+//                block.setMixHash(digest);
 
-                blockMiner.addMinedBlock(block);
+                miningTask.set(new MinerIfc.MiningResult(nonce, digest));
+                miningTask = null;
                 return true;
             } else {
                 return false;

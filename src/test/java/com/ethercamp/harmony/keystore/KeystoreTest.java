@@ -48,7 +48,7 @@ public class KeystoreTest {
         }
 
         @Override
-        protected Path getKeyStoreLocation() {
+        public Path getKeyStoreLocation() {
             return keystorePath;
         }
     };

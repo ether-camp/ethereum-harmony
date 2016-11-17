@@ -123,7 +123,10 @@ public class JsonRpcUsageFilter implements Filter {
         final String responseText = mapper.writeValueAsString(responseJson);
         final String methodName = requestJson.get("method").asText();
         final List<JsonNode> params = new ArrayList<>();
-        requestJson.get("params").forEach(n -> params.add(n));
+        if (requestJson.has("params")) {
+            requestJson.get("params")
+                    .forEach(n -> params.add(n));
+        }
 
         jsonRpcUsageService.methodInvoked(methodName, responseText);
 
