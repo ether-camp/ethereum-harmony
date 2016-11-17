@@ -44,7 +44,7 @@ dependencies {
     compile "org.ethereum:solcJ-all:0.4.3"                   // Solidity Compiler win/mac/linux binaries
 
     // don't forget to adjust {ethereumJ.version} in application.properties
-    compile ("org.ethereum:ethereumj-core:1.3.6-RELEASE") {
+    compile ("org.ethereum:ethereumj-core:1.3.7-RELEASE") {
         changing = true
 
         exclude group: "log4j"
@@ -175,4 +175,5 @@ task extractSolc(type: Copy) {
 
 compileJava.dependsOn extractSolc
 compileTestJava.dependsOn extractSolc
+build.dependsOn extractSolc
 
