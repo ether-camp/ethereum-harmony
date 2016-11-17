@@ -80,6 +80,9 @@ public class WalletService {
     Repository repository;
 
     @Autowired
+    Blockchain blockchain;
+
+    @Autowired
     FileSystemWalletStore fileSystemWalletStore;
 
     @Autowired
@@ -220,7 +223,7 @@ public class WalletService {
                     try {
                         final String hexAddress = e.getKey();
                         final byte[] address = Hex.decode(hexAddress);
-                        final BigInteger balance = repository.getBalance(address);
+                        final BigInteger balance = ((BlockchainImpl) blockchain).getRepository().getBalance(address);
                         final BigInteger sendBalance = calculatePendingChange(pendingSendTransactions, hexAddress, txFee);
                         final BigInteger receiveBalance = calculatePendingChange(pendingReceiveTransactions, hexAddress, BigInteger.ZERO);
 

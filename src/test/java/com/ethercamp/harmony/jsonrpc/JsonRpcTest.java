@@ -100,7 +100,7 @@ public class JsonRpcTest {
                 Path keystorePath = Files.createTempDirectory("keystore");
 
                 @Override
-                protected Path getKeyStoreLocation() {
+                public Path getKeyStoreLocation() {
                     return keystorePath;
                 }
             };
