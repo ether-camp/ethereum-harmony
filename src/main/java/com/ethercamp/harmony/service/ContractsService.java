@@ -61,12 +61,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static org.apache.commons.lang3.StringUtils.*;
-import static org.ethereum.solidity.compiler.ContractException.compilationError;
-import static org.ethereum.solidity.compiler.ContractException.validationError;
+import static com.ethercamp.harmony.util.exception.ContractException.compilationError;
+import static com.ethercamp.harmony.util.exception.ContractException.validationError;
 import static org.ethereum.util.ByteUtil.toHexString;
 import com.ethercamp.harmony.dto.ContractObjects.*;
 
@@ -164,9 +165,12 @@ public class ContractsService {
         if (ArrayUtils.isEmpty(contract.functions)) {
             throw validationError("contract with name '%s' not found in uploaded sources.", contractName);
         }
-        final Set<String> funcHashes = stream(contract.functions)
+        List<CallTransaction.FunctionType> funcTypes = asList(CallTransaction.FunctionType.function, CallTransaction.FunctionType.constructor);
+        Set<String> funcHashes = stream(contract.functions)
+                .filter(function -> funcTypes.contains(function.type))
                 .map(func -> toHexString(func.encodeSignature()))
                 .collect(toSet());
+
 
         final String code = toHexString(ethereum.getRepository().getCode(Hex.decode(address)));
         final String asm = getAsm(code);
@@ -253,7 +257,8 @@ public class ContractsService {
                                     contractsStorage.put(Hex.decode(address), contractFormat.encode(contract));
 
                                     return Stream.of(new ContractInfoDTO(address, name));
-                                } catch (Exception e) {
+                                } catch (ContractException e) {
+                                    log.warn("Problem with contract. " + e.getMessage());
                                     return Stream.empty();
                                 }
                             });
