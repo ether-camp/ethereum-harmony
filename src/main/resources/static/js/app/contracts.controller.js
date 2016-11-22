@@ -267,7 +267,7 @@
         $scope.onUploadFiles = function() {
             var formData = new FormData();
             $scope.files.forEach(function(f) {
-                formData.append('files', f);
+                formData.append('contracts', f);
             });
 
             $http.post(

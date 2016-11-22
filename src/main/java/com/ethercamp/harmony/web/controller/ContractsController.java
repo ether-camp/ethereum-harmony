@@ -77,7 +77,8 @@ public class ContractsController {
     @RequestMapping(value = "/contracts/{address}/files", method = RequestMethod.POST)
     public ActionStatus<ContractInfoDTO> uploadContractFiles(
             @PathVariable String address,
-            @RequestParam("files") MultipartFile[] contracts) {
+            @RequestParam MultipartFile[] contracts,
+            @RequestParam(required = false) String verifyRlp) {
 
         try {
             ContractInfoDTO contract = contractsService.uploadContract(lowerCase(address), contracts);
