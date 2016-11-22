@@ -22,7 +22,7 @@
         setHeight: 200,
         scrollInertia: 0,
         // having this will cause container to scroll down whenever Cmd or Ctrl pressed
-        keyboard: { enable: false },
+        //keyboard: { enable: false },
         scrollButtons: { enable: false }
     });
 

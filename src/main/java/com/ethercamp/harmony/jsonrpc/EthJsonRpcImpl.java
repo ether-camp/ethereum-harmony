@@ -61,6 +61,8 @@ import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.ethercamp.harmony.jsonrpc.TypeConverter.*;
@@ -299,8 +301,16 @@ public class EthJsonRpcImpl implements JsonRpc {
     }
 
     public String web3_clientVersion() {
-        return "EthereumJ" + "/v" + config.projectVersion() + "/" +
-                System.getProperty("os.name") + "/Java1.7/" + config.projectVersionModifier() + "-" + BuildInfo.buildHash;
+        Pattern shortVersion = Pattern.compile("(\\d\\.\\d).*");
+        Matcher matcher = shortVersion.matcher(System.getProperty("java.version"));
+        matcher.matches();
+
+        return Arrays.asList(
+                "Harmony", "v" + config.projectVersion(),
+                System.getProperty("os.name"),
+                "Java" + matcher.group(1),
+                config.projectVersionModifier() + "-" + BuildInfo.buildHash).stream()
+                .collect(Collectors.joining("/"));
     }
 
     public String web3_sha3(String data) throws Exception {
