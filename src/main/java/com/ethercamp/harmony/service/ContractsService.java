@@ -165,9 +165,11 @@ public class ContractsService {
         if (ArrayUtils.isEmpty(contract.functions)) {
             throw validationError("contract with name '%s' not found in uploaded sources.", contractName);
         }
-        List<CallTransaction.FunctionType> funcTypes = asList(CallTransaction.FunctionType.function, CallTransaction.FunctionType.constructor);
+
+        // TODO uncomment
+//        List<CallTransaction.FunctionType> funcTypes = asList(CallTransaction.FunctionType.function, CallTransaction.FunctionType.constructor);
         Set<String> funcHashes = stream(contract.functions)
-                .filter(function -> funcTypes.contains(function.type))
+//                .filter(function -> funcTypes.contains(function.type))
                 .map(func -> toHexString(func.encodeSignature()))
                 .collect(toSet());
 
