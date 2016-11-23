@@ -99,12 +99,6 @@ public class StorageValuesTest {
         final AccountState accountState = bc.getBlockchain().getRepository().getAccountState(calc.getAddress());
         final ContractDetails contractDetails = bc.getBlockchain().getRepository().getContractDetails(calc.getAddress());
 
-        contractDetails.getStorageKeys().stream()
-                .forEach(k -> {
-                    DataWord storageValue = bc.getBlockchain().getRepository().getStorageValue(calc.getAddress(), k);
-                    System.out.println("Key " + k.shortHex() + ": " + storageValue.bigIntValue());
-                });
-
         System.out.println("Done 2.");
     }
 }
