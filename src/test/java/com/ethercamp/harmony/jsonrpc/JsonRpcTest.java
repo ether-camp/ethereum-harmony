@@ -42,9 +42,11 @@ import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.stream.Collectors;
 
 import static com.ethercamp.harmony.jsonrpc.TypeConverter.*;
 import static java.math.BigInteger.valueOf;
+import static java.util.Arrays.stream;
 import static org.ethereum.crypto.HashUtil.sha3;
 import static org.junit.Assert.*;
 
@@ -211,13 +213,23 @@ public class JsonRpcTest {
 
             JsonRpc.CompilationResult compRes = jsonRpc.eth_compileSolidity(
                     "contract A { " +
-                            "uint public num; " +
-                            "function set(uint a) {" +
-                            "  num = a; " +
-                            "  log1(0x1111, 0x2222);" +
-                            "}}");
-            assertEquals(compRes.info.abiDefinition[0].name, "num");
-            assertEquals(compRes.info.abiDefinition[1].name, "set");
+                    "   uint public num; " +
+                    "   function set(uint a) {" +
+                    "       num = a; " +
+                    "       log1(0x1111, 0x2222);" +
+                    "   }" +
+                    "   function getPublic() public constant returns (address) {" +
+                    "        return msg.sender;" +
+                    "   }" +
+                    "}");
+
+
+            boolean compiledAllMethods = stream(compRes.info.abiDefinition)
+                    .map(abi -> abi.name)
+                    .collect(Collectors.toSet())
+                    .containsAll(Arrays.asList("num", "set", "getPublic"));
+            assertTrue(compiledAllMethods);
+
             assertTrue(compRes.code.length() > 10);
 
             JsonRpc.CallArguments callArgs = new JsonRpc.CallArguments();
@@ -255,9 +267,7 @@ public class JsonRpcTest {
 
             String txHash3 = jsonRpc.eth_sendRawTransaction(TypeConverter.toJsonHex(rawTx.getEncoded()));
 
-            JsonRpc.CallArguments callArgs2= new JsonRpc.CallArguments();
-            callArgs2.to = receipt2.contractAddress;
-            callArgs2.data = TypeConverter.toJsonHex(CallTransaction.Function.fromSignature("num").encode());
+            JsonRpc.CallArguments callArgs2= createCall(receipt2.contractAddress, "num");
 
             String ret3 = jsonRpc.eth_call(callArgs2, "pending");
             String ret4 = jsonRpc.eth_call(callArgs2, "latest");
@@ -284,6 +294,28 @@ public class JsonRpcTest {
             assertEquals("0x0000000000000000000000000000000000000000000000000000000000000777", ret2);
             assertEquals("0x0000000000000000000000000000000000000000000000000000000000000777", ret3);
             assertEquals("0x0000000000000000000000000000000000000000000000000000000000000000", ret4);
+
+            {
+                JsonRpc.CallArguments callArgs3 = createCall(receipt2.contractAddress, "getPublic");
+                String ret5 = jsonRpc.eth_call(callArgs3, blockResult2.number);
+
+                // fall back account
+                ECKey key = ECKey.fromPrivate(new byte[32]);
+                String fallBackAddress = Hex.toHexString(key.getAddress());
+                assertEquals("0x000000000000000000000000" + fallBackAddress, ret5);
+
+                callArgs3.from = cowAcct;
+
+                String ret6 = jsonRpc.eth_call(callArgs3, blockResult2.number);
+                assertEquals("0x000000000000000000000000cd2a3d9f938e13cd947ec05abc7fe734df8dd826", ret6);
+            }
+        }
+
+        JsonRpc.CallArguments createCall(String contractAddress, String functionName) {
+            JsonRpc.CallArguments result = new JsonRpc.CallArguments();
+            result.to = contractAddress;
+            result.data = TypeConverter.toJsonHex(CallTransaction.Function.fromSignature(functionName).encode());
+            return result;
         }
 
         String mineBlock() throws InterruptedException {
