@@ -85,7 +85,10 @@ public class PeersService {
                             0,
                             true,
                             null,
-                            channel.getEthHandler().getBestKnownBlock().getNumber()));
+                            Optional.of(channel.getEthHandler().getBestKnownBlock())
+                                    .map(b -> b.getNumber())
+                                    .orElse(0L)
+                    ));
                 }
             }
         });
