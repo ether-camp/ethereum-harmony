@@ -145,6 +145,7 @@ public class BlockchainInfoService implements ApplicationListener {
         if (!config.isSyncEnabled()) {
             syncStatus = BlockchainInfoService.SyncStatus.DISABLED;
         } else {
+            syncStatus = syncManager.isSyncDone() ? SyncStatus.SHORT_SYNC : SyncStatus.LONG_SYNC;
             ethereum.addListener(new EthereumListenerAdapter() {
                 @Override
                 public void onSyncDone() {
@@ -242,6 +243,7 @@ public class BlockchainInfoService implements ApplicationListener {
 
     @Scheduled(fixedRate = 5000)
     private void doUpdateMachineInfoStatus() {
+        System.out.println("doUpdateMachineInfoStatus " + syncManager.isSyncDone());
 
         final OperatingSystemMXBean bean = (OperatingSystemMXBean) ManagementFactory
                 .getOperatingSystemMXBean();
