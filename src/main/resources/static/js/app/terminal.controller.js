@@ -207,6 +207,16 @@
                     return;
                 }
 
+                // workaround for `eth_compileSolidity`
+                var eth_compileSolidity = 'eth_compileSolidity';
+                if (command == eth_compileSolidity) {
+                    var code = line.replace(eth_compileSolidity, '')
+                        .trim()
+                        .replace(/^"/, '')
+                        .replace(/"$/, '');
+                    args = [code];
+                }
+
                 // fill missing arguments with null values
                 var isNotAllArguments = false;
                 var originArgs = originCommandRow.split(' ');
