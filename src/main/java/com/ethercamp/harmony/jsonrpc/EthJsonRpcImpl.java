@@ -26,6 +26,7 @@ import com.google.common.collect.ImmutableMap;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.map.LRUMap;
+import org.ethereum.config.CommonConfig;
 import org.ethereum.config.SystemProperties;
 import org.ethereum.core.*;
 import org.ethereum.crypto.ECKey;
@@ -49,6 +50,7 @@ import org.ethereum.util.BuildInfo;
 import org.ethereum.util.ByteUtil;
 import org.ethereum.vm.DataWord;
 import org.ethereum.vm.LogInfo;
+import org.ethereum.vm.program.invoke.ProgramInvokeFactory;
 import org.spongycastle.util.encoders.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -164,6 +166,13 @@ public class EthJsonRpcImpl implements JsonRpc {
 
     @Autowired
     BlockStore blockStore;
+
+    @Autowired
+    ProgramInvokeFactory programInvokeFactory;
+
+    @Autowired
+    CommonConfig commonConfig = CommonConfig.getDefault();
+
 
     /**
      * Lowercase hex address as a key.
@@ -532,6 +541,14 @@ public class EthJsonRpcImpl implements JsonRpc {
     }
 
     protected TransactionReceipt createCallTxAndExecute(CallArguments args, Block block) throws Exception {
+        Repository repository = ((Repository) worldManager.getRepository())
+                .getSnapshotTo(block.getStateRoot())
+                .startTracking();
+
+        return createCallTxAndExecute(args, block, repository, worldManager.getBlockStore());
+    }
+
+    protected TransactionReceipt createCallTxAndExecute(CallArguments args, Block block, Repository repository, BlockStore blockStore) throws Exception {
         BinaryCallArguments bca = new BinaryCallArguments();
         bca.setArguments(args);
         Transaction tx = CallTransaction.createRawTransaction(0,
@@ -541,11 +558,36 @@ public class EthJsonRpcImpl implements JsonRpc {
                 bca.value,
                 bca.data);
 
-        return eth.callConstant(tx, block);
+        // put mock signature if not present
+        if (tx.getSignature() == null) {
+            tx.sign(ECKey.fromPrivate(new byte[32]));
+        }
+
+        try {
+            TransactionExecutor executor = commonConfig.transactionExecutor
+                    (tx, block.getCoinbase(), repository, blockStore,
+                            programInvokeFactory, block, new EthereumListenerAdapter(), 0)
+                    .setLocalCall(true);
+
+            executor.init();
+            executor.execute();
+            executor.go();
+            executor.finalization();
+
+            return executor.getReceipt();
+        } finally {
+            repository.rollback();
+        }
     }
 
     public String eth_call(CallArguments args, String bnOrId) throws Exception {
-        TransactionReceipt res = createCallTxAndExecute(args, getByJsonBlockId(bnOrId));
+        TransactionReceipt res;
+        if ("pending".equals(bnOrId)) {
+            Block pendingBlock = blockchain.createNewBlock(blockchain.getBestBlock(), pendingState.getPendingTransactions(), Collections.<BlockHeader>emptyList());
+            res = createCallTxAndExecute(args, pendingBlock, pendingState.getRepository(), worldManager.getBlockStore());
+        } else {
+            res = createCallTxAndExecute(args, getByJsonBlockId(bnOrId));
+        }
         return TypeConverter.toJsonHex(res.getExecutionResult());
     }
 
