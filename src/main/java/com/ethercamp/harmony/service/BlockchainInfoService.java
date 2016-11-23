@@ -253,6 +253,8 @@ public class BlockchainInfoService implements ApplicationListener {
 
     @Scheduled(fixedRate = 2000)
     private void doUpdateBlockchainStatus() {
+        // update sync status
+        syncStatus = syncManager.isSyncDone() ? SyncStatus.SHORT_SYNC : SyncStatus.LONG_SYNC;
 
         final Block bestBlock = ethereum.getBlockchain().getBestBlock();
 
