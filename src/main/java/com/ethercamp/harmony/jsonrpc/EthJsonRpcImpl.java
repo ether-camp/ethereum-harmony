@@ -86,6 +86,7 @@ public class EthJsonRpcImpl implements JsonRpc {
         public long gasPrice;
         public long gasLimit;
         public String toAddress;
+        public String fromAddress;
         public long value;
         public byte[] data;
         public void setArguments(CallArguments args) throws Exception {
@@ -104,6 +105,10 @@ public class EthJsonRpcImpl implements JsonRpc {
             toAddress = null;
             if (args.to != null && !args.to.isEmpty())
                 toAddress = JSonHexToHex(args.to);
+
+            fromAddress = null;
+            if (args.from != null && !args.from.isEmpty())
+                fromAddress = JSonHexToHex(args.from);
 
             value=0;
             if (args.value != null && args.value.length()!=0)
@@ -282,7 +287,7 @@ public class EthJsonRpcImpl implements JsonRpc {
     /**
      * @param address
      * @return unlocked account with private key ready for signing tx
-     * @throws RuntimeException if account not unlocked or not found in keystore
+     * @throws RuntimeException if account is not unlocked or not found in keystore
      */
     protected Account getAccountFromKeystore(String address) throws RuntimeException {
         if (address.indexOf("0x") == 0) {
@@ -557,6 +562,12 @@ public class EthJsonRpcImpl implements JsonRpc {
                 bca.toAddress,
                 bca.value,
                 bca.data);
+
+        // sign if from address is present
+        if (args.from != null) {
+            Account account = getAccountFromKeystore(args.from);
+            tx.sign(account.getEcKey());
+        }
 
         // put mock signature if not present
         if (tx.getSignature() == null) {
