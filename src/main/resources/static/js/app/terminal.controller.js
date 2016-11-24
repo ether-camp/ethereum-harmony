@@ -254,7 +254,7 @@
                          * Ask user for password.
                          */
                         if (error.data && error.data.exceptionTypeName == 'com.ethercamp.harmony.util.HarmonyException') {
-                            if (error.data.message == 'Unlocked account is required') {
+                            if (error.data.message && error.data.message.indexOf('Unlocked account is required') == 0) {
                                 term.echo('[[;#f6a821;]' + 'Unlocked account is required. Please unlock with personal_unlockAccount'  + ']');
                             } else if (error.data.message == 'Key not found in keystore') {
                                 // show modal popup
