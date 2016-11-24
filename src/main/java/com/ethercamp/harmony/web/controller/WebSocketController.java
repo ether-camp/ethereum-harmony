@@ -20,11 +20,10 @@ package com.ethercamp.harmony.web.controller;
 
 import com.ethercamp.harmony.dto.*;
 import com.ethercamp.harmony.service.BlockchainInfoService;
-import com.ethercamp.harmony.service.ContractsService;
+import com.ethercamp.harmony.util.AppConst;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.FileSystemResource;
-import org.springframework.http.HttpRequest;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -84,6 +83,14 @@ public class WebSocketController {
             return "error.html";
         }
         return "index.html";
+    }
+
+    /**
+     * Also handles JSON-RPC requests at site root
+     */
+    @RequestMapping(value = {AppConst.JSON_RPC_ALIAS_PATH}, method = RequestMethod.POST)
+    public String jsonrpcAlias() {
+        return "forward:" + AppConst.JSON_RPC_PATH;
     }
 
     /**

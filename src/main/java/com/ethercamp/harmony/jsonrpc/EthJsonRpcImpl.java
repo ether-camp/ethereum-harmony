@@ -299,7 +299,7 @@ public class EthJsonRpcImpl implements JsonRpc {
         }
 
         if (keystore.hasStoredKey(address)) {
-            throw new HarmonyException("Unlocked account is required", ErrorCodes.ERROR__101_UNLOCK_ACCOUNT);
+            throw new HarmonyException("Unlocked account is required. Account: " + address, ErrorCodes.ERROR__101_UNLOCK_ACCOUNT);
         } else {
             throw new HarmonyException("Key not found in keystore", ErrorCodes.ERROR__102_KEY_NOT_FOUND);
         }

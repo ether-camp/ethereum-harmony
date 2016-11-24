@@ -68,7 +68,10 @@ public class JsonRpcUsageFilter implements Filter {
             final HttpServletRequest httpRequest = (HttpServletRequest) request;
             final HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-            if (AppConst.JSON_RPC_PATH.equals(httpRequest.getRequestURI())) {
+            // don't count alias as it redirects here
+            final boolean isJsonRpcUrl = AppConst.JSON_RPC_PATH.equals(httpRequest.getRequestURI());
+
+            if (isJsonRpcUrl && httpRequest.getMethod().equalsIgnoreCase("POST")) {
 
                 try {
                     final ResettableStreamHttpServletRequest wrappedRequest = new ResettableStreamHttpServletRequest(
