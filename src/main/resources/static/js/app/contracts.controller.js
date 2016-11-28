@@ -110,6 +110,7 @@
         $scope.newContract = {};
         $scope.storage = {entries: [], value: {decoded: ''}};
         $scope.indexSizeString = 'n/a';
+        $scope.solcVersionString = 'n/a';
 
         // file upload
         $scope.files = [];
@@ -124,6 +125,7 @@
         $timeout(function() {
             restService.Contracts.getIndexStatus().then(function(result) {
                 $scope.indexSizeString = filesize(result.indexSize);
+                $scope.solcVersionString = result.solcVersion;
             });
         }, 100);
 

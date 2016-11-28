@@ -46,6 +46,10 @@ public class ImportManyContractsTest {
 
         JSONArray accounts = result.getObject().getJSONArray("content");
 
+        if (accounts.length() == 0) {
+            System.err.println("No contracts left");
+        }
+
         for (int i = 0; i< accounts.length(); i++) {
             System.out.println("Processing item " + i);
             JSONObject account = (JSONObject) accounts.get(i);
@@ -60,7 +64,7 @@ public class ImportManyContractsTest {
 
     @Test
     public void importSpecificContractFromSite() throws Exception {
-        Arrays.asList("").stream()
+        Arrays.asList("086e68b8b72f618ec22c6996f63505975a643fd2").stream()
                 .forEach(a -> verifyContract(a, null));
 
         System.out.println("Done");
