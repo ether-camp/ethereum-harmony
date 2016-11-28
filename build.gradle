@@ -37,7 +37,7 @@ dependencies {
 
 //    compile "com.google.guava:guava:19.0"
 
-    compile "org.ethereum:solcJ-all:0.4.4"                   // Solidity Compiler win/mac/linux binaries
+    compile "org.ethereum:solcJ-all:0.4.6"                   // Solidity Compiler win/mac/linux binaries
 
     // don't forget to adjust {ethereumJ.version} in application.properties
     compile ("org.ethereum:ethereumj-core:1.4.0-SNAPSHOT") {

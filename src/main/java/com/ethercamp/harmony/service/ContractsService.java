@@ -43,6 +43,7 @@ import org.ethereum.datasource.KeyValueDataSource;
 import org.ethereum.datasource.LevelDbDataSource;
 import org.ethereum.facade.Ethereum;
 import org.ethereum.solidity.compiler.SolidityCompiler;
+import org.ethereum.solcJ.SolcVersion;
 import org.ethereum.vm.program.Program;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -134,7 +135,7 @@ public class ContractsService {
 
     public IndexStatusDTO getIndexStatus() throws IOException {
         return new IndexStatusDTO(
-                FileUtils.sizeOfDirectory(new File(config.databaseDir() + "/storageDict")));
+                FileUtils.sizeOfDirectory(new File(config.databaseDir() + "/storageDict")), SolcVersion.VERSION);
     }
 
     /**
@@ -166,10 +167,9 @@ public class ContractsService {
             throw validationError("contract with name '%s' not found in uploaded sources.", contractName);
         }
 
-        // TODO uncomment
-//        List<CallTransaction.FunctionType> funcTypes = asList(CallTransaction.FunctionType.function, CallTransaction.FunctionType.constructor);
-        Set<String> funcHashes = stream(contract.functions)
-//                .filter(function -> funcTypes.contains(function.type))
+        final List<CallTransaction.FunctionType> funcTypes = asList(CallTransaction.FunctionType.function, CallTransaction.FunctionType.constructor);
+        final Set<String> funcHashes = stream(contract.functions)
+                .filter(function -> funcTypes.contains(function.type))
                 .map(func -> toHexString(func.encodeSignature()))
                 .collect(toSet());
 
@@ -179,10 +179,15 @@ public class ContractsService {
         if (isBlank(asm)) {
             throw validationError("wrong account type: account with address '%s' hasn't any code.", address);
         }
-        extractFuncHashes(asm).forEach(funcHash -> {
+
+//        funcHashes.forEach(h -> System.out.println("Compiled funcHash " + h));
+
+        final Set<String> extractFuncHashes = extractFuncHashes(asm);
+        extractFuncHashes.forEach(funcHash -> {
+//            System.out.println("Extracted ASM funcHash " + funcHash);
             if (!funcHashes.contains(funcHash)) {
-                // TEMP disabled until fixed
-                // throw validationError("incorrect code version: function with hash '%s' not found.", funcHash);
+//                 TEMP disabled until fixed
+                throw validationError("incorrect code version: function with hash '%s' not found.", funcHash);
             }
         });
         return abi;

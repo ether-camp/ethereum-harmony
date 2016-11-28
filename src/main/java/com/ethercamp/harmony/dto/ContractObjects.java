@@ -42,7 +42,8 @@ public class ContractObjects {
 
         private final long indexSize;
 
-//        private final long databaseSize;
+        private final String solcVersion;
+
     }
 }
 
