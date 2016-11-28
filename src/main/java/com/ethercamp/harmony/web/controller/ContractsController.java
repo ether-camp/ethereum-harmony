@@ -40,6 +40,7 @@ import static org.apache.commons.lang3.StringUtils.lowerCase;
  */
 @Slf4j
 @RestController
+@CrossOrigin
 public class ContractsController {
 
     @Autowired
