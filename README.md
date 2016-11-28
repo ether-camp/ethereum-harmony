@@ -50,7 +50,7 @@ JSON-RPC is available at `http://localhost:8080/rpc`
 | Environment        | Run      | ... |
 | ------------- |:-------------|------------- |
 | Live      | `gradlew bootRun` | Start server connecting to **Live** network |
-| Morden      | `gradlew runMorden` | Start server connecting to **Morden** network |
+| Ropsten      | `gradlew runRopsten` | Start server connecting to **Ropsten** network |
 | Test      | `gradlew runTest`      | Start server connecting to **Test** network |
 | Classic | `gradlew runClassic`      | Start server connecting to **Ethereum Classic** network |   
 | Private | `gradlew runPrivate`      | Start server, no network connection, single miner running|    
