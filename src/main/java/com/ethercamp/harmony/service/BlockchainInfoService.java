@@ -415,6 +415,8 @@ public class BlockchainInfoService implements ApplicationListener {
         static {
             GENESIS_BLOCK_HASH_MAP.put("d4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3", "Live ETH");
             GENESIS_BLOCK_HASH_MAP.put("0cd786a2425d16f152c658316c423e6ce1181e15c3295826d7c9904cba9ce303", "Morden ETH");
+            GENESIS_BLOCK_HASH_MAP.put("41941023680923e0fe4d74a34bdac8141f2540e3ae90623718e47d66d1ca4a2d", "Ropsten ETH");
+            GENESIS_BLOCK_HASH_MAP.put("34288454de81f95812b9e20ad6a016817069b13c7edc99639114b73efbc21368", "Test ETH");
 
             // not static as user can put changes into genesis, which cause hash to change
             // GENESIS_BLOCK_HASH_MAP.put("???", "Private Miner Network");
