@@ -1107,10 +1107,10 @@ public class EthJsonRpcImpl implements JsonRpc {
             final Block block = miningBlocks.remove(new ByteArrayWrapper(header));
 
             if (block != null && miningTask != null) {
-//                block.setNonce(longToBytes(nonce));
-//                block.setMixHash(digest);
+                block.setNonce(longToBytes(nonce));
+                block.setMixHash(digest);
 
-                miningTask.set(new MinerIfc.MiningResult(nonce, digest));
+                miningTask.set(new MinerIfc.MiningResult(nonce, digest, block));
                 miningTask = null;
                 return true;
             } else {

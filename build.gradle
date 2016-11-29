@@ -142,6 +142,8 @@ applicationDefaultJvmArgs = ["-server", "-Xss32m", "-XX:-OmitStackTraceInFastThr
  */
 task runMorden << { bootRunWithNetworkConfig('morden') }
 
+task runRopsten << { bootRunWithNetworkConfig('ropsten') }
+
 task runTest << { bootRunWithNetworkConfig('test') }
 
 task runPrivate << { bootRunWithNetworkConfig('private') }
