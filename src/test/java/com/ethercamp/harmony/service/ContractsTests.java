@@ -25,10 +25,14 @@ import org.ethereum.facade.Repository;
 import org.junit.Before;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
+import org.springframework.mock.web.MockMultipartFile;
 
 import java.util.List;
+import java.util.Set;
 
-import static org.junit.Assert.assertEquals;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -39,6 +43,7 @@ import static org.mockito.Mockito.when;
 public class ContractsTests {
 
     ContractsService contractsService;
+    Repository repository;
 
     private static final String ADDRESS = "0C37520af9B346D413d90805E86064B47642478E".toLowerCase();
 
@@ -57,7 +62,6 @@ public class ContractsTests {
             "        function sam(bytes strAsBytes, bool someFlag, string str) {}\n" +
             "}";
 
-    //private static final String CODE = "606060405260e060020a600035046329f0de3f8114602e57806390a16130146036578063cdcd77c01460bb575b005b60dd60015481565b608060206004803580820135601f810184900490930284016040526060838152602c949293602493919284019181908382808284375050604080516020604435808b0135601f81018390048302840183019094528383529799893599909860649850929650919091019350909150819084018382808284375050505050505050505050565b60dd600435602435600060208363ffffffff16118060d65750815b9392505050565b6060908152602090f3";
     private static final String CODE = "112233";
 
     @Before
@@ -86,6 +90,69 @@ public class ContractsTests {
     @Test(expected = RuntimeException.class)
     public void contracts_shouldFailCreate_whenWrongCode() throws Exception {
         contractsService.addContract(ADDRESS, "123");
+    }
+
+    @Test
+    public void contracts_shouldDetectContractName_whenFileUpload() throws Exception {
+        when(repository.getCode(any())).thenReturn(Hex.decode("60606040525b33600060006101000a81548173ffffffffffffffffffffffffffffffffffffffff02191690836c010000000000000000000000009081020402179055505b5b610181806100526000396000f360606040523615610044576000357c0100000000000000000000000000000000000000000000000000000000900480639937232114610086578063a6f9dae1146100a3575b6100845b60405180807f7465737400000000000000000000000000000000000000000000000000000000815260200150600401905060405180910390a05b565b005b34610000576100a160048080359060200190919050506100c0565b005b34610000576100be60048080359060200190919050506100e8565b005b6000600082604051808260001916815260200191505060405180910390a0600091505b505050565b600060009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff16141561017d5780600060006101000a81548173ffffffffffffffffffffffffffffffffffffffff02191690836c010000000000000000000000009081020402179055505b5b5b5056"));
+
+        final byte[] contract1 = ("contract owned {\n" +
+                "  address owner;\n" +
+                "  function owned() {\n" +
+                "    owner = msg.sender;\n" +
+                "  }\n" +
+                "  function changeOwner(address newOwner) onlyowner {\n" +
+                "    owner = newOwner;\n" +
+                "  }\n" +
+                "  modifier onlyowner() {\n" +
+                "    if (msg.sender==owner) _;\n" +
+                "  }\n" +
+                "}\n").getBytes("UTF-8");
+
+        final byte[] contract2 =  ("import \"std.sol\";" +
+                "contract Contract is owned {\n" +
+                "  enum E { E1, E2 }\n" +
+                "  function test(bytes32 str) {\n" +
+                "    log0(str);\n" +
+                "    E e = E.E1;\n" +
+                "    uint b;\n" +
+                "  }\n" +
+                "  function () payable {\n" +
+                "    log0(\"test\");\n" +
+                "  }\n" +
+                "}\n").getBytes("UTF-8");
+
+        MockMultipartFile[] files = {
+                new MockMultipartFile("std.sol", "std.sol", "plain/text", contract1)
+                ,
+                new MockMultipartFile("contract.sol", "contract.sol", "plain/text", contract2)
+
+        };
+        ContractInfoDTO addedContract = contractsService.uploadContract(ADDRESS, files);
+
+        assertThat(addedContract.getName(), is("Contract"));
+    }
+
+    @Test
+    public void contracts_shouldExtractHash_1() throws Exception {
+        Set<String> set = ContractsService.extractFuncHashes("PUSH1 0x60  PUSH1 0x40  MSTORE JUMPDEST CALLER PUSH1 0x0  PUSH1 0x0  PUSH2 0x100  EXP DUP2 SLOAD DUP2 PUSH20 0xffffffffffffffffffffffffffffffffffffffff  MUL NOT AND SWAP1 DUP4 PUSH13 0x1000000000000000000000000  SWAP1 DUP2 MUL DIV MUL OR SWAP1 SSTORE POP JUMPDEST JUMPDEST PUSH2 0x181  DUP1 PUSH2 0x52  PUSH1 0x0  CODECOPY PUSH1 0x0  RETURN PUSH1 0x60  PUSH1 0x40  MSTORE CALLDATASIZE ISZERO PUSH2 0x44  JUMPI PUSH1 0x0  CALLDATALOAD PUSH29 0x100000000000000000000000000000000000000000000000000000000  SWAP1 DIV DUP1 PUSH4 0x99372321  EQ PUSH2 0x86  JUMPI DUP1 PUSH4 0xa6f9dae1  EQ PUSH2 0xa3  JUMPI JUMPDEST PUSH2 0x84  JUMPDEST PUSH1 0x40  MLOAD DUP1 DUP1 PUSH32 0x7465737400000000000000000000000000000000000000000000000000000000  DUP2 MSTORE PUSH1 0x20  ADD POP PUSH1 0x4  ADD SWAP1 POP PUSH1 0x40  MLOAD DUP1 SWAP2 SUB SWAP1 LOG0 JUMPDEST JUMP JUMPDEST STOP JUMPDEST CALLVALUE PUSH2 0x0  JUMPI PUSH2 0xa1  PUSH1 0x4  DUP1 DUP1 CALLDATALOAD SWAP1 PUSH1 0x20  ADD SWAP1 SWAP2 SWAP1 POP POP PUSH2 0xc0  JUMP JUMPDEST STOP JUMPDEST CALLVALUE PUSH2 0x0  JUMPI PUSH2 0xbe  PUSH1 0x4  DUP1 DUP1 CALLDATALOAD SWAP1 PUSH1 0x20  ADD SWAP1 SWAP2 SWAP1 POP POP PUSH2 0xe8  JUMP JUMPDEST STOP JUMPDEST PUSH1 0x0  PUSH1 0x0  DUP3 PUSH1 0x40  MLOAD DUP1 DUP3 PUSH1 0x0  NOT AND DUP2 MSTORE PUSH1 0x20  ADD SWAP2 POP POP PUSH1 0x40  MLOAD DUP1 SWAP2 SUB SWAP1 LOG0 PUSH1 0x0  SWAP2 POP JUMPDEST POP POP POP JUMP JUMPDEST PUSH1 0x0  PUSH1 0x0  SWAP1 SLOAD SWAP1 PUSH2 0x100  EXP SWAP1 DIV PUSH20 0xffffffffffffffffffffffffffffffffffffffff  AND PUSH20 0xffffffffffffffffffffffffffffffffffffffff  AND CALLER PUSH20 0xffffffffffffffffffffffffffffffffffffffff  AND EQ ISZERO PUSH2 0x17d  JUMPI DUP1 PUSH1 0x0  PUSH1 0x0  PUSH2 0x100  EXP DUP2 SLOAD DUP2 PUSH20 0xffffffffffffffffffffffffffffffffffffffff  MUL NOT AND SWAP1 DUP4 PUSH13 0x1000000000000000000000000  SWAP1 DUP2 MUL DIV MUL OR SWAP1 SSTORE POP JUMPDEST JUMPDEST JUMPDEST POP JUMP");
+
+        assertThat(set.size(), is(2));
+        assertTrue(set.contains("99372321"));
+        assertTrue(set.contains("a6f9dae1"));
+    }
+
+    @Test
+    public void contracts_shouldDetectContractName_whenSameHashes() throws Exception {
+        when(repository.getCode(any())).thenReturn(Hex.decode("6060604052346000575b6054806100166000396000f360606040526000357c01000000000000000000000000000000000000000000000000000000009004806399372321146036575b6000565b34600057604e60048080359060200190919050506050565b005b5b5056"));
+
+        final String sourceCode =
+                "contract Contract1 { function test(bytes32 str) {}}" +
+                "contract Contract2 { function test(bytes32 str) {}}";
+        ContractInfoDTO addedContract = contractsService.addContract(ADDRESS, sourceCode);
+
+        assertThat(addedContract.getName(), containsString("Contract1"));
+        assertThat(addedContract.getName(), containsString("Contract2"));
     }
 }
 

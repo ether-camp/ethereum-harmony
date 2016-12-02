@@ -82,6 +82,7 @@ public class ContractsController {
 
         try {
             ContractInfoDTO contract = contractsService.uploadContract(lowerCase(address), contracts);
+            log.info("Uploaded files for address: {}, contract name: {}" + address, contract.getName());
             return createSuccessStatus(contract);
         } catch (Exception e) {
             log.warn("Contract's source uploading error: ", e);

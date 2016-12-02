@@ -60,10 +60,12 @@ import java.nio.charset.Charset;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
+import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static org.apache.commons.lang3.StringUtils.*;
@@ -156,6 +158,7 @@ public class ContractsService {
     }
 
     private String getValidatedAbi(String address, String contractName, CompilationResult result) {
+        log.debug("getValidatedAbi address:{}, contractName: {}", address, contractName);
         final ContractMetadata metadata = result.getContracts().get(contractName);
         if (metadata == null) {
             throw validationError("contract with name '%s' not found in uploaded sources.", contractName);
@@ -170,7 +173,10 @@ public class ContractsService {
         final List<CallTransaction.FunctionType> funcTypes = asList(CallTransaction.FunctionType.function, CallTransaction.FunctionType.constructor);
         final Set<String> funcHashes = stream(contract.functions)
                 .filter(function -> funcTypes.contains(function.type))
-                .map(func -> toHexString(func.encodeSignature()))
+                .map(func -> {
+//                    log.debug("compiled funcHash " + toHexString(func.encodeSignature()) + " " + func.name);
+                    return toHexString(func.encodeSignature());
+                })
                 .collect(toSet());
 
 
@@ -180,23 +186,21 @@ public class ContractsService {
             throw validationError("wrong account type: account with address '%s' hasn't any code.", address);
         }
 
-//        funcHashes.forEach(h -> System.out.println("Compiled funcHash " + h));
-
         final Set<String> extractFuncHashes = extractFuncHashes(asm);
+//        extractFuncHashes.forEach(h -> log.debug("Extracted ASM funcHash " + h));
         extractFuncHashes.forEach(funcHash -> {
-//            System.out.println("Extracted ASM funcHash " + funcHash);
             if (!funcHashes.contains(funcHash)) {
-//                 TEMP disabled until fixed
                 throw validationError("incorrect code version: function with hash '%s' not found.", funcHash);
             }
         });
         return abi;
     }
 
-    private static Set<String> extractFuncHashes(String asm) {
+    public static Set<String> extractFuncHashes(String asm) {
         Set<String> result = new HashSet<>();
 
-        Matcher matcher = FUNC_HASHES_PATTERN.matcher(substringBefore(asm, "JUMPDEST"));
+//        String beforeJumpDest = substringBefore(asm, "JUMPDEST");
+        Matcher matcher = FUNC_HASHES_PATTERN.matcher(asm);
         while (matcher.find()) {
             String hash = matcher.group(2);
             result.add(leftPad(hash, 8, "0"));
@@ -246,11 +250,13 @@ public class ContractsService {
     }
 
     /**
-     * Try to compile each file and check if it's interface matches to asm functions hashes at the contract
+     * Try to compile each file and check if it's interface matches to asm functions hashes
+     * at the deployed contract.
      * @return contract from matched file
      */
     private ContractInfoDTO compileAndSave(String address, List<String> files) {
-        return files.stream()
+        // get list of contracts which match to deployed code
+        final List<ContractInfoDTO> validContracts = files.stream()
                 .flatMap(src -> {
                     final CompilationResult result = compileAbi(src.getBytes());
 
@@ -270,8 +276,15 @@ public class ContractsService {
                                     return Stream.empty();
                                 }
                             });
-                })
-                .findAny()
+
+                }).collect(Collectors.toList());
+
+        // join contract names if there are few with same signature
+        return validContracts.stream()
+                .findFirst()
+                .map(c -> new ContractInfoDTO(
+                        c.getAddress(),
+                        validContracts.stream().map(cc -> cc.getName()).collect(joining("|"))))
                 .orElseThrow(() -> validationError("target contract source not found within uploaded sources."));
     }
 
