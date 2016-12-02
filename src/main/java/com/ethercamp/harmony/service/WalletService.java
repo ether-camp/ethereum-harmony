@@ -217,8 +217,8 @@ public class WalletService {
 
         List<WalletAddressDTO> list = addresses.entrySet().stream()
                 .flatMap(e -> {
+                    final String hexAddress = e.getKey();
                     try {
-                        final String hexAddress = e.getKey();
                         final byte[] address = Hex.decode(hexAddress);
                         final BigInteger balance = repository.getBalance(address);
                         final BigInteger sendBalance = calculatePendingChange(pendingSendTransactions, hexAddress, txFee);
@@ -231,7 +231,7 @@ public class WalletService {
                                 receiveBalance.subtract(sendBalance),
                                 keystore.hasStoredKey(e.getKey())));
                     } catch (Exception exception) {
-                        log.error("Error in making wallet address", exception);
+                        log.error("Error in making wallet address " + hexAddress, exception);
                         return Stream.empty();
                     }
                 })

@@ -1,5 +1,6 @@
 package com.ethercamp.harmony.service.contracts.compiler;
 
+import lombok.extern.slf4j.Slf4j;
 import org.ethereum.config.SystemProperties;
 
 import java.io.*;
@@ -10,6 +11,7 @@ import java.util.*;
 /**
  * Created by Anton Nashatyrev on 03.03.2016.
  */
+@Slf4j(topic = "contracts")
 public class Solc {
 
     private File solc = null;
@@ -49,6 +51,16 @@ public class Solc {
             }
             targetFile.deleteOnExit();
         }
+        log.info("Solc initialized");
+        String solcVersionOutput = execCmd(getExecutable().getAbsolutePath() + " --version");
+        Arrays.asList(solcVersionOutput.split("\\n"))
+                .forEach(line -> log.info(line));
+
+    }
+
+    public static String execCmd(String cmd) throws java.io.IOException {
+        java.util.Scanner s = new java.util.Scanner(Runtime.getRuntime().exec(cmd).getInputStream()).useDelimiter("\\A");
+        return s.hasNext() ? s.next() : "";
     }
 
     private InputStream getResource(String resourceName) throws FileNotFoundException {
