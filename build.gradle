@@ -65,6 +65,9 @@ dependencies {
     compile "javax.portlet:portlet-api:2.0"
     compile "org.apache.commons:commons-io:1.3.2"
 
+    compile "org.functionaljava:functionaljava:4.6"
+    compile "org.functionaljava:functionaljava-java8:4.6"
+
     /* WEB DEPENDENCIES */
     compile("org.webjars.bower:bootstrap:3.3.6")
     compile("org.webjars:jquery:2.2.4")

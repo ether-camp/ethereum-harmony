@@ -19,18 +19,23 @@
 package com.ethercamp.harmony.service;
 
 import com.ethercamp.harmony.dto.ContractObjects.*;
-import org.ethereum.datasource.inmem.HashMapDB;
+import com.ethercamp.harmony.service.contracts.compiler.SolidityCompiler;
+import org.apache.commons.io.IOUtils;
+import org.ethereum.datasource.HashMapDB;
 import org.ethereum.facade.Ethereum;
 import org.ethereum.facade.Repository;
+import org.ethereum.solidity.compiler.CompilationResult;
 import org.junit.Before;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.mock.web.MockMultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.any;
@@ -123,8 +128,7 @@ public class ContractsTests {
                 "}\n").getBytes("UTF-8");
 
         MockMultipartFile[] files = {
-                new MockMultipartFile("std.sol", "std.sol", "plain/text", contract1)
-                ,
+                new MockMultipartFile("std.sol", "std.sol", "plain/text", contract1),
                 new MockMultipartFile("contract.sol", "contract.sol", "plain/text", contract2)
 
         };
@@ -135,24 +139,74 @@ public class ContractsTests {
 
     @Test
     public void contracts_shouldExtractHash_1() throws Exception {
-        Set<String> set = ContractsService.extractFuncHashes("PUSH1 0x60  PUSH1 0x40  MSTORE JUMPDEST CALLER PUSH1 0x0  PUSH1 0x0  PUSH2 0x100  EXP DUP2 SLOAD DUP2 PUSH20 0xffffffffffffffffffffffffffffffffffffffff  MUL NOT AND SWAP1 DUP4 PUSH13 0x1000000000000000000000000  SWAP1 DUP2 MUL DIV MUL OR SWAP1 SSTORE POP JUMPDEST JUMPDEST PUSH2 0x181  DUP1 PUSH2 0x52  PUSH1 0x0  CODECOPY PUSH1 0x0  RETURN PUSH1 0x60  PUSH1 0x40  MSTORE CALLDATASIZE ISZERO PUSH2 0x44  JUMPI PUSH1 0x0  CALLDATALOAD PUSH29 0x100000000000000000000000000000000000000000000000000000000  SWAP1 DIV DUP1 PUSH4 0x99372321  EQ PUSH2 0x86  JUMPI DUP1 PUSH4 0xa6f9dae1  EQ PUSH2 0xa3  JUMPI JUMPDEST PUSH2 0x84  JUMPDEST PUSH1 0x40  MLOAD DUP1 DUP1 PUSH32 0x7465737400000000000000000000000000000000000000000000000000000000  DUP2 MSTORE PUSH1 0x20  ADD POP PUSH1 0x4  ADD SWAP1 POP PUSH1 0x40  MLOAD DUP1 SWAP2 SUB SWAP1 LOG0 JUMPDEST JUMP JUMPDEST STOP JUMPDEST CALLVALUE PUSH2 0x0  JUMPI PUSH2 0xa1  PUSH1 0x4  DUP1 DUP1 CALLDATALOAD SWAP1 PUSH1 0x20  ADD SWAP1 SWAP2 SWAP1 POP POP PUSH2 0xc0  JUMP JUMPDEST STOP JUMPDEST CALLVALUE PUSH2 0x0  JUMPI PUSH2 0xbe  PUSH1 0x4  DUP1 DUP1 CALLDATALOAD SWAP1 PUSH1 0x20  ADD SWAP1 SWAP2 SWAP1 POP POP PUSH2 0xe8  JUMP JUMPDEST STOP JUMPDEST PUSH1 0x0  PUSH1 0x0  DUP3 PUSH1 0x40  MLOAD DUP1 DUP3 PUSH1 0x0  NOT AND DUP2 MSTORE PUSH1 0x20  ADD SWAP2 POP POP PUSH1 0x40  MLOAD DUP1 SWAP2 SUB SWAP1 LOG0 PUSH1 0x0  SWAP2 POP JUMPDEST POP POP POP JUMP JUMPDEST PUSH1 0x0  PUSH1 0x0  SWAP1 SLOAD SWAP1 PUSH2 0x100  EXP SWAP1 DIV PUSH20 0xffffffffffffffffffffffffffffffffffffffff  AND PUSH20 0xffffffffffffffffffffffffffffffffffffffff  AND CALLER PUSH20 0xffffffffffffffffffffffffffffffffffffffff  AND EQ ISZERO PUSH2 0x17d  JUMPI DUP1 PUSH1 0x0  PUSH1 0x0  PUSH2 0x100  EXP DUP2 SLOAD DUP2 PUSH20 0xffffffffffffffffffffffffffffffffffffffff  MUL NOT AND SWAP1 DUP4 PUSH13 0x1000000000000000000000000  SWAP1 DUP2 MUL DIV MUL OR SWAP1 SSTORE POP JUMPDEST JUMPDEST JUMPDEST POP JUMP");
+        final String testData = IOUtils.toString(getClass().getClassLoader().getResourceAsStream("contracts/test-extract-hashes.asm.txt"));
+        final Set<String> set = ContractsService.extractFuncHashes(testData);
 
-        assertThat(set.size(), is(2));
+        assertThat(set, hasSize(3));
         assertTrue(set.contains("99372321"));
         assertTrue(set.contains("a6f9dae1"));
+        assertTrue(set.contains("41c0e1b5"));
     }
 
     @Test
     public void contracts_shouldDetectContractName_whenSameHashes() throws Exception {
-        when(repository.getCode(any())).thenReturn(Hex.decode("6060604052346000575b6054806100166000396000f360606040526000357c01000000000000000000000000000000000000000000000000000000009004806399372321146036575b6000565b34600057604e60048080359060200190919050506050565b005b5b5056"));
-
         final String sourceCode =
                 "contract Contract1 { function test(bytes32 str) {}}" +
-                "contract Contract2 { function test(bytes32 str) {}}";
+                        "contract Contract2 { function test(bytes32 str) {}}";
+        final String contractBin = loadContractBin(sourceCode, "Contract1");
+        when(repository.getCode(any())).thenReturn(Hex.decode(contractBin));
+
+
         ContractInfoDTO addedContract = contractsService.addContract(ADDRESS, sourceCode);
 
         assertThat(addedContract.getName(), containsString("Contract1"));
         assertThat(addedContract.getName(), containsString("Contract2"));
+    }
+
+    @Test
+    public void contracts_shouldDetectContractName_whenNameReg() throws Exception {
+        // prepare
+        final String sourceCode = loadSourceCode("contracts/NameReg.sol");
+        final String contractBin = loadContractBin(sourceCode, "NameReg");
+        when(repository.getCode(any())).thenReturn(Hex.decode(contractBin));
+
+        // test
+        ContractInfoDTO addedContract = contractsService.addContract(ADDRESS, sourceCode);
+
+        assertThat(addedContract.getName(), is("NameReg"));
+    }
+
+    @Test
+    public void contracts_shouldDetectContractName_whenManyContracts() throws Exception {
+        // prepare
+        final String sourceCode = loadSourceCode("contracts/NameReg.sol");
+        final String contractBin = loadContractBin(sourceCode, "NameReg");
+        //when(repository.getCode(any())).thenReturn(Hex.decode(contractBin));
+        String bin = "606060405260e060020a600035046341c0e1b581146044578063bb34534c146050578063e1fa8e84146086578063e79a198f146044578063f5c573821460a1575b6000565b34600057604e60c0565b005b34600057605d60043560c3565b6040805173ffffffffffffffffffffffffffffffffffffffff9092168252519081900360200190f35b34600057604e60043560cb565b005b34600057604e60c0565b005b3460005760ae60043560c3565b60408051918252519081900360200190f35b5b565b60005b919050565b5b50565b5b565b60005b91905056";
+        when(repository.getCode(any())).thenReturn(Hex.decode(bin));
+
+        // test
+        MockMultipartFile[] files = {
+                new MockMultipartFile("contract.sol", "contract.sol", "plain/text", loadSourceCode("contracts/Contract.sol").getBytes()),
+                new MockMultipartFile("NameReg.sol", "NameReg.sol", "plain/text", loadSourceCode("contracts/NameReg.sol").getBytes()),
+                new MockMultipartFile("std.sol", "std.sol", "plain/text", loadSourceCode("contracts/std.sol").getBytes())
+        };
+        ContractInfoDTO addedContract = contractsService.uploadContract(ADDRESS, files);
+
+        assertThat(addedContract.getName(), is("NameReg"));
+    }
+
+    /*-------- HELPERS --------*/
+
+    private String loadSourceCode(String path) throws IOException {
+        return IOUtils.toString(getClass().getClassLoader().getResourceAsStream(path));
+    }
+
+    private String loadContractBin(String sourceCode, String contractName) throws IOException {
+        final SolidityCompiler.Result compiled = SolidityCompiler.compile(sourceCode.getBytes("UTF-8"), true, SolidityCompiler.Options.BIN);
+        final CompilationResult result = CompilationResult.parse(compiled.output);
+
+        return result.contracts.get(contractName).bin;
     }
 }
 

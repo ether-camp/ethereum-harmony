@@ -45,7 +45,7 @@ public class TransactionReceiptDTO {
     public String contractAddress;          // The contract address created, if the transaction was a contract creation, otherwise  null .
 //    public String from;
 //    public String to;
-    public org.ethereum.jsonrpc.JsonRpc.LogFilterElement[] logs;         // Array of log objects, which this transaction generated.
+    public JsonRpc.LogFilterElement[] logs;         // Array of log objects, which this transaction generated.
 
     public TransactionReceiptDTO(Block block, TransactionInfo txInfo){
         TransactionReceipt receipt = txInfo.getReceipt();
@@ -59,7 +59,7 @@ public class TransactionReceiptDTO {
         } else {
             contractAddress = null;
         }
-        logs = new org.ethereum.jsonrpc.JsonRpc.LogFilterElement[receipt.getLogInfoList().size()];
+        logs = new JsonRpc.LogFilterElement[receipt.getLogInfoList().size()];
         if (block != null) {
             blockNumber = toJsonHex(block.getNumber());
             blockHash = toJsonHex(txInfo.getBlockHash());
@@ -69,7 +69,7 @@ public class TransactionReceiptDTO {
         }
         for (int i = 0; i < logs.length; i++) {
             LogInfo logInfo = receipt.getLogInfoList().get(i);
-            logs[i] = new org.ethereum.jsonrpc.JsonRpc.LogFilterElement(logInfo, block, txInfo.getIndex(),
+            logs[i] = new JsonRpc.LogFilterElement(logInfo, block, txInfo.getIndex(),
                     txInfo.getReceipt().getTransaction(), i);
         }
     }

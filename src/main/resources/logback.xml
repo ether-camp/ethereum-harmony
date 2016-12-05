@@ -45,7 +45,7 @@
         <appender-ref ref="FILE"/>
     </root>
 
-    <logger level="INFO" name="contracts"/>
+    <logger level="DEBUG" name="contracts"/>
     <logger level="DEBUG" name="keystore"/>
     <logger level="DEBUG" name="wallet"/>
     <logger level="DEBUG" name="harmony"/>
@@ -72,7 +72,7 @@
     <logger level="INFO" name="sync"/>
     <logger level="TRACE" name="notification"/>
     <logger level="ERROR" name="wallet"/>
-    <logger level="ERROR" name="net"/>
+    <logger level="INFO" name="net"/>
     <logger level="INFO" name="db"/>
     <logger level="ERROR" name="peerdiscovery"/>
     <logger level="ERROR" name="peermonitor"/>
