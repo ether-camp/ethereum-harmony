@@ -30,6 +30,7 @@ import com.ethercamp.harmony.util.exception.ContractException;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import fj.data.Validation;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -61,7 +62,6 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
@@ -86,7 +86,7 @@ import com.ethercamp.harmony.dto.ContractObjects.*;
 @Service
 public class ContractsService {
 
-    private static final Pattern FUNC_HASHES_PATTERN = Pattern.compile("(PUSH4\\s+0x)([0-9a-fA-F]{2,8})(\\s+DUP2)?(\\s+EQ\\s+PUSH2)");
+    private static final Pattern FUNC_HASHES_PATTERN = Pattern.compile("(PUSH4\\s+0x)([0-9a-fA-F]{2,8})(\\s+DUP2)?(\\s+EQ\\s+[PUSH1|PUSH2])");
     private static final Pattern SOLIDITY_HEADER_PATTERN = Pattern.compile("^\\s{0,}PUSH1\\s+0x60\\s+PUSH1\\s+0x40\\s+MSTORE.+");
     private static final Charset UTF_8 = Charset.forName("UTF-8");
 
@@ -173,7 +173,7 @@ public class ContractsService {
         final Set<String> funcHashes = stream(contract.functions)
                 .filter(function -> funcTypes.contains(function.type))
                 .map(func -> {
-//                    log.debug("compiled funcHash " + toHexString(func.encodeSignature()) + " " + func.name);
+                    log.debug("Compiled funcHash " + toHexString(func.encodeSignature()) + " " + func.name);
                     return toHexString(func.encodeSignature());
                 })
                 .collect(toSet());
@@ -186,12 +186,13 @@ public class ContractsService {
         }
 
         final Set<String> extractFuncHashes = extractFuncHashes(asm);
-//        extractFuncHashes.forEach(h -> log.debug("Extracted ASM funcHash " + h));
+        extractFuncHashes.forEach(h -> log.debug("Extracted ASM funcHash " + h));
         extractFuncHashes.forEach(funcHash -> {
             if (!funcHashes.contains(funcHash)) {
                 throw validationError("incorrect code version: function with hash '%s' not found.", funcHash);
             }
         });
+        log.debug("Contract is valid " + contractName);
         return abi;
     }
 
@@ -251,40 +252,70 @@ public class ContractsService {
     /**
      * Try to compile each file and check if it's interface matches to asm functions hashes
      * at the deployed contract.
-     * @return contract from matched file
+     * Save contract if valid one is found, or merge names.
+     * @return contract name(s) from matched file
      */
     private ContractInfoDTO compileAndSave(String address, List<String> files) {
         // get list of contracts which match to deployed code
-        final List<ContractInfoDTO> validContracts = files.stream()
+        final List<Validation<ContractException, ContractEntity>> validationResult = files.stream()
                 .flatMap(src -> {
                     final CompilationResult result = compileAbi(src.getBytes());
 
                     return result.getContracts().entrySet().stream()
-                            .flatMap(entry -> {
-                                try {
-                                    final String name = entry.getKey();
-                                    final String abi = getValidatedAbi(address, name, result);
-                                    final String dataMembers = compileAst(src.getBytes()).getContractAllDataMembers(name).toJson();
-
-                                    final ContractEntity contract = new ContractEntity(name, src, dataMembers, abi);
-                                    contractsStorage.put(Hex.decode(address), contractFormat.encode(contract));
-
-                                    return Stream.of(new ContractInfoDTO(address, name));
-                                } catch (ContractException e) {
-                                    log.warn("Problem with contract. " + e.getMessage());
-                                    return Stream.empty();
-                                }
-                            });
+                            .map(entry -> validateContracts(address, src, result, entry.getKey()));
 
                 }).collect(Collectors.toList());
 
-        // join contract names if there are few with same signature
-        return validContracts.stream()
-                .findFirst()
-                .map(c -> new ContractInfoDTO(
-                        c.getAddress(),
-                        validContracts.stream().map(cc -> cc.getName()).collect(joining("|"))))
-                .orElseThrow(() -> validationError("target contract source not found within uploaded sources."));
+        final List<ContractEntity> validContracts = validationResult.stream()
+                .filter(v -> v.isSuccess())
+                .map(v -> v.success())
+                .collect(toList());
+
+        if (!validContracts.isEmpty()) {
+            // SUCCESS
+
+            // join contract names if there are few with same signature
+            // in that way we will provide more information for a user
+            final String contractName = validContracts.stream()
+                    .map(cc -> cc.getName())
+                    .distinct()
+                    .collect(joining("|"));
+
+            // save
+            validContracts.stream()
+                    .findFirst()
+                    .ifPresent(entity -> {
+                        entity.name = contractName;
+                        contractsStorage.put(Hex.decode(address), contractFormat.encode(entity));
+                    });
+
+            return new ContractInfoDTO(address, contractName);
+        } else {
+            if (validationResult.size() == 1) {
+                throw validationResult.stream()
+                        .findFirst()
+                        .map(v -> v.fail())
+                        .get();
+            } else {
+                throw validationError("Target contract source not found within uploaded sources.");
+            }
+        }
+    }
+
+    private Validation<ContractException, ContractEntity> validateContracts(String address, String src,
+                                                                             CompilationResult result,
+                                                                             String name) {
+        try {
+            final String abi = getValidatedAbi(address, name, result);
+            final String dataMembers = compileAst(src.getBytes()).getContractAllDataMembers(name).toJson();
+
+            final ContractEntity contract = new ContractEntity(name, src, dataMembers, abi);
+
+            return Validation.success(contract);
+        } catch (ContractException e) {
+            log.debug("Problem with contract. " + e.getMessage());
+            return Validation.fail(e);
+        }
     }
 
     private ContractEntity loadContract(byte[] address) {
