@@ -67,7 +67,7 @@ dependencies {
     compile("org.webjars.bower:bootstrap:3.3.6")
     compile("org.webjars:jquery:2.2.4")
 
-    compile("org.webjars.bower:angular:1.5.8")
+//    compile("org.webjars.bower:angular:1.5.8")
     compile("org.webjars.bower:angular-route:1.5.8")
     compile("org.webjars.bower:angular-animate:1.5.8")
 
