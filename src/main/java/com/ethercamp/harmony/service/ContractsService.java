@@ -39,8 +39,8 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ethereum.config.SystemProperties;
 import org.ethereum.core.CallTransaction;
-import org.ethereum.datasource.KeyValueDataSource;
-import org.ethereum.datasource.LevelDbDataSource;
+import org.ethereum.datasource.DbSource;
+import org.ethereum.datasource.leveldb.LevelDbDataSource;
 import org.ethereum.facade.Ethereum;
 import org.ethereum.solidity.compiler.SolidityCompiler;
 import org.ethereum.solcJ.SolcVersion;
@@ -100,7 +100,7 @@ public class ContractsService {
     @Autowired
     Ethereum ethereum;
 
-    KeyValueDataSource contractsStorage;
+    DbSource<byte[]> contractsStorage;
 
     ObjectToBytesFormat<ContractEntity> contractFormat = new ObjectToBytesFormat<>(ContractEntity.class);
 

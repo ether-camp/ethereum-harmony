@@ -92,9 +92,9 @@ public class StorageValuesTest {
 //        assertEquals(BigInteger.valueOf(0), calc.callConstFunction("result")[0]);
         System.out.println("Done.");
 
-        bc.getBlockchain().getRepository().getAccountsKeys().stream()
-            .map(a -> Hex.toHexString(a))
-            .forEach(a -> System.out.println("Accounts in storage: " + a));
+//        bc.getBlockchain().getRepository().getAccountsKeys().stream()
+//            .map(a -> Hex.toHexString(a))
+//            .forEach(a -> System.out.println("Accounts in storage: " + a));
 
         final AccountState accountState = bc.getBlockchain().getRepository().getAccountState(calc.getAddress());
         final ContractDetails contractDetails = bc.getBlockchain().getRepository().getContractDetails(calc.getAddress());

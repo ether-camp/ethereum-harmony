@@ -19,7 +19,7 @@
 package com.ethercamp.harmony.service;
 
 import com.ethercamp.harmony.dto.ContractObjects.*;
-import org.ethereum.datasource.HashMapDB;
+import org.ethereum.datasource.inmem.HashMapDB;
 import org.ethereum.facade.Ethereum;
 import org.ethereum.facade.Repository;
 import org.junit.Before;
@@ -65,7 +65,7 @@ public class ContractsTests {
         contractsService = new ContractsService();
         contractsService.ethereum = mock(Ethereum.class);
 
-        contractsService.contractsStorage = new HashMapDB();
+        contractsService.contractsStorage = new HashMapDB<byte[]>();
         Repository repository = mock(Repository.class);
 
         when(repository.getCode(any())).thenReturn(Hex.decode(CODE));
