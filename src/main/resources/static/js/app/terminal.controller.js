@@ -91,6 +91,9 @@
         var commandLinePendingUnlock = null;
 
         $scope.$on('$destroy', function() {
+            if (terminal) {
+                terminal.destroy();
+            }
             console.log('TerminalCtrl controller exited.');
         });
 
@@ -147,9 +150,9 @@
             $timeout(function() {
                 $scope.scrollConfig.setHeight = newHeight;
                 $('#suggestion-scroll-container').mCustomScrollbar($scope.scrollConfig);
-                if (terminal) {
-                    $('#terminal-container').mCustomScrollbar($scope.scrollConfig);
-                }
+                //if (terminal) {
+                //    $('#terminal-container').mCustomScrollbar($scope.scrollConfig);
+                //}
             }, 10);
         }
 
@@ -287,6 +290,7 @@
          * If one command left, show command details panel.
          */
         function onCommandChange(line, terminal) {
+            console.log('onCommandChange')
             $('#terminal-container').mCustomScrollbar('scrollTo', 'bottom');
             $timeout(function() {
                 var arr = line.match(/\S+/g);
