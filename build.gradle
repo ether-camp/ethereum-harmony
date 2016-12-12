@@ -91,7 +91,7 @@ dependencies {
 
 //    compile("org.webjars:jquery.terminal:0.10.11")
     compile("org.webjars.bower:malihu-custom-scrollbar-plugin:3.1.5")
-    compile("org.webjars.bower:ng-scrollbars:0.0.10")
+//    compile("org.webjars.bower:ng-scrollbars:0.0.10")
     compile("org.webjars.bower:angular-ui:0.4.0")
     compile("org.webjars.bower:underscore:1.8.3")
     compile("org.webjars.npm:bignumber.js:2.4.0")
