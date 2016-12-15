@@ -148,9 +148,11 @@ public class BlockchainInfoService implements ApplicationListener {
             syncStatus = syncManager.isSyncDone() ? SyncStatus.SHORT_SYNC : SyncStatus.LONG_SYNC;
             ethereum.addListener(new EthereumListenerAdapter() {
                 @Override
-                public void onSyncDone() {
-                    log.info("Sync done");
-                    syncStatus = BlockchainInfoService.SyncStatus.SHORT_SYNC;
+                public void onSyncDone(SyncState state) {
+                    log.info("Sync done " + state);
+                    if (syncStatus != BlockchainInfoService.SyncStatus.SHORT_SYNC) {
+                        syncStatus = BlockchainInfoService.SyncStatus.SHORT_SYNC;
+                    }
                 }
             });
         }
