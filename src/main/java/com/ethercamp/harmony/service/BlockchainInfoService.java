@@ -26,7 +26,6 @@ import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.UnsynchronizedAppenderBase;
 
 import com.ethercamp.harmony.keystore.FileSystemKeystore;
-import org.ethereum.sync.SyncState;
 import org.slf4j.LoggerFactory;
 import ch.qos.logback.classic.Logger;
 import com.ethercamp.harmony.dto.*;
@@ -149,8 +148,8 @@ public class BlockchainInfoService implements ApplicationListener {
             syncStatus = syncManager.isSyncDone() ? SyncStatus.SHORT_SYNC : SyncStatus.LONG_SYNC;
             ethereum.addListener(new EthereumListenerAdapter() {
                 @Override
-                public void onSyncDone() {
-                    log.info("Sync done");
+                public void onSyncDone(SyncState state) {
+                    log.info("Sync done " + state);
                     if (syncStatus != BlockchainInfoService.SyncStatus.SHORT_SYNC) {
                         syncStatus = BlockchainInfoService.SyncStatus.SHORT_SYNC;
                     }
