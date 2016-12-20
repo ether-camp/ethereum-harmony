@@ -19,12 +19,12 @@
 package com.ethercamp.harmony.service;
 
 import com.ethercamp.harmony.dto.ContractObjects.*;
-import com.ethercamp.harmony.service.contracts.compiler.SolidityCompiler;
 import org.apache.commons.io.IOUtils;
-import org.ethereum.datasource.HashMapDB;
+import org.ethereum.datasource.inmem.HashMapDB;
 import org.ethereum.facade.Ethereum;
 import org.ethereum.facade.Repository;
 import org.ethereum.solidity.compiler.CompilationResult;
+import org.ethereum.solidity.compiler.SolidityCompiler;
 import org.junit.Before;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
