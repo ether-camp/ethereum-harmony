@@ -46,7 +46,8 @@ import java.util.stream.Collectors;
 @Slf4j(topic = "keystore")
 public class FileSystemKeystore implements Keystore {
 
-    @Value("${keystore.dir?:#{null}}")
+//    @Value("#{ ${keystore.dir} != #null ? ${keystore.dir} : #null }")
+    @Value("${keystore.dir}")
     public String keystoreDir;
 
     public KeystoreFormat keystoreFormat = new KeystoreFormat();
@@ -147,7 +148,7 @@ public class FileSystemKeystore implements Keystore {
      * @return platform dependent path to Ethereum folder
      */
     public Path getKeyStoreLocation() {
-        if (keystoreDir != null) {
+        if (!StringUtils.isEmpty(keystoreDir)) {
             return Paths.get(keystoreDir);
         }
 
