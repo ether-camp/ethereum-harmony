@@ -60,7 +60,7 @@ public class PrivateMinerService {
     public void init() throws IOException, InterruptedException {
         final boolean isPrivateNetwork = env.getProperty("networkProfile", "").equalsIgnoreCase("private");
 //        log.info("isPrivateNetwork " + isPrivateNetwork);
-        if (isPrivateNetwork && false) {
+        if (isPrivateNetwork) {
             ethereum.getBlockMiner().addListener(new MinerListener() {
                 @Override
                 public void miningStarted() {

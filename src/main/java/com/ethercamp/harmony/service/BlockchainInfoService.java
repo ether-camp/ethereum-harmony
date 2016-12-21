@@ -285,7 +285,7 @@ public class BlockchainInfoService implements ApplicationListener {
     private void doUpdateNetworkInfo() {
         final NetworkInfoDTO info = new NetworkInfoDTO(
                 channelManager.getActivePeers().size(),
-                syncStatus.toString(),
+                NetworkInfoDTO.SyncStatusDTO.instanceOf(syncManager.getSyncStatus()),
                 config.listenPort(),
                 true
         );

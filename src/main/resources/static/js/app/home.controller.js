@@ -7,6 +7,17 @@
 (function() {
     'use strict';
 
+    function formatWithProps(input, map) {
+        if (!input) {
+            return '';
+        }
+        var result = input;
+        for (var prop in map) {
+            result = result.replace('{' + prop + '}', map[prop])
+        }
+        return result;
+    }
+
     function HomeCtrl($scope, $timeout, $http, $q, scrollConfig) {
         $scope.scrollConfig = jQuery.extend(true, {}, scrollConfig);
         //$scope.scrollConfig.axis = 'xy';
@@ -15,16 +26,44 @@
 
         $scope.activePeers = 0;
         $scope.syncStatus = 'n/a';
+        $scope.syncStatusMessageTop = '';
+        $scope.syncStatusMessageBottom = '';
         $scope.ethPort = 'n/a';
         $scope.ethAccessible = 'n/a';
         $scope.miners = [];
-        $scope.isLongSync = false;
+        $scope.isLoadingComplete = false;
         $scope.publicIp = ' ';
 
         var syncStatuses = {
-            'LONG_SYNC': 'Long sync',
-            'SHORT_SYNC': 'Short sync',
-            'DISABLED': 'Sync disabled'
+            'PivotBlock': 'Preparing for fast sync',
+            'StateNodes': 'Loading state in fast sync mode',
+            'Headers': 'Synced. Headers ({curCnt} of {knownCnt})',
+            'BlockBodies': 'Synced. Bodies ({curCnt} of {knownCnt})',
+            'Receipts': 'Synced. Receipts ({curCnt} of {knownCnt})',
+            'Regular': 'Long sync',
+            'Complete': 'Short sync',
+            'Off': 'Disabled'
+        };
+
+        var loadingCompleteStatuses = {
+            'Headers': true,
+            'BlockBodies': true,
+            'Receipts': true,
+            'Complete': true,
+            'Off': true
+        };
+
+        var syncStatusesMessageTop = {
+            'PivotBlock': 'Loading state in fast sync mode.',
+            'StateNodes': 'Loading state in fast sync mode.',
+            'Regular': 'Loading state in long sync mode.'
+        };
+
+        var syncStatusesMessageBottom = {
+            'PivotBlock': 'Preparing for fast sync. Best known block {blockBestKnown}.',
+            'StateNodes': 'Imported {curCnt} of {knownCnt} known state nodes.',
+            'StateNodesBlocks': 'State loaded. Imported {blockLastImported} of {blockBestKnown} known best block.',
+            'Regular': 'Imported {blockLastImported} blocks, highest known block is {blockBestKnown}.'
         };
 
         var chartData = [];
@@ -77,13 +116,21 @@
             redrawChartLater();
         });
         $scope.$on('networkInfoEvent', function(event, item) {
+            console.log(item.syncStatus);
+            console.log(item.syncStatus.stage);
             $timeout(function() {
                 $scope.activePeers = item.activePeers;
-                $scope.syncStatus = syncStatuses[item.syncStatus] || syncStatuses[item.syncStatus] || 'n/a';
+                $scope.syncStatus = formatWithProps(syncStatuses[item.syncStatus.stage], item.syncStatus) || item.syncStatus.stage || 'n/a';
+                $scope.syncStatusMessageTop = formatWithProps(syncStatusesMessageTop[item.syncStatus.stage], item.syncStatus);
+                if (item.syncStatus.stage == 'StateNodes' && item.syncStatus.curCnt > 0 && item.syncStatus.curCnt == item.syncStatus.knownCnt) {
+                    $scope.syncStatusMessageBottom = formatWithProps(syncStatusesMessageBottom['StateNodesBlocks'], item.syncStatus);
+                } else {
+                    $scope.syncStatusMessageBottom = formatWithProps(syncStatusesMessageBottom[item.syncStatus.stage], item.syncStatus);
+                }
                 $scope.ethPort = item.ethPort;
                 $scope.ethAccessible = item.ethAccessible;
                 $scope.miners = item.miners;
-                $scope.isLongSync = item.syncStatus == 'LONG_SYNC';
+                $scope.isLoadingComplete = loadingCompleteStatuses[item.syncStatus.stage] == true;
             }, 10);
         });
         $scope.$on('connectedEvent', function (event, item) {
