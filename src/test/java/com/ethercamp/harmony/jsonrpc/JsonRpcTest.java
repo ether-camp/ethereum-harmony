@@ -296,18 +296,27 @@ public class JsonRpcTest {
             assertEquals("0x0000000000000000000000000000000000000000000000000000000000000000", ret4);
 
             {
-                JsonRpc.CallArguments callArgs3 = createCall(receipt2.contractAddress, "getPublic");
-                String ret5 = jsonRpc.eth_call(callArgs3, blockResult2.number);
+                JsonRpc.CallArguments args = createCall(receipt2.contractAddress, "getPublic");
+                String ret5 = jsonRpc.eth_call(args, blockResult2.number);
 
                 // fall back account
                 ECKey key = ECKey.fromPrivate(new byte[32]);
                 String fallBackAddress = Hex.toHexString(key.getAddress());
                 assertEquals("0x000000000000000000000000" + fallBackAddress, ret5);
 
-                callArgs3.from = cowAcct;
+                args.from = cowAcct;
 
-                String ret6 = jsonRpc.eth_call(callArgs3, blockResult2.number);
-                assertEquals("0x000000000000000000000000cd2a3d9f938e13cd947ec05abc7fe734df8dd826", ret6);
+                String result = jsonRpc.eth_call(args, blockResult2.number);
+                assertEquals("0x000000000000000000000000cd2a3d9f938e13cd947ec05abc7fe734df8dd826", result);
+            }
+
+            {
+                ECKey key = ECKey.fromPrivate(sha3("new address".getBytes()));
+                String newAddress = Hex.toHexString(key.getAddress());
+                JsonRpc.CallArguments args = createCall(receipt2.contractAddress, "getPublic");
+                args.from = "0x" + newAddress;
+                String result = jsonRpc.eth_call(args, blockResult2.number);
+                assertEquals("0x000000000000000000000000" + newAddress, result);
             }
         }
 

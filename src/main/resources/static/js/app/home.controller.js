@@ -7,13 +7,16 @@
 (function() {
     'use strict';
 
+    /**
+     * @example formatWithProps('Hello {name}', {name: "Stan"}) will produce 'Hello Stan'
+     */
     function formatWithProps(input, map) {
         if (!input) {
             return '';
         }
         var result = input;
         for (var prop in map) {
-            result = result.replace('{' + prop + '}', map[prop])
+            result = result.replace('{' + prop + '}', map[prop]);
         }
         return result;
     }
@@ -62,6 +65,7 @@
         var syncStatusesMessageBottom = {
             'PivotBlock': 'Preparing for fast sync. Best known block {blockBestKnown}.',
             'StateNodes': 'Imported {curCnt} of {knownCnt} known state nodes.',
+            // this one happens when state has been loaded and blocks are loading till last
             'StateNodesBlocks': 'State loaded. Imported {blockLastImported} of {blockBestKnown} known best block.',
             'Regular': 'Imported {blockLastImported} blocks, highest known block is {blockBestKnown}.'
         };

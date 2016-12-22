@@ -580,21 +580,19 @@ public class EthJsonRpcImpl implements JsonRpc {
     protected TransactionReceipt createCallTxAndExecute(CallArguments args, Block block, Repository repository, BlockStore blockStore) throws Exception {
         BinaryCallArguments bca = new BinaryCallArguments();
         bca.setArguments(args);
-        Transaction tx = CallTransaction.createRawTransaction(0,
+        Transaction rawTransaction = CallTransaction.createRawTransaction(0,
                 bca.gasPrice,
                 bca.gasLimit,
                 bca.toAddress,
                 bca.value,
                 bca.data);
+        LocalTransaction tx = new LocalTransaction(rawTransaction.getEncoded());
 
-        // sign if from address is present
+        // handle from address without signing
         if (args.from != null) {
-            Account account = getAccountFromKeystore(args.from);
-            tx.sign(account.getEcKey());
-        }
-
-        // put mock signature if not present
-        if (tx.getSignature() == null) {
+            tx.setSender(hexStringToBytes(args.from));
+        } else {
+            // put mock signature if not present
             tx.sign(ECKey.fromPrivate(new byte[32]));
         }
 
