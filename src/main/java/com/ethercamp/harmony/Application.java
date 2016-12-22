@@ -26,6 +26,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.util.List;
+import java.util.Optional;
 
 import static java.util.Arrays.asList;
 
@@ -42,11 +43,14 @@ public class Application {
     public static void main(String[] args) throws Exception {
         final List<String> actions = asList("importBlocks");
 
-        System.getProperties().entrySet()
-                .forEach(e -> System.out.println("System prop " + e.getKey() + "=" + e.getValue()));
+        final Optional<String> foundAction = asList(args).stream()
+                .filter(arg -> actions.contains(arg))
+                .findFirst();
 
-        if (asList(args).stream().anyMatch(arg -> actions.contains(arg))) {
+        if (foundAction.isPresent()) {
+            foundAction.ifPresent(action -> System.out.println("Performing action: " + action));
             Start.main(args);
+            // system is expected to exit after action performed
         } else {
             SpringApplication.run(new Object[]{Application.class}, args);
         }
