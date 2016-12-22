@@ -174,4 +174,21 @@ task webjar(type: Jar, dependsOn: "jar") {
     }
 }
 
+/**
+ * Run import blocks action.
+ * Be sure to pass genesis, database location and path to blocks.
+ * @example `./gradlew
+ *                  -Ddatabase.dir=database-private -Dgenesis=frontier-private.json
+ *                  -Dblocks.loader=blocks.rlp -Dblocks.format=binary`
+ */
+task importBlocks(type: JavaExec) {
+    main                "org.ethereum.Start"
+    classpath           sourceSets.main.runtimeClasspath
+    description         "Running import blocks with"
+
+    // pass CLI properties (set of -Dprop=value) to forked java process
+    systemProperties    System.properties
+    systemProperty      "logback.configurationFile", "src/main/resources/logback.xml"
+}
+
 
