@@ -189,6 +189,8 @@ task importBlocks(type: JavaExec) {
     // pass CLI properties (set of -Dprop=value) to forked java process
     systemProperties    System.properties
     systemProperty      "logback.configurationFile", "src/main/resources/logback.xml"
+    systemProperty      "peer.discovery.enabled", "false"
+    systemProperty      "sync.enabled", "false"
 }
 
 
