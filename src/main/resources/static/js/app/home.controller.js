@@ -39,7 +39,7 @@
 
         var syncStatuses = {
             'PivotBlock': 'Preparing for fast sync',
-            'StateNodes': 'Loading state in fast sync mode',
+            'StateNodes': 'Fast sync',
             'Headers': 'Synced. Headers ({curCnt} of {knownCnt})',
             'BlockBodies': 'Synced. Bodies ({curCnt} of {knownCnt})',
             'Receipts': 'Synced. Receipts ({curCnt} of {knownCnt})',
