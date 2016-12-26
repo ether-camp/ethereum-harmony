@@ -69,7 +69,7 @@
     <logger level="INFO" name="contract-data"/>
     <logger level="INFO" name="stat"/>
 
-    <logger level="DEBUG" name="discovery"/>
+    <logger level="DEBUG" name="discover"/>
     <logger level="INFO" name="sync"/>
     <logger level="TRACE" name="notification"/>
     <logger level="ERROR" name="wallet"/>
