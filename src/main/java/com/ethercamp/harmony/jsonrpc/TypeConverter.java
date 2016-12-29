@@ -40,8 +40,11 @@ public class TypeConverter {
     }
 
     public static BigInteger StringHexToBigInteger(String input) {
-        String hexa = input.substring(2);
-        return new BigInteger(hexa, 16);
+        if (input.startsWith("0x")) {
+            return new BigInteger(input.substring(2), 16);
+        } else {
+            return new BigInteger(input, 10);
+        }
     }
 
     private static BigInteger StringDecimalToBigInteger(String input) {

@@ -680,7 +680,7 @@ public class EthJsonRpcImpl implements JsonRpc {
         return getBlockResult(b, fullTransactionObjects);
     }
 
-    public BlockResult eth_getBlockByNumber(String bnOrId,Boolean fullTransactionObjects) throws Exception {
+    public BlockResult eth_getBlockByNumber(String bnOrId, Boolean fullTransactionObjects) throws Exception {
         final Block b;
         if ("pending".equalsIgnoreCase(bnOrId)) {
             b = blockchain.createNewBlock(blockchain.getBestBlock(), pendingState.getPendingTransactions(), Collections.<BlockHeader>emptyList());

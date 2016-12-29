@@ -74,7 +74,7 @@ public class PrivateMinerService {
 
                 @Override
                 public void blockMiningStarted(Block block) {
-                    log.info("blockMiningStarted");
+                    log.info("new block mining started");
                 }
 
                 @Override
