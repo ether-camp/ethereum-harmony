@@ -69,7 +69,7 @@
     <logger level="INFO" name="contract-data"/>
     <logger level="INFO" name="stat"/>
 
-    <logger level="DEBUG" name="discover"/>
+    <logger level="INFO" name="discover"/>
     <logger level="INFO" name="sync"/>
     <logger level="TRACE" name="notification"/>
     <logger level="ERROR" name="wallet"/>
@@ -90,6 +90,8 @@
     <logger level="ERROR" name="vmtrace"/>
     <logger level="ERROR" name="execute"/>
     <logger level="INFO" name="import-contract"/>
-    <logger level="INFO" name="mine"/>
+    <logger level="DEBUG" name="mine"/>
+    <logger level="ERROR" name="o.s.web.servlet.DispatcherServlet"/>
+    <logger level="ERROR" name="com.ethercamp.harmony.Application"/>
 
 </configuration>

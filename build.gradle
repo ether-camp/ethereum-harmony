@@ -16,6 +16,7 @@ apply plugin: 'spring-boot'
 apply plugin: 'application'
 apply plugin: "com.github.johnrengelman.shadow"
 
+// check if -PuseMavenLocal is supplied
 if (project.hasProperty('useMavenLocal')) {
     repositories {
         mavenLocal()
@@ -179,18 +180,19 @@ task webjar(type: Jar, dependsOn: "jar") {
  * Be sure to pass genesis, database location and path to blocks.
  * @example `./gradlew
  *                  -Ddatabase.dir=database-private -Dgenesis=frontier-private.json
- *                  -Dblocks.loader=blocks.rlp -Dblocks.format=binary`
+ *                  -Dblocks.loader=blocks.rlp -Dblocks.format=rlp`
  */
 task importBlocks(type: JavaExec) {
     main                "org.ethereum.Start"
     classpath           sourceSets.main.runtimeClasspath
-    description         "Running import blocks with"
+    description         "Running import blocks"
 
     // pass CLI properties (set of -Dprop=value) to forked java process
     systemProperties    System.properties
     systemProperty      "logback.configurationFile", "src/main/resources/logback.xml"
-    systemProperty      "peer.discovery.enabled", "false"
-    systemProperty      "sync.enabled", "false"
+    systemProperty      "peer.discovery.enabled", false
+    systemProperty      "sync.enabled", false
 }
+
 
 

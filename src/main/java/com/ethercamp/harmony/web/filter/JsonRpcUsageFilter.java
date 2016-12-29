@@ -125,7 +125,7 @@ public class JsonRpcUsageFilter implements Filter {
     private void notifyInvocation(JsonNode requestJson, JsonNode responseJson) throws IOException {
         if (responseJson.has("error")) {
             final String errorMessage = responseJson.get("error").toString();
-            log.warn("Problem when invoking JSON-RPC " + errorMessage);
+            log.warn("Problem when invoking JSON-RPC " + requestJson.toString() + " response:" + errorMessage);
         } else {
             final String methodName = requestJson.get("method").asText();
             final List<JsonNode> params = new ArrayList<>();
