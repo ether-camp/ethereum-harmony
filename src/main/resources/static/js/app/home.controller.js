@@ -120,8 +120,6 @@
             redrawChartLater();
         });
         $scope.$on('networkInfoEvent', function(event, item) {
-            console.log(item.syncStatus);
-            console.log(item.syncStatus.stage);
             $timeout(function() {
                 $scope.activePeers = item.activePeers;
                 $scope.syncStatus = formatWithProps(syncStatuses[item.syncStatus.stage], item.syncStatus) || item.syncStatus.stage || 'n/a';
