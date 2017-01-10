@@ -59,6 +59,9 @@
         // checkbox value
         $scope.isAutoScroll = true;
         $scope.scrollConfig = jQuery.extend(true, {}, scrollConfig);
+        // used to batch update UI
+        $scope.batchLogsTimer = null;
+        $scope.pendingLogs = [];
 
         // checkbox change handler
         $scope.onAutoScrollChange = function() {
@@ -72,12 +75,29 @@
 
         // handling event from main controller
         $scope.$on('systemLogEvent', function(event, data) {
-            log(data);
+            if ($scope.batchLogsTimer == null) {
+                // for safety
+                $scope.pendingLogs.forEach(addLogLine);
+                $scope.pendingLogs = [];
+                // process first log immediatelly
+                addLogLine(data);
+                postLogAction();
+                // delay all other logs with some DELAY
+                $scope.batchLogsTimer = $timeout(function() {
+                    $scope.pendingLogs.forEach(addLogLine);
+                    $scope.pendingLogs = [];
+                    postLogAction();
+                    $scope.batchLogsTimer = null;
+                }, 300);
+            } else {
+                $scope.pendingLogs.push(data);
+            }
         });
         $scope.$on('currentSystemLogs', function(event, items) {
-            items.forEach(function(msg) {
-                log(msg);
-            });
+            $scope.pendingLogs.forEach(addLogLine);
+            $scope.pendingLogs = [];
+            items.forEach(addLogLine);
+            postLogAction();
             if ($scope.isAutoScroll) {
                 scrollToBottom();
             }
@@ -162,7 +182,7 @@
         /**
          * Main method for adding new log line
          */
-        function log(data) {
+        function addLogLine(data) {
             var div = document.createElement('div');
             var p = document.createElement('p');
             p.className = 'inner-line';
@@ -185,8 +205,13 @@
             div.appendChild(p);
             filterElement(div);
             logContainer.appendChild(div);
+        }
 
-            // removing items when auto scroll turned off, will cause logs to move
+        /**
+         * Remove old lines and auto scroll.
+         */
+        function postLogAction() {
+            // removing items, when auto scroll turned off, will cause logs to move
             if ($scope.isAutoScroll) {
                 var len = logContainer.children.length;
                 if (len > LINES_LIMIT) {
