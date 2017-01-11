@@ -18,6 +18,7 @@ apply plugin: "com.github.johnrengelman.shadow"
 
 // check if -PuseMavenLocal is supplied
 if (project.hasProperty('useMavenLocal')) {
+    println "Flag enabled: using EthereumJ jar from maven local repo if exist"
     repositories {
         mavenLocal()
     }
@@ -112,14 +113,23 @@ task stage {
 }
 
 bootRun {
+    // point logback to config to use
+    // without this line logback will warn that it finds 2 files (in core.jar and in this app)
+    putIfEmpty System.properties, "logback.configurationFile", "src/main/resources/logback.xml"
+    // include placeholder config for tests
+    putIfEmpty System.properties, "ethereumj.conf.file", "src/main/resources/config-override.conf"
+    // default database name for main network
+    putIfEmpty System.properties, "database.name", "database"
+
     systemProperties = System.properties
 
-    def args = ["-server", "-Xss32m",
-                "-XX:+UseCompressedOops", "-XX:+HeapDumpOnOutOfMemoryError", "-XX:-OmitStackTraceInFastThrow",
+    def args = ["-server",
+                "-Xss32m",
+                "-XX:+UseCompressedOops",
+                "-XX:+HeapDumpOnOutOfMemoryError",
+                "-XX:-OmitStackTraceInFastThrow",
                 "-Xmx3500M",
-                // point logback to config to use
-                // without this line logback will warn that it found 2 files (in core.jar and in this app)
-                "-Dlogback.configurationFile=src/main/resources/logback.xml"]
+                ]
     if ( project.hasProperty('jvmArgs') ) {
         println "Adding properties from jvmArgs " + project.jvmArgs
         args.addAll(project.jvmArgs.split('\\s+'))
@@ -153,8 +163,6 @@ applicationDefaultJvmArgs = ["-server", "-Xss32m", "-XX:-OmitStackTraceInFastThr
  * Tasks for connecting to predefined networks.
  * It is not possible to override task defined values from command line.
  */
-task runMorden << { bootRunWithNetworkConfig('morden') }
-
 task runRopsten << { bootRunWithNetworkConfig('ropsten') }
 
 task runTest << { bootRunWithNetworkConfig('test') }
@@ -167,6 +175,13 @@ def bootRunWithNetworkConfig(String name) {
     bootRun.jvmArgs = bootRun.jvmArgs + ('-Dethereumj.conf.res=' + name + '.conf') + ('-Ddatabase.name=database-' + name)
     tasks.compileJava.execute()
     tasks.bootRun.execute()
+}
+
+def putIfEmpty(Properties properties, String key, String value) {
+    // don't use System.hasProperty as it is groovy wrapper
+    if (System.getProperty(key) == null) {
+        properties.put key, value
+    }
 }
 
 task webjar(type: Jar, dependsOn: "jar") {
