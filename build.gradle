@@ -116,10 +116,6 @@ bootRun {
     // point logback to config to use
     // without this line logback will warn that it finds 2 files (in core.jar and in this app)
     putIfEmpty System.properties, "logback.configurationFile", "src/main/resources/logback.xml"
-    // include placeholder config for tests
-    putIfEmpty System.properties, "ethereumj.conf.file", "src/main/resources/config-override.conf"
-    // default database name for main network
-    putIfEmpty System.properties, "database.name", "database"
 
     systemProperties = System.properties
 
