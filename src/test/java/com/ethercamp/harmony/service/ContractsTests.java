@@ -74,7 +74,9 @@ public class ContractsTests {
         contractsService = new ContractsService();
         contractsService.ethereum = mock(Ethereum.class);
 
-        contractsService.contractsStorage = new HashMapDB<byte[]>();
+        contractsService.contractsStorage = new HashMapDB<>();
+        contractsService.settingsStorage = new HashMapDB<>();
+        contractsService.contractCreation = new HashMapDB<>();
         repository = mock(Repository.class);
 
         when(repository.getCode(any())).thenReturn(Hex.decode(CODE));

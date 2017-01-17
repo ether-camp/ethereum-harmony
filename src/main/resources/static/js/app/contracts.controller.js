@@ -101,20 +101,31 @@
         toastr.error('<strong>' + topMessage + '</strong> <br/><small>' + bottomMessage + '</small>');
     }
 
+    /**
+     * @example 1000 -> "1,000"
+     */
+    function numberWithCommas(x) {
+        return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
     function ContractsCtrl($scope, $timeout, scrollConfig, $http, jsonrpc, restService) {
+        var UNINITIALIZED_SYNCED_BLOCK = -1;
+
         console.log('Contracts controller activated.');
         $scope.contracts = $scope.contracts || [];
         $scope.scrollConfig = jQuery.extend(true, {}, scrollConfig);
         $scope.isAddingContract = false;
         $scope.isViewingStorage = false;
         $scope.newContract = {};
-        $scope.storage = {entries: [], value: {decoded: ''}};
+        $scope.storage = {entries: [], value: {decoded: ''}, blockNumber: -1};
         $scope.indexSizeString = 'n/a';
         $scope.solcVersionString = 'n/a';
+        $scope.syncedBlock = UNINITIALIZED_SYNCED_BLOCK;
 
         // file upload
         $scope.files = [];
         $scope.allowFileUpload = false;
+        $scope.submitErrorMessage = '';
 
         var remove0x = Utils.Hex.remove0x;
 
@@ -122,12 +133,23 @@
             console.log('Contracts controller exited.');
         });
 
-        $timeout(function() {
+        // update status in case of synced block value changed
+        $scope.$on('newBlockFromEvent', function(event, item) {
+            if ($scope.syncedBlock == UNINITIALIZED_SYNCED_BLOCK) {
+                loadStatus();
+            }
+        });
+
+        function loadStatus() {
             restService.Contracts.getIndexStatus().then(function(result) {
                 $scope.indexSizeString = filesize(result.indexSize);
                 $scope.solcVersionString = result.solcVersion;
+                $scope.syncedBlock = result.syncedBlock;
+                $scope.syncedBlockString = numberWithCommas(result.syncedBlock);
             });
-        }, 100);
+        }
+
+        $timeout(loadStatus, 100);
 
         /**
          * Resize table to fit all available space.
@@ -146,6 +168,7 @@
             $scope.$broadcast('show-errors-reset');
             $scope.form.$setUntouched();
             $scope.form.$setPristine();
+            resetFormError();
         };
 
         $scope.onBackToList = function() {
@@ -160,6 +183,7 @@
             $scope.storage.address = item.address;
             $scope.storage.balanceString = 'n/a';
             $scope.storage.contractName = item.name;
+            $scope.storage.blockNumber = item.blockNumber;
 
             // #1 Load balance
             jsonrpc.request('eth_getBalance', [$scope.storage.address, 'latest'])
@@ -218,6 +242,7 @@
         };
 
         $scope.onAddSourceCode = function() {
+            resetFormError();
             console.log('onAddSourceCode');
             $http({
                 method: 'POST',
@@ -232,7 +257,7 @@
                     if (result && result.success) {
                         return $scope.loadContracts().then($scope.onBackToList);
                     } else {
-                        showErrorToastr('Upload failed', result.errorMessage || 'Unknown error');
+                        showFormError('Upload failed', result.errorMessage || 'Unknown error');
                     }
                 })
         };
@@ -267,6 +292,8 @@
         };
 
         $scope.onUploadFiles = function() {
+            resetFormError();
+
             var formData = new FormData();
             $scope.files.forEach(function(f) {
                 formData.append('contracts', f);
@@ -286,7 +313,7 @@
                 console.log('Upload complete');
                 console.log(result);
                 if (result && !result.success) {
-                    showErrorToastr('Upload failed', result.errorMessage || 'Unknown error');
+                    showFormError('Upload failed', result.errorMessage || 'Unknown error');
                 } else {
                     return $scope.loadContracts().then($scope.onBackToList);
                 }
@@ -294,12 +321,13 @@
         };
 
         $scope.onFinalAddFiles = function() {
+            resetFormError();
             // force showing validation
             $scope.form.$setSubmitted();
             $scope.$broadcast('show-errors-check-validity');
 
             if (!$scope.form.$valid) {
-                showErrorToastr('FORM VALIDATION', 'Please fill address.');
+                showFormError('FORM VALIDATION', 'Please fill address.');
                 return;
             }
 
@@ -308,7 +336,7 @@
             } else if ($scope.newContract.sourceCode) {
                 $scope.onAddSourceCode();
             } else {
-                showErrorToastr('FORM VALIDATION', 'Please fill either contract source code or attach it\'s file.');
+                showFormError('FORM VALIDATION', 'Please either fill contract source code or attach it\'s file.');
             }
         };
 
@@ -325,6 +353,14 @@
             $timeout(function() {
                 $(scrollContainer).mCustomScrollbar($scope.scrollConfig);
             }, 10);
+        }
+
+        function resetFormError() {
+            $scope.submitErrorMessage = '';
+        }
+
+        function showFormError(topMessage, bottomMessage) {
+            $scope.submitErrorMessage = bottomMessage;
         }
     }
 

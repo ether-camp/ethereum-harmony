@@ -87,7 +87,7 @@ public class EthJsonRpcImpl implements JsonRpc {
 
     private static final String BLOCK_LATEST = "latest";
 
-    private String hashrate;
+    private volatile String hashrate;
 
     public class BinaryCallArguments {
         public long nonce;

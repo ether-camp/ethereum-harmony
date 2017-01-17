@@ -16,46 +16,22 @@
  * along with Ethereum Harmony.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.ethercamp.harmony.dto;
+package com.ethercamp.harmony.util;
 
-import lombok.AllArgsConstructor;
-import lombok.Value;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 /**
- * Created by Stan Reshetnyk on 18.10.16.
+ * Created by Stan Reshetnyk on 13.01.17.
  */
-public class ContractObjects {
+public class StreamUtil {
 
-    @Value
-    @AllArgsConstructor
-    public static class ContractInfoDTO {
-
-        private final String address;
-
-        private final String name;
-
-        /**
-         * Block number when contract was introduced or -1.
-         */
-        private final long blockNumber;
-
-    }
-
-    @Value
-    @AllArgsConstructor
-    public static class IndexStatusDTO {
-
-        private final long indexSize;
-
-        private final String solcVersion;
-
-        /**
-         * Block number when indexing started or -1.
-         * Zero value is not possible
-         */
-        private final long syncedBlock;
-
+    /**
+     * Stream or value or empty stream if value is null.
+     */
+    public static <T> Stream<T> streamOf(T value) {
+        return Optional.ofNullable(value)
+                .map(Stream::of)
+                .orElseGet(Stream::empty);
     }
 }
-
-

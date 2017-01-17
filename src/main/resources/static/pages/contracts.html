@@ -48,10 +48,17 @@
             <div class="col-lg-12">
                 <div class="view-header">
                     <div class="header-icon">
-                        <i class="pe page-header-icon pe-7s-world"></i>
+                        <i class="pe page-header-icon pe-7s-albums"></i>
                     </div>
 
                     <div class="header-title">
+                        <div class="pull-right">
+                            <p ng-show="syncedBlock == 1">Index is full. We can show all properties</p>
+                            <p ng-show="syncedBlock == -1">Index is not ready</p>
+                            <p ng-show="syncedBlock > 1">Contracts, added since block <b class="c-white">#{{syncedBlockString}}</b>, will be displayed correctly</p>
+                            <p>Storage used for index <b class="c-white">{{indexSizeString}}</b> | Solc version <b class="c-white">{{solcVersionString}}</b></p>
+                        </div>
+
                         <h3 class="m-b-xs">Contracts</h3>
                         <small>
                             Watch contracts' storage fields
@@ -79,6 +86,9 @@
 
                         <div class="panel-heading">
                             <h4>Add contact for watching it's storage</h4>
+                            <p ng-hide="isLoadingComplete" class="text-warning">
+                                * Sync is not finished. Contract block may not exist yet.
+                            </p>
                         </div>
 
                         <div class="panel-body">
@@ -90,9 +100,9 @@
                                            name="address" required="true" type="text">
 
                                     <div ng-show="form.$submitted || form.address.$touched">
-                                        <div ng-show="form.address.$error.required">Address is required</div>
-                                        <div ng-show="form.address.$error.ethaddress">Address format is invalid</div>
-                                        <div ng-show="form.address.$error.ethaddresschecksum">Checksum address format is invalid</div>
+                                        <div class="text-warning" ng-show="form.address.$error.required">Address is required</div>
+                                        <div class="text-warning" ng-show="form.address.$error.ethaddress">Address format is invalid</div>
+                                        <div class="text-warning" ng-show="form.address.$error.ethaddresschecksum">Checksum address format is invalid</div>
                                     </div>
                                 </div>
 
@@ -126,6 +136,10 @@
 
                                 </div>
 
+                                <div ng-hide="submitErrorMessage == ''" class="text-danger">
+                                    {{submitErrorMessage}}
+                                </div>
+
                             </form>
 
                         </div>
@@ -154,6 +168,19 @@
                 </div>
 
                 <div class="panel-body">
+
+                    <div ng-show="storage.blockNumber == -1 || syncedBlock == -1 || storage.blockNumber < syncedBlock" class="panel panel-filled panel-c-danger">
+                        <div class="panel-heading">
+                            <!--<div class="panel-tools">-->
+                                <!--<a class="panel-toggle"><i class="fa fa-chevron-up"></i></a>-->
+                                <!--<a class="panel-close"><i class="fa fa-times"></i></a>-->
+                            <!--</div>-->
+                            Displayed values may be incorrect.
+                        </div>
+                        <div class="panel-body">
+                            We don't have enough data to display proper values. Please consider to clear database and load blockchain with Fast Sync turned off.
+                        </div>
+                    </div>
 
                     <div class="storage-background">
                         <div ng-controller="TreeController" style="list-style-type: none;margin-left: -17px;" ng-include="'tree_item_renderer.html'" ng-init="init(storage)">
@@ -215,9 +242,6 @@
 
                             </tbody>
                         </table>
-                    </div>
-                    <div class="pull-right">
-                        Storage used for index {{indexSizeString}} | Solc version {{solcVersionString}}
                     </div>
                 </div>
             </div>
