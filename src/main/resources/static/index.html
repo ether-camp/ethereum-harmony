@@ -89,7 +89,53 @@
                     </a>
                 </div>
 
-                <ul class="list-inline navbar-right m-b-none">
+                <ul class="topbar flex-row flex-align-center navbar-right m-b-none ">
+                    <li>
+                        <div class="panel tp-panel">
+                            <div class="panel-body" ng-cloak>
+                                    <span class="m-b-none tp-title">
+                                        Syncing
+                                        <span class="c-text m-r-sm">(Fast Mode)</span>
+                                    </span>
+                                <div class="top-bar-line"/>
+                                <div class="small c-accent">wait for fast sync to finish</div>
+                                <div class="small c-accent">before doing any transaction</div>
+                            </div>
+                        </div>
+                    </li>
+
+                    <li>
+                        <div class="fast-sync-boxes panel tp-panel" ng-cloak>
+                            <!--<div class="tp-title m-r-sm">Syncing</div>-->
+                            <!--<div class="c-text m-r-sm">(Fast Mode)</div>-->
+                            <div class="progress progress-bar-left">
+                                <div class="progress-bar progress-bar-sync" style="width: 100%;">
+
+                                </div>
+                            </div>
+
+                            <div class="progress progress-striped blink_me">
+                                <div class="progress-bar progress-bar-sync" style="width: 100%">
+                                    <span class="c-white">loading</span>
+                                    <span class="c-white">headers</span>
+                                </div>
+                            </div>
+
+                            <div class="progress progress-striped">
+                                <div class="progress-bar progress-bar-sync" style="width: 0%">
+                                    <!--<span class="sr-only">80% Used</span>-->
+                                </div>
+                            </div>
+
+                            <div class="progress progress-striped progress-bar-right">
+                                <div class="progress-bar progress-bar-sync " style="width: 0%">
+                                    <!--<span class="sr-only">90% Used</span>-->
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+
+
                     <li>
                         <div class="panel tp-panel" ng-cloak>
                             <div class="panel-body" data-toggle="tooltip" title="Created at {{vm.data.lastBlockTimeString}}">
