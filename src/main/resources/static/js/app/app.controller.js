@@ -220,6 +220,7 @@
         $scope.syncStatus = {curCnt: 0, knownCnt: 0};
         $scope.oldStateNodesCount = 0;
         $scope.lastStateUpdateTime = 0;
+        $scope.syncStateReceived = false;
 
         function jsonParseAndBroadcast(event) {
             return function(data) {
@@ -453,7 +454,6 @@
         };
 
         $scope.setSyncStatus = function(value) {
-            console.log(value);
             var oldSyncStatus = $scope.syncStatus;
             var syncStatus = $scope.syncStatus = value;
 
@@ -478,6 +478,7 @@
                 }
                 $scope.lastStateUpdateTime = new Date().getTime();
             }
+            $scope.syncStateReceived = true;
         };
     }
 })();
