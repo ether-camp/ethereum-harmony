@@ -95,7 +95,8 @@
                             <div class="tp-title m-r-sm">Fast Sync</div>
                             <div class="c-text m-r-sm" ng-hide="isLoadingStateWithBlocks">({{loadingStateSpeed}} nodes/sec)</div>
                             <div class="progress active">
-                                <div class="progress-bar progress-bar-sync progress-bar-striped" style="width: 100%;">
+                                <div class="progress-bar progress-bar-sync progress-bar-striped"
+                                     ng-style="{'width' : loadingItemsProgress + '%' }">
 
                                 </div>
                             </div>
