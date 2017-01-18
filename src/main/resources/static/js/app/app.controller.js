@@ -475,7 +475,7 @@
                     var newValue = syncStatus.curCnt;
                     var decimals = 10^0; // 0 or more digits after dot
                     var speed = Math.round(decimals * (newValue - oldValue) * 1000 / (new Date().getTime() - $scope.lastStateUpdateTime)) / decimals;
-                    $scope.loadingStateSpeed = speed;
+                    $scope.loadingStateSpeed = Math.max(speed, 0);
                 }
                 $scope.lastStateUpdateTime = new Date().getTime();
             }
