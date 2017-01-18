@@ -275,7 +275,7 @@
                 topicStorage = {};
             }
             vm.isConnected = value;
-            console.log("Connected status " + value);
+            //console.log("Connected status " + value);
             $scope.$broadcast('connectedEvent');
         }
 
@@ -291,7 +291,7 @@
         }
 
         function connect() {
-            console.log("Attempting to connect");
+            //console.log("Attempting to connect");
             $stomp.setDebug(function (args) {
                 //console.log(args);
             });
@@ -303,7 +303,7 @@
                         showToastr('Connection established', '');
                     }
 
-                    console.log('Connected');
+                    //console.log('Connected');
 
                     // subscribe for updates
                     $stomp.subscribe('/topic/initialInfo', onInitialInfoResult);
@@ -417,7 +417,7 @@
 
         function onConfirmedTransaction(data) {
             console.log('onConfirmedTransaction');
-            console.log(data);
+            //console.log(data);
 
             if (confirmedTransactions.indexOf(data.hash) > -1) {
                 console.log('Already notified tx ' + data.hash);
@@ -435,13 +435,13 @@
 
         function disconnect() {
             connectionLostOnce = true;
-            showToastr('Connection Lost', 'Reconnecting...');
+            //showToastr('Connection Lost', 'Reconnecting...');
 
             if ($stomp != null) {
                 $stomp.disconnect();
             }
             setConnected(false);
-            console.log('Disconnected. Retry ...');
+            //console.log('Disconnected. Retry ...');
             setTimeout(connect, 5000);
         }
 
@@ -460,6 +460,7 @@
             $scope.isLoadingState = ['PivotBlock', 'StateNodes'].indexOf(syncStatus.stage) > -1;
             $scope.isLoadingStateWithBlocks = syncStatus.stage == 'StateNodes' && syncStatus.curCnt > 0 && syncStatus.curCnt == syncStatus.knownCnt;
             $scope.isSyncComplete = syncStatus.stage == 'Complete';
+            $scope.isRegularSync = syncStatus.stage == 'Regular';
             $scope.syncProgressMessage = loadingMessages[syncStatus.stage] || '';
             if (syncStatus.knownCnt == 0) {
                 $scope.loadingItemsProgress = 0;
