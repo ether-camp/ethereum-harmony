@@ -3085,15 +3085,27 @@ input[type="number"] {
 .fast-sync-boxes {
     display: flex;
     align-items: center;
-    /*padding-top: 10px;*/
-    /*padding-bottom: 15px;*/
+    flex-direction: row;
+}
+
+.loading-boxes {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
 }
 
 .fast-sync-boxes .progress {
-    min-width: 60px;
-    min-height: 40px;
-    border-radius: 0px;
+    min-width: 150px;
+    height: 20px;
     margin-bottom: 0px;
+    border-radius: 6px;
+}
+
+.loading-boxes .progress {
+    min-width: 150px;
+    height: 10px;
+    margin-bottom: 0px;
+    border-radius: 6px;
 }
 
 .blink_me {
@@ -3135,6 +3147,8 @@ input[type="number"] {
 
 .topbar {
     list-style-type: none;
+    min-height: 60px;
+    overflow: hidden;
 }
 
 .topbar .tp-panel .panel-body {
@@ -3142,12 +3156,12 @@ input[type="number"] {
     padding-bottom: 0;
 }
 
-.progress-bar-left {
-    border-radius: 6px 0 0 6px !important;
-}
+/*.progress-bar-left {*/
+    /*border-radius: 6px 0 0 6px !important;*/
+/*}*/
 
-.progress-bar-right {
-    border-radius: 0 6px 6px 0 !important;
-}
+/*.progress-bar-right {*/
+    /*border-radius: 0 6px 6px 0 !important;*/
+/*}*/
 
 

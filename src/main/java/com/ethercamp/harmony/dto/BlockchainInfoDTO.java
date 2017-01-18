@@ -47,4 +47,6 @@ public class BlockchainInfoDTO {
     private final Long networkHashRate;
 
     private final Long gasPrice;
+
+    private final NetworkInfoDTO.SyncStatusDTO syncStatus;
 }

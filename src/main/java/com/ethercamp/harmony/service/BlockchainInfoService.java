@@ -274,7 +274,8 @@ public class BlockchainInfoService implements ApplicationListener {
                         bestBlock.getDifficultyBI().longValue(),
                         0l, // not implemented
                         calculateHashRate(),
-                        ethereum.getGasPrice()
+                        ethereum.getGasPrice(),
+                        NetworkInfoDTO.SyncStatusDTO.instanceOf(syncManager.getSyncStatus())
                 )
         );
 

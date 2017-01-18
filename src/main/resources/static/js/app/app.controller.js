@@ -179,9 +179,9 @@
         toastr.success('<strong>' + topMessage + '</strong> <br/><small>' + bottomMessage + '</small>');
     }
 
-    AppCtrl.$inject = ['$scope', '$timeout', '$http', '$window', '$stomp'];
+    AppCtrl.$inject = ['$scope', '$timeout', '$http', '$window', '$stomp', '$interval'];
 
-    function AppCtrl ($scope, $timeout, $http, $window, $stomp) {
+    function AppCtrl ($scope, $timeout, $http, $window, $stomp, $interval) {
         var vm = this;
         vm.isConnected = false;
         vm.data = {
@@ -212,6 +212,15 @@
             publicIpLabel:      'IP'
         };
 
+        $scope.isLoadingState = true;
+        $scope.isSyncComplete = false;
+        $scope.isLoadingStateWithBlocks = false;
+        $scope.loadingStateSpeed = 0;
+        $scope.loadingItemsProgress = 0;
+        $scope.syncStatus = {curCnt: 0, knownCnt: 0};
+        $scope.oldStateNodesCount = 0;
+        $scope.lastStateUpdateTime = 0;
+
         function jsonParseAndBroadcast(event) {
             return function(data) {
                 $scope.$broadcast(event, (data));
@@ -232,10 +241,6 @@
         var updateWalletSubscription     = updateSubscriptionFun('/topic/getWalletInfo', jsonParseAndBroadcast('walletInfoEvent'),
             function() {
                 $stomp.send('/app/getWalletInfo');
-            });
-        var updateContractsSubscription  = updateSubscriptionFun('/topic/currentContracts', jsonParseAndBroadcast('contractsListEvent'),
-            function() {
-                $stomp.send('/app/currentContracts');
             });
 
         /**
@@ -405,6 +410,7 @@
                 vm.data.lastReforkTime          = info.lastReforkTime;
                 vm.data.networkHashRate         = filesize(info.networkHashRate, simpleSuffixes) + 'H/s';
                 vm.data.gasPrice                = formatBigDigital(info.gasPrice) + 'Wei';
+                $scope.setSyncStatus(info.syncStatus);
             }, 10);
         }
 
@@ -439,5 +445,39 @@
         }
 
         connect();
+
+        var loadingMessages = {
+            'Headers'       : 'Validating headers',
+            'BlockBodies'   : 'Loading bodies',
+            'Receipts'      : 'Loading receipts'
+        };
+
+        $scope.setSyncStatus = function(value) {
+            console.log(value);
+            var oldSyncStatus = $scope.syncStatus;
+            var syncStatus = $scope.syncStatus = value;
+
+            $scope.isLoadingState = ['PivotBlock', 'StateNodes'].indexOf(syncStatus.stage) > -1;
+            $scope.isLoadingStateWithBlocks = syncStatus.stage == 'StateNodes' && syncStatus.curCnt > 0 && syncStatus.curCnt == syncStatus.knownCnt;
+            $scope.isSyncComplete = syncStatus.stage == 'Complete';
+            $scope.syncProgressMessage = loadingMessages[syncStatus.stage] || '';
+            if (syncStatus.knownCnt == 0) {
+                $scope.loadingItemsProgress = 0;
+            } else {
+                $scope.loadingItemsProgress = Math.round(100 * syncStatus.curCnt / syncStatus.knownCnt);
+            }
+
+            // state nodes loading speed
+            if ($scope.isLoadingState) {
+                if ($scope.lastStateUpdateTime != 0) {
+                    var oldValue = oldSyncStatus.curCnt || 0;
+                    var newValue = syncStatus.curCnt;
+                    var decimals = 10^0; // 0 or more digits after dot
+                    var speed = Math.round(decimals * (newValue - oldValue) * 1000 / (new Date().getTime() - $scope.lastStateUpdateTime)) / decimals;
+                    $scope.loadingStateSpeed = speed;
+                }
+                $scope.lastStateUpdateTime = new Date().getTime();
+            }
+        };
     }
 })();
