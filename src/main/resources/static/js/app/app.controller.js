@@ -470,7 +470,7 @@
             $scope.isSyncComplete = syncStatus.stage == 'Complete';
             $scope.isRegularSync = syncStatus.stage == 'Regular';
             $scope.syncProgressMessage = loadingMessages[syncStatus.stage] || '';
-            if (syncStatus.knownCnt == 0) {
+            if (syncStatus.knownCnt == 0 || syncStatus.stage == 'PivotBlock') {
                 $scope.loadingItemsProgress = 0;
             } else {
                 $scope.loadingItemsProgress = Math.round(100 * syncStatus.curCnt / syncStatus.knownCnt);
