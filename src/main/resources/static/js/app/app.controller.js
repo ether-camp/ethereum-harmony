@@ -453,6 +453,14 @@
             'Receipts'      : 'Loading receipts'
         };
 
+        var loadingCompleteStatuses = [
+            'Headers',
+            'BlockBodies',
+            'Receipts',
+            'Complete',
+            'Off'
+        ];
+
         $scope.setSyncStatus = function(value) {
             var oldSyncStatus = $scope.syncStatus;
             var syncStatus = $scope.syncStatus = value;
@@ -480,6 +488,9 @@
                 $scope.lastStateUpdateTime = new Date().getTime();
             }
             $scope.syncStateReceived = true;
+            $scope.isLoadingComplete = loadingCompleteStatuses.indexOf(syncStatus.stage) > -1;
+            console.log(syncStatus);
+            console.log($scope.isLoadingComplete);
         };
     }
 })();

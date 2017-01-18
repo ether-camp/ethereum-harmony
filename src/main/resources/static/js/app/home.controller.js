@@ -48,14 +48,6 @@
             'Off': 'Disabled'
         };
 
-        var loadingCompleteStatuses = {
-            'Headers': true,
-            'BlockBodies': true,
-            'Receipts': true,
-            'Complete': true,
-            'Off': true
-        };
-
         var syncStatusesMessageTop = {
             'PivotBlock': 'Loading state in fast sync mode.',
             'StateNodes': 'Loading state in fast sync mode.',
@@ -132,7 +124,7 @@
                 $scope.ethPort = item.ethPort;
                 $scope.ethAccessible = item.ethAccessible;
                 $scope.miners = item.miners;
-                $scope.isLoadingComplete = loadingCompleteStatuses[item.syncStatus.stage] == true;
+
             }, 10);
         });
         $scope.$on('connectedEvent', function (event, item) {
