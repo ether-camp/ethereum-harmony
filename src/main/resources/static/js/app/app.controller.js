@@ -7,7 +7,8 @@
         'ngRoute',                      // sub page navigation
         'angular-jsonrpc-client',       // json-rpc communication
         'ngStomp',                      // websocket communication
-        'angularModalService'           // for showing modal popups
+        'angularModalService',          // for showing modal popups
+        'scope-util'
     ]);
 
     mainApp.controller('AppCtrl', AppCtrl);
@@ -179,9 +180,9 @@
         toastr.success('<strong>' + topMessage + '</strong> <br/><small>' + bottomMessage + '</small>');
     }
 
-    AppCtrl.$inject = ['$scope', '$timeout', '$http', '$window', '$stomp', '$interval'];
+    AppCtrl.$inject = ['$scope', 'scopeUtil', '$window', '$stomp'];
 
-    function AppCtrl ($scope, $timeout, $http, $window, $stomp, $interval) {
+    function AppCtrl ($scope, scopeUtil, $window, $stomp) {
         var vm = this;
         vm.isConnected = false;
         vm.data = {
@@ -214,6 +215,7 @@
 
         $scope.isLoadingState = true;
         $scope.isSyncComplete = false;
+        $scope.isSyncOff = false;
         $scope.isLoadingStateWithBlocks = false;
         $scope.loadingStateSpeed = 0;
         $scope.loadingItemsProgress = 0;
@@ -221,6 +223,7 @@
         $scope.oldStateNodesCount = 0;
         $scope.lastStateUpdateTime = 0;
         $scope.syncStateReceived = false;
+        //$scope.isLoadingComplete = false;   // can we show block chart or not
 
         function jsonParseAndBroadcast(event) {
             return function(data) {
@@ -359,7 +362,7 @@
         function onMachineInfoResult(data) {
             var info = (data);
 
-            $timeout(function() {
+            scopeUtil.safeApply(function() {
                 vm.data.cpuUsage        = info.cpuUsage;
                 vm.data.memoryOccupied  = filesize(info.memoryTotal - info.memoryFree);
                 vm.data.memoryFree      = filesize(info.memoryFree);
@@ -371,13 +374,13 @@
                 }
                 updateProgressBar('#memoryUsageProgress', memoryPercentage);
                 updateProgressBar('#cpuUsageProgress', info.cpuUsage);
-            }, 10);
+            });
         }
 
         function onInitialInfoResult(data) {
             var info = (data);
 
-            $timeout(function() {
+            scopeUtil.safeApply(function() {
                 vm.data.appVersion = info.appVersion;
                 vm.data.ethereumJVersion = info.ethereumJVersion;
 
@@ -390,7 +393,7 @@
                 vm.data.publicIp = info.publicIp;
                 vm.data.portCheckerUrl = info.portCheckerUrl;
                 vm.data.featureContracts = info.featureContracts;
-            }, 10);
+            });
 
             console.log('App version ' + info.appVersion + ', info.privateNetwork: ' + info.privateNetwork);
             $stomp.unsubscribe('/topic/initialInfo');
@@ -399,7 +402,7 @@
         function onBlockchainInfoResult(data) {
             var info = (data);
 
-            $timeout(function() {
+            scopeUtil.safeApply(function() {
                 updateBlockCounter(info.lastBlockNumber);
                 vm.data.highestBlockNumber      = info.highestBlockNumber;
                 vm.data.lastBlockNumber         = info.lastBlockNumber;
@@ -412,7 +415,7 @@
                 vm.data.networkHashRate         = filesize(info.networkHashRate, simpleSuffixes) + 'H/s';
                 vm.data.gasPrice                = formatBigDigital(info.gasPrice) + 'Wei';
                 $scope.setSyncStatus(info.syncStatus);
-            }, 10);
+            });
         }
 
         function onConfirmedTransaction(data) {
@@ -435,7 +438,7 @@
 
         function disconnect() {
             connectionLostOnce = true;
-            //showToastr('Connection Lost', 'Reconnecting...');
+            showToastr('Connection Lost', 'Reconnecting...');
 
             if ($stomp != null) {
                 $stomp.disconnect();
@@ -468,29 +471,37 @@
             $scope.isLoadingState = ['PivotBlock', 'StateNodes'].indexOf(syncStatus.stage) > -1;
             $scope.isLoadingStateWithBlocks = syncStatus.stage == 'StateNodes' && syncStatus.curCnt > 0 && syncStatus.curCnt == syncStatus.knownCnt;
             $scope.isSyncComplete = syncStatus.stage == 'Complete';
+            $scope.isSyncOff = syncStatus.stage == 'Off';
             $scope.isRegularSync = syncStatus.stage == 'Regular';
-            $scope.syncProgressMessage = loadingMessages[syncStatus.stage] || '';
-            if (syncStatus.knownCnt == 0 || syncStatus.stage == 'PivotBlock') {
-                $scope.loadingItemsProgress = 0;
-            } else {
-                $scope.loadingItemsProgress = Math.round(100 * syncStatus.curCnt / syncStatus.knownCnt);
-            }
 
-            // state nodes loading speed
-            if ($scope.isLoadingState) {
-                if ($scope.lastStateUpdateTime != 0) {
-                    var oldValue = oldSyncStatus.curCnt || 0;
-                    var newValue = syncStatus.curCnt;
-                    var decimals = 10^0; // 0 or more digits after dot
-                    var speed = Math.round(decimals * (newValue - oldValue) * 1000 / (new Date().getTime() - $scope.lastStateUpdateTime)) / decimals;
-                    $scope.loadingStateSpeed = Math.max(speed, 0);
+            if (!$scope.isSyncComplete) {
+                if (syncStatus.stage == 'StateNodes') {
+                    $scope.syncProgressMessage = (syncStatus.curCnt + ' / ' + syncStatus.knownCnt)
+                } else {
+                    $scope.syncProgressMessage = loadingMessages[syncStatus.stage] || '';
                 }
-                $scope.lastStateUpdateTime = new Date().getTime();
+                if (syncStatus.knownCnt == 0 || syncStatus.stage == 'PivotBlock') {
+                    $scope.loadingItemsProgress = 0;
+                } else {
+                    $scope.loadingItemsProgress = Math.round(100 * syncStatus.curCnt / syncStatus.knownCnt);
+                }
+
+                // state nodes loading speed
+                if ($scope.isLoadingState) {
+                    if ($scope.lastStateUpdateTime != 0) {
+                        var oldValue = oldSyncStatus.curCnt || 0;
+                        var newValue = syncStatus.curCnt;
+                        var decimals = 10^0; // 0 or more digits after dot
+                        var speed = Math.round(decimals * (newValue - oldValue) * 1000 / (new Date().getTime() - $scope.lastStateUpdateTime)) / decimals;
+                        $scope.loadingStateSpeed = Math.max(speed, 0);
+                    }
+                    $scope.lastStateUpdateTime = new Date().getTime();
+                }
             }
-            $scope.syncStateReceived = true;
             $scope.isLoadingComplete = loadingCompleteStatuses.indexOf(syncStatus.stage) > -1;
             console.log(syncStatus);
             console.log($scope.isLoadingComplete);
+            $scope.syncStateReceived = true;
         };
     }
 })();

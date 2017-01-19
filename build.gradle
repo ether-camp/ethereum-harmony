@@ -160,8 +160,11 @@ applicationDefaultJvmArgs = ["-server", "-Xss32m", "-XX:-OmitStackTraceInFastThr
  * It is not possible to override task defined values from command line.
  */
 task runMain << {
-    putIfEmpty System.properties, "sync.fast.enabled", "true"
-    bootRunWithNetworkConfig('ethereumj')
+    addJvmArgIfEmpty "sync.fast.enabled", "true"
+    addJvmArgIfEmpty "ethereumj.conf.res", "ethereumj.conf"
+    addJvmArgIfEmpty "database.name", "database"
+    addJvmArgIfEmpty "networkProfile", "main"
+    bootRunWithNetworkConfig('main', false)
 }
 
 task runRopsten << { bootRunWithNetworkConfig('ropsten') }
@@ -172,8 +175,10 @@ task runPrivate << { bootRunWithNetworkConfig('private') }
 
 task runClassic << { bootRunWithNetworkConfig('classic') }
 
-def bootRunWithNetworkConfig(String name) {
-    bootRun.jvmArgs = bootRun.jvmArgs + ('-Dethereumj.conf.res=' + name + '.conf') + ('-Ddatabase.name=database-' + name) + ('-DnetworkProfile=' + name)
+def bootRunWithNetworkConfig(String name, boolean includePresets = true) {
+    if (includePresets) {
+        bootRun.jvmArgs = bootRun.jvmArgs + ('-Dethereumj.conf.res=' + name + '.conf') + ('-Ddatabase.name=database-' + name) + ('-DnetworkProfile=' + name)
+    }
     tasks.compileJava.execute()
     tasks.bootRun.execute()
 }
@@ -182,6 +187,12 @@ def putIfEmpty(Properties properties, String key, String value) {
     // don't use System.hasProperty as it is groovy wrapper
     if (System.getProperty(key) == null) {
         properties.put key, value
+    }
+}
+
+def addJvmArgIfEmpty(String key, String value) {
+    if (System.getProperty(key) == null) {
+        bootRun.jvmArgs = bootRun.jvmArgs + ('-D' + key + '=' + value)
     }
 }
 

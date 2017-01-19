@@ -34,7 +34,6 @@
         $scope.ethPort = 'n/a';
         $scope.ethAccessible = 'n/a';
         $scope.miners = [];
-        $scope.isLoadingComplete = false;
         $scope.publicIp = ' ';
 
         var syncStatuses = {

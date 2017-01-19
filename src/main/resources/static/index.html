@@ -90,20 +90,29 @@
                 </div>
 
                 <ul class="topbar flex-row flex-align-center navbar-right m-b-none" ng-cloak ng-show="syncStateReceived">
-                    <li ng-if="isLoadingState">
+
+                    <li ng-if="isSyncOff">
+                        <div class="tp-panel m-r-sm">
+                            <div class="tp-title m-r-sm">Sync is disabled</div>
+                        </div>
+                    </li>
+
+                    <li ng-if="isLoadingState && !isSyncOff">
                         <div class="fast-sync-boxes panel tp-panel m-r-sm" ng-cloak>
                             <div class="tp-title m-r-sm">Fast Sync</div>
                             <div class="c-text m-r-sm" ng-hide="isLoadingStateWithBlocks">({{loadingStateSpeed}} nodes/sec)</div>
-                            <div class="progress active">
-                                <div class="progress-bar progress-bar-sync progress-bar-striped"
-                                     ng-style="{'width' : loadingItemsProgress + '%' }">
-
+                            <div class="flex-justify-center flex-align-center">
+                                <div class="progress active">
+                                    <div class="progress-bar progress-bar-sync progress-bar-striped"
+                                         ng-style="{'width' : loadingItemsProgress + '%' }">
+                                    </div>
                                 </div>
+                                <div class="small m-t-xs" style="text-align: center;">{{syncProgressMessage}}</div>
                             </div>
                         </div>
                     </li>
 
-                    <li ng-if="!isLoadingState && !isSyncComplete && !isRegularSync">
+                    <li ng-if="!isLoadingState && !isSyncComplete && !isRegularSync && !isSyncOff">
                         <div class="loading-boxes panel tp-panel m-r-sm" ng-cloak>
 
                             <div class="progress m-t-xs">
@@ -296,6 +305,7 @@
 <script src="js/vendor/ansi_up.js"></script>
 <script src="js/vendor/ng-stomp.js"></script>
 <script src="js/app/util/generateWord.js"></script>
+<script src="js/app/util/scope.util.js"></script>
 
 <script src="js/app/app.controller.js"></script>
 <script src="js/app/rest.factory.js"></script>
