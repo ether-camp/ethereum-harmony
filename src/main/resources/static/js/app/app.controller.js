@@ -499,8 +499,8 @@
                 }
             }
             $scope.isLoadingComplete = loadingCompleteStatuses.indexOf(syncStatus.stage) > -1;
-            console.log(syncStatus);
-            console.log($scope.isLoadingComplete);
+            //console.log(syncStatus);
+            //console.log($scope.isLoadingComplete);
             $scope.syncStateReceived = true;
         };
     }
