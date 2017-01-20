@@ -203,6 +203,7 @@
             appVersion:         'n/a',
             ethereumJVersion:   'n/a',
             networkName:        'n/a',
+            explorerUrl:        '',
             genesisHash:        'n/a',
             serverStartTime:    'n/a',
             nodeId:             'n/a',
@@ -385,6 +386,7 @@
                 vm.data.ethereumJVersion = info.ethereumJVersion;
 
                 vm.data.networkName = info.networkName;
+                $scope.explorerUrl = info.explorerUrl;
                 vm.data.privateNetwork = info.privateNetwork;
                 vm.data.genesisHash = info.genesisHash ? '0x' + info.genesisHash.substr(0, 6) : 'n/a';
                 vm.data.serverStartTime = moment(info.serverStartTime).format('DD-MMM-YYYY, HH:mm');

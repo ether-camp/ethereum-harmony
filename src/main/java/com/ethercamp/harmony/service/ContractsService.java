@@ -18,6 +18,7 @@
 
 package com.ethercamp.harmony.service;
 
+import com.cedarsoftware.util.io.JsonObject;
 import com.ethercamp.contrdata.ContractDataService;
 import com.ethercamp.contrdata.contract.Ast;
 import com.ethercamp.contrdata.contract.ContractData;
@@ -29,21 +30,27 @@ import com.ethercamp.contrdata.storage.dictionary.StorageDictionary;
 import com.ethercamp.contrdata.storage.dictionary.StorageDictionaryDb;
 import com.ethercamp.contrdata.storage.dictionary.StorageDictionaryVmHook;
 import com.ethercamp.harmony.service.contracts.Source;
+import com.ethercamp.harmony.util.TrustSSL;
 import com.ethercamp.harmony.util.exception.ContractException;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.util.JSONPObject;
+import com.mashape.unirest.http.JsonNode;
+import com.mashape.unirest.http.Unirest;
 import fj.data.Validation;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.apache.commons.collections4.map.HashedMap;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ethereum.config.SystemProperties;
 import org.ethereum.core.Block;
+import org.ethereum.core.Blockchain;
 import org.ethereum.core.CallTransaction;
 import org.ethereum.core.TransactionReceipt;
 import org.ethereum.datasource.DbSource;
@@ -53,13 +60,16 @@ import org.ethereum.facade.Ethereum;
 import org.ethereum.listener.EthereumListenerAdapter;
 import org.ethereum.solidity.compiler.SolidityCompiler;
 import org.ethereum.solcJ.SolcVersion;
-import org.ethereum.vm.DataWord;
 import org.ethereum.vm.program.Program;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -121,6 +131,12 @@ public class ContractsService {
     @Autowired
     Storage storage;
 
+    @Autowired
+    private Environment env;
+
+    @Autowired
+    private Blockchain blockchain;
+
     DbSource<byte[]> contractsStorage;
 
     DbSource<byte[]> settingsStorage;
@@ -158,6 +174,7 @@ public class ContractsService {
                     if (!syncedBlock.isPresent()) {
                         syncedBlock = Optional.of(block.getNumber());
                         settingsStorage.put(SYNCED_BLOCK_KEY, longToBytesNoLeadZeroes(block.getNumber()));
+                        settingsStorage.flush();
                         log.info("Synced block is set to #{}", block.getNumber());
                     }
 
@@ -167,11 +184,14 @@ public class ContractsService {
                             .forEach(address -> {
                                 log.info("Marked contract creation block {} {}", Hex.toHexString(address), block.getNumber());
                                 contractCreation.put(address, longToBytesNoLeadZeroes(block.getNumber()));
+                                contractCreation.flush();
                             });
                 }
             });
         }
         log.info("Initialized contracts. Synced block is #{}", syncedBlock.map(Object::toString).orElseGet(() -> "Undefined"));
+
+        TrustSSL.apply();
     }
 
     public boolean deleteContract(String address) {
@@ -386,6 +406,7 @@ public class ContractsService {
                     .ifPresent(entity -> {
                         entity.name = contractName;
                         contractsStorage.put(address, contractFormat.encode(entity));
+                        contractsStorage.flush();
                     });
 
             return new ContractInfoDTO(hexAddress, contractName, getContractBlock(address));
@@ -428,6 +449,43 @@ public class ContractsService {
 
     private boolean equals(byte[] b1, byte[] b2) {
         return new ByteArrayWrapper(b1).equals(new ByteArrayWrapper(b2));
+    }
+
+    public boolean importContractFromExplorer(String hexAddress) throws Exception {
+        final byte[] address = Hex.decode(hexAddress);
+        final String explorerHost = Optional.ofNullable(blockchain.getBlockByNumber(0l))
+                .map(block -> Hex.toHexString(block.getHash()))
+                .flatMap(hash -> BlockchainConsts.getNetworkInfo(env, hash).getSecond())
+                .orElseThrow(() -> new RuntimeException("Can't import contract for this network"));
+
+        final String url = String.format("%s/api/v1/accounts/%s/smart-storage/export", explorerHost, hexAddress);
+        log.info("Importing contract:{} from:{}", hexAddress, url);
+        final JsonNode result = Unirest.get(url).asJson().getBody();
+
+        final JSONObject resultObject = result.getObject();
+        final Map<String, String> map = new HashedMap<>();
+        resultObject.keySet().stream()
+                .forEach(k -> map.put((String) k, resultObject.getString((String) k)));
+
+        contractDataService.importDictionary(address, map);
+
+        contractCreation.put(address, longToBytesNoLeadZeroes(-2L));
+        contractCreation.flush();
+        return true;
+    }
+
+    /**
+     * For testing purpose.
+     */
+    public void clearContractStorage(String hexAddress) throws Exception {
+        final byte[] address = Hex.decode(hexAddress);
+        log.info("Clear storage of contract:{}", hexAddress);
+        contractDataService.clearDictionary(address);
+        contractCreation.delete(address);
+
+        // re-import to fill members
+        final ContractEntity contractEntity = loadContract(address);
+        compileAndSave(hexAddress, Arrays.asList(contractEntity.src));
     }
 
     @Data

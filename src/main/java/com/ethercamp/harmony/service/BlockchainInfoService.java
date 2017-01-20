@@ -45,6 +45,7 @@ import org.springframework.boot.context.embedded.EmbeddedServletContainerInitial
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.core.env.Environment;
+import org.springframework.data.util.Pair;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -53,7 +54,6 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.nio.file.*;
-import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
@@ -192,23 +192,26 @@ public class BlockchainInfoService implements ApplicationListener {
             final boolean isPrivateNetwork = env.getProperty("networkProfile", "").equalsIgnoreCase("private");
             final boolean isClassicNetwork = env.getProperty("networkProfile", "").equalsIgnoreCase("classic");
 
+            // find out network name
             final Optional<String> blockHash = Optional.ofNullable(blockchain.getBlockByNumber(0l))
                     .map(block -> Hex.toHexString(block.getHash()));
-            final String networkName;
+            final Pair<String, Optional<String>> networkInfo;
             if (isPrivateNetwork) {
-                networkName = "Private Miner Network";
+                networkInfo = Pair.of("Private Miner Network", Optional.empty());
             } else if (isClassicNetwork) {
-                networkName = "Ethereum Classic";
+                networkInfo = Pair.of("Classic ETC", Optional.empty());
             } else {
-                networkName = blockHash
-                        .map(hash -> BlockchainConsts.GENESIS_BLOCK_HASH_MAP.getOrDefault(hash, "Unknown network"))
-                        .orElse("Undefined blockchain");
+                networkInfo = blockHash
+                        .flatMap(hash -> Optional.ofNullable(BlockchainConsts.getNetworkInfo(env, hash)))
+                        .orElse(Pair.of("Unknown network", Optional.empty()));
             }
+
 
             initialInfo.set(new InitialInfoDTO(
                     config.projectVersion() + "-" + config.projectVersionModifier(),
                     env.getProperty("app.version"),
-                    networkName,
+                    networkInfo.getFirst(),
+                    networkInfo.getSecond().orElse(null),
                     blockHash.orElse(null),
                     System.currentTimeMillis(),
                     Hex.toHexString(config.nodeId()),
@@ -414,21 +417,6 @@ public class BlockchainInfoService implements ApplicationListener {
 
     public String getGenesisDump() {
         return systemProperties.getGenesis().toString();
-    }
-
-    static class BlockchainConsts {
-
-        static final Map<String, String> GENESIS_BLOCK_HASH_MAP = new HashMap<>();
-
-        static {
-            GENESIS_BLOCK_HASH_MAP.put("d4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3", "Live ETH");
-            GENESIS_BLOCK_HASH_MAP.put("0cd786a2425d16f152c658316c423e6ce1181e15c3295826d7c9904cba9ce303", "Morden ETH");
-            GENESIS_BLOCK_HASH_MAP.put("41941023680923e0fe4d74a34bdac8141f2540e3ae90623718e47d66d1ca4a2d", "Ropsten ETH");
-            GENESIS_BLOCK_HASH_MAP.put("34288454de81f95812b9e20ad6a016817069b13c7edc99639114b73efbc21368", "Test ETH");
-
-            // not static as user can put changes into genesis, which cause hash to change
-            // GENESIS_BLOCK_HASH_MAP.put("???", "Private Miner Network");
-        }
     }
 
     /**

@@ -89,8 +89,8 @@
         return entry;
     }
 
-    function showErrorToastr(topMessage, bottomMessage) {
-        toastr.clear()
+    function showToastr(isError, topMessage, bottomMessage) {
+        toastr.clear();
         toastr.options = {
             "positionClass": "toast-top-right",
             "closeButton": true,
@@ -98,7 +98,12 @@
             "showEasing": "swing",
             "timeOut": "4000"
         };
-        toastr.error('<strong>' + topMessage + '</strong> <br/><small>' + bottomMessage + '</small>');
+        if (isError) {
+            toastr.error('<strong>' + topMessage + '</strong> <br/><small>' + bottomMessage + '</small>');
+        } else {
+            toastr.success('<strong>' + topMessage + '</strong> <br/><small>' + bottomMessage + '</small>');
+        }
+
     }
 
     /**
@@ -108,7 +113,7 @@
         return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     }
 
-    function ContractsCtrl($scope, $timeout, scrollConfig, $http, jsonrpc, restService) {
+    function ContractsCtrl($scope, $timeout, scrollConfig, $http, jsonrpc, restService, $q, scopeUtil) {
         var UNINITIALIZED_SYNCED_BLOCK = -1;
 
         console.log('Contracts controller activated.');
@@ -177,13 +182,23 @@
             $scope.storage.entries = [];
         };
 
-        $scope.onViewStorage = function(item) {
-            $scope.isAddingContract = false;
-            $scope.isViewingStorage = true;
-            $scope.storage.address = item.address;
-            $scope.storage.balanceString = 'n/a';
-            $scope.storage.contractName = item.name;
-            $scope.storage.blockNumber = item.blockNumber;
+        $scope.onViewStorage = function(value) {
+            var contract = $scope.contracts.filter(function(item) {
+                return item.address == value.address;
+            })[0];
+
+            console.log('View contact ' + contract.address + ' from #' + contract.blockNumber);
+
+            scopeUtil.safeApply(function() {
+                $scope.isAddingContract = false;
+                $scope.isViewingStorage = true;
+                $scope.storage.address = contract.address;
+                $scope.storage.balanceString = 'n/a';
+                $scope.storage.contractName = contract.name;
+                $scope.storage.blockNumber = contract.blockNumber;
+                $scope.lastViewingItem = contract;
+                $scope.importingError = '';
+            });
 
             // #1 Load balance
             jsonrpc.request('eth_getBalance', [$scope.storage.address, 'latest'])
@@ -217,17 +232,24 @@
         };
 
         $scope.loadContracts = function() {
-            return $http({
+            var deferred = $q.defer();
+            $http({
                 method: 'GET',
                 url: '/contracts/list'
-            }).then(function(result) {
-                console.log(result);
-                $scope.contracts = (result.data || [])
-                    .map(function(c) {
-                        c.address = EthUtil.toChecksumAddress(c.address);
-                        return c;
-                    });
-            });
+            }).then(
+                function(result) {
+                    console.log(result);
+                    $scope.contracts = (result.data || [])
+                        .map(function(c) {
+                            c.address = EthUtil.toChecksumAddress(c.address);
+                            return c;
+                        });
+                    deferred.resolve();
+                }),
+                function(error) {
+                    deferred.reject(error);
+                };
+            return deferred.promise;
         };
 
         $scope.onRemoveClick = function(item) {
@@ -340,6 +362,52 @@
             }
         };
 
+        $scope.onClearContract = function() {
+            var lastItem = $scope.lastViewingItem;
+            $http({
+                    method: 'POST',
+                    url: '/contracts/' + remove0x($scope.storage.address).toLowerCase() + '/clearContractStorage',
+                    params: {}
+            })
+                .then(function() {
+                    return $scope.loadContracts()
+                        .then(function() {
+                            $scope.onViewStorage(lastItem);
+                        });
+                })
+        };
+
+        $scope.onImportContract = function() {
+            $scope.isImportingInProgress = true;
+            $scope.importingError = '';
+
+            var lastItem = $scope.lastViewingItem;
+            $http({
+                method: 'POST',
+                url: '/contracts/' + remove0x($scope.storage.address).toLowerCase() + '/importFromExplorer',
+                params: {}
+            }).then(function(result) {
+                console.log('Imported addition result');
+                console.log(result);
+                if (result.data.success) {
+                    showToastr(false, "", "Successfully imported contract data");
+                    $scope.loadContracts()
+                        .then(function() {
+                            $scope.onViewStorage(lastItem);
+                        });
+                } else {
+                    $scope.importingError = result.data.errorMessage;
+                    showToastr(false, "Work done", "Imported contract data");
+                }
+                $scope.isImportingInProgress = false;
+            }).catch(function(error) {
+                console.log('Import error');
+                console.log(error);
+                $scope.isImportingInProgress = false;
+                $scope.importingError = 'Problem importing data. Server might not be available';
+            });
+        };
+
         $scope.loadContracts();
 
         function onResize() {
@@ -365,7 +433,7 @@
     }
 
     angular.module('HarmonyApp')
-        .controller('ContractsCtrl', ['$scope', '$timeout', 'scrollConfig', '$http', 'jsonrpc', 'restService', ContractsCtrl])
+        .controller('ContractsCtrl', ['$scope', '$timeout', 'scrollConfig', '$http', 'jsonrpc', 'restService', '$q', 'scopeUtil', ContractsCtrl])
 
         /**
          * Controller for rendering contract storage in expandable tree view.
