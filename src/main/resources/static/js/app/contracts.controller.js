@@ -8,6 +8,10 @@
     var PAGE_SIZE = 30;
     var NULL = '<empty>';
 
+    function isTimestamp (value) {
+        return /^1[4-9]((\d{8})|(\d{11}))$/.test('' + value);
+    }
+
     function isBytesAreString(data) {
         var isString = false;
 
@@ -50,9 +54,11 @@
     function updateEntry(entry) {
         if (entry.key && entry.value) {
             var isStruct = entry.value.typeKind == 'struct';
+            var isContract = entry.value.typeKind == 'contract';
             entry.isCompositeObject = entry.value.container || isStruct;
             entry.template = 'tree_item_renderer.html';
 
+            entry.valueType = entry.value.typeKind || entry.value.type;
             // value label
             if (entry.value.container) {
                 if (entry.value.type.indexOf('mapping(') == 0) {
@@ -63,15 +69,22 @@
             } else if (isStruct) {
                 entry.valueLabel = entry.value.type;
             } else {
-                entry.valueLabel = entry.value.decoded ? entry.value.decoded : NULL;
-                var isString = isBytesAreString(entry.value.decoded);
-                if (isString) {
+                var decoded = entry.value.decoded;
+                entry.valueLabel = decoded ? decoded : NULL;
+                entry.valueSecondLabel = '';
+                var isString = isBytesAreString(decoded);
+                if (isContract) {
+                    entry.valueType = entry.value.type + ' contract';
+                } else if (isString) {
                     entry.type1Label = 'string';
                     entry.type2Label = entry.value.type;
-                    entry.valueLabel = '"' + bytesToString(entry.value.decoded) + '"';
+                    entry.valueLabel = '"' + bytesToString(decoded) + '"';
                     entry.isConverted = true;
                     entry.template = 'tree_string_renderer.html';
                 } else {
+                    if (isTimestamp(decoded)) {
+                        entry.valueSecondLabel = moment((('' + decoded).length == 10) ? (decoded * 1000) : decoded).format('(DD-MMM-YYYY HH:mm:ss Z)');
+                    }
                     entry.template = 'tree_value_renderer.html';
                 }
             }

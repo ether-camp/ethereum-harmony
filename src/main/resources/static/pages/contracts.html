@@ -8,7 +8,7 @@
                 <i class="fa" ng-class="{'fa-plus-square-o': !entry.expanded, 'fa-minus-square-o': entry.expanded}"/>
             </a>
         </div>
-        <span class="c-text font-16">{{entry.key.decoded}}</span> = <span class="font-16 storage-entry-value">{{entry.valueLabel}}</span><i class="m-l-sm font-monospace c-accent">{{entry.value.typeKind || entry.value.type}}</i>
+        <span class="c-text font-16">{{entry.key.decoded}}</span> = <span class="font-16 storage-entry-value">{{entry.valueLabel}}</span><i class="m-l-sm font-monospace c-accent">{{entry.valueType}}</i>
     </div>
 
     <ul style="list-style-type: none; margin-left: 0; padding-left: 0" ng-show="entry.expanded">
@@ -36,7 +36,7 @@
 
     <div class="font-16 font-monospace storage-entry-div">
         <div class="entry-icon-div"/>
-        <span class="c-text font-16">{{entry.key.decoded}}</span> = <span class="font-16 storage-entry-value">{{entry.valueLabel}}</span>&nbsp;<i class="font-monospace c-accent">{{entry.value.typeKind || entry.value.type}}</i>
+        <span class="c-text font-16">{{entry.key.decoded}}</span> = <span class="font-16 storage-entry-value">{{entry.valueLabel}}</span>&nbsp;<span class="font-16 c-text">{{entry.valueSecondLabel}}</span><i class="font-monospace c-accent">{{entry.value.typeKind || entry.value.type}}</i>
     </div>
 </script>
 
@@ -186,13 +186,13 @@
                         </div>
                     </div>
 
-                    <div ng-show="storage.blockNumber == -2" class="panel panel-filled panel-c-danger">
-                        <div class="panel-footer" ng-show="explorerUrl != null">
-                            <a href="#" ng-click="onClearContract()" class="btn btn-w-md btn-warning m-r-sm">
-                                Clear for test
-                            </a>
-                        </div>
-                    </div>
+                    <!--<div ng-show="storage.blockNumber == -2" class="panel panel-filled panel-c-danger">-->
+                        <!--<div class="panel-footer" ng-show="explorerUrl != null">-->
+                            <!--<a href="#" ng-click="onClearContract()" class="btn btn-w-md btn-warning m-r-sm">-->
+                                <!--Clear for test-->
+                            <!--</a>-->
+                        <!--</div>-->
+                    <!--</div>-->
 
                     <div class="storage-background">
                         <div ng-controller="TreeController" style="list-style-type: none;margin-left: -17px;" ng-include="'tree_item_renderer.html'" ng-init="init(storage)">
