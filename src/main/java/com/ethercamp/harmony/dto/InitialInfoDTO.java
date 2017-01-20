@@ -32,6 +32,8 @@ public class InitialInfoDTO {
 
     private final String ethereumJVersion;
 
+    private final String ethereumJBuildInfo;
+
     private final String appVersion;
 
     private final String networkName;

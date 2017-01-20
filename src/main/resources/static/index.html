@@ -259,13 +259,13 @@
                         Free space: <span class="c-white" ng-cloak>{{vm.data.freeSpace}}</span>
                     </div>
 
-                    <div class="m-t-xl">
+                    <div class="m-t-xl" data-toggle="tooltip" title="{{vm.data.ethereumJBuildInfo}}">
                         <small>
                             Ethereum Harmony <span class="c-white m-l-xs">{{vm.data.appVersion}}</span>
                         </small>
                         <br>
                         <small>
-                            EthereumJ <span class="c-white m-l-xs">{{vm.data.ethereumJVersion}}</span>
+                            <small>EthereumJ <span class="c-white m-l-xs">{{vm.data.ethereumJVersion}}</span></small>
                         </small>
                     </div>
 

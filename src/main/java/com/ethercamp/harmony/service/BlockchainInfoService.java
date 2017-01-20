@@ -26,6 +26,7 @@ import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.UnsynchronizedAppenderBase;
 
 import com.ethercamp.harmony.keystore.FileSystemKeystore;
+import org.ethereum.util.BuildInfo;
 import org.slf4j.LoggerFactory;
 import ch.qos.logback.classic.Logger;
 import com.ethercamp.harmony.dto.*;
@@ -209,6 +210,7 @@ public class BlockchainInfoService implements ApplicationListener {
 
             initialInfo.set(new InitialInfoDTO(
                     config.projectVersion() + "-" + config.projectVersionModifier(),
+                    "Hash: " + BuildInfo.buildHash + ",   Created: " + BuildInfo.buildTime,
                     env.getProperty("app.version"),
                     networkInfo.getFirst(),
                     networkInfo.getSecond().orElse(null),

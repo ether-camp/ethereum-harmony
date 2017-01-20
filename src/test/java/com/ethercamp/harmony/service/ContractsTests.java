@@ -19,6 +19,7 @@
 package com.ethercamp.harmony.service;
 
 import com.ethercamp.harmony.dto.ContractObjects.*;
+import com.ethercamp.harmony.util.SolcUtils;
 import org.apache.commons.io.IOUtils;
 import org.ethereum.datasource.inmem.HashMapDB;
 import org.ethereum.facade.Ethereum;
@@ -81,6 +82,11 @@ public class ContractsTests {
 
         when(repository.getCode(any())).thenReturn(Hex.decode(CODE));
         when(contractsService.ethereum.getRepository()).thenReturn(repository);
+    }
+
+    @Test
+    public void contracts_readSolcVersion() {
+        assertThat(SolcUtils.getSolcVersion(), is("0.4.8"));
     }
 
     @Test

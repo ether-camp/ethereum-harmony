@@ -18,7 +18,6 @@
 
 package com.ethercamp.harmony.service;
 
-import com.cedarsoftware.util.io.JsonObject;
 import com.ethercamp.contrdata.ContractDataService;
 import com.ethercamp.contrdata.contract.Ast;
 import com.ethercamp.contrdata.contract.ContractData;
@@ -30,12 +29,12 @@ import com.ethercamp.contrdata.storage.dictionary.StorageDictionary;
 import com.ethercamp.contrdata.storage.dictionary.StorageDictionaryDb;
 import com.ethercamp.contrdata.storage.dictionary.StorageDictionaryVmHook;
 import com.ethercamp.harmony.service.contracts.Source;
+import com.ethercamp.harmony.util.SolcUtils;
 import com.ethercamp.harmony.util.TrustSSL;
 import com.ethercamp.harmony.util.exception.ContractException;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.util.JSONPObject;
 import com.mashape.unirest.http.JsonNode;
 import com.mashape.unirest.http.Unirest;
 import fj.data.Validation;
@@ -59,9 +58,7 @@ import org.ethereum.db.ByteArrayWrapper;
 import org.ethereum.facade.Ethereum;
 import org.ethereum.listener.EthereumListenerAdapter;
 import org.ethereum.solidity.compiler.SolidityCompiler;
-import org.ethereum.solcJ.SolcVersion;
 import org.ethereum.vm.program.Program;
-import org.json.JSONArray;
 import org.json.JSONObject;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,7 +66,6 @@ import org.springframework.core.env.Environment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -143,6 +139,8 @@ public class ContractsService {
 
     DbSource<byte[]> contractCreation;
 
+    volatile String solcVersion;
+
     /**
      * Contract data will be fully available from this block.
      * Usually this is pivot block in fast sync or zero block for regular sync.
@@ -191,6 +189,8 @@ public class ContractsService {
         }
         log.info("Initialized contracts. Synced block is #{}", syncedBlock.map(Object::toString).orElseGet(() -> "Undefined"));
 
+        solcVersion = SolcUtils.getSolcVersion();
+
         TrustSSL.apply();
     }
 
@@ -229,7 +229,7 @@ public class ContractsService {
 
         return new IndexStatusDTO(
                 totalSize,
-                SolcVersion.VERSION,
+                solcVersion,
                 syncedBlock.orElse(-1L));
     }
 

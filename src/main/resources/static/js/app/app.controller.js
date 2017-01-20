@@ -384,6 +384,7 @@
             scopeUtil.safeApply(function() {
                 vm.data.appVersion = info.appVersion;
                 vm.data.ethereumJVersion = info.ethereumJVersion;
+                vm.data.ethereumJBuildInfo = info.ethereumJBuildInfo;
 
                 vm.data.networkName = info.networkName;
                 $scope.explorerUrl = info.explorerUrl;
