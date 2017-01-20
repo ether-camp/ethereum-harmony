@@ -28,6 +28,7 @@ import org.ethereum.datasource.inmem.HashMapDB;
 import org.ethereum.db.ContractDetails;
 import org.ethereum.util.blockchain.StandaloneBlockchain;
 import org.ethereum.vm.DataWord;
+import org.junit.Ignore;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.*;
@@ -48,7 +49,7 @@ import static java.util.stream.Collectors.toMap;
         ContractDataConfig.class, BaseContextAwareTest.TestConfig.class
 })
 
-
+@Ignore
 public class BaseContextAwareTest {
 
     @Autowired
