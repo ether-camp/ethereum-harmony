@@ -139,8 +139,6 @@ public class ContractsService {
 
     DbSource<byte[]> contractCreation;
 
-    volatile String solcVersion;
-
     /**
      * Contract data will be fully available from this block.
      * Usually this is pivot block in fast sync or zero block for regular sync.
@@ -189,8 +187,6 @@ public class ContractsService {
         }
         log.info("Initialized contracts. Synced block is #{}", syncedBlock.map(Object::toString).orElseGet(() -> "Undefined"));
 
-        solcVersion = SolcUtils.getSolcVersion();
-
         TrustSSL.apply();
     }
 
@@ -229,7 +225,7 @@ public class ContractsService {
 
         return new IndexStatusDTO(
                 totalSize,
-                solcVersion,
+                SolcUtils.getSolcVersion(),
                 syncedBlock.orElse(-1L));
     }
 
