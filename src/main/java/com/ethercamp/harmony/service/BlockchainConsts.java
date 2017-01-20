@@ -16,44 +16,30 @@
  * along with Ethereum Harmony.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.ethercamp.harmony.dto;
+package com.ethercamp.harmony.service;
 
-import lombok.AllArgsConstructor;
 import lombok.Value;
+import org.springframework.core.env.Environment;
+import org.springframework.data.util.Pair;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 /**
- * Created by Stan Reshetnyk on 13.07.16.
+ * Created by Stan Reshetnyk on 20.01.17.
  */
-@Value
-@AllArgsConstructor
-public class InitialInfoDTO {
-
-    private final String ethereumJVersion;
-
-    private final String appVersion;
-
-    private final String networkName;
+class BlockchainConsts {
 
     /**
-     * Link to Ether.Camp block explore site for contracts import
+     * Return pair of name and explorer url.
      */
-    private final String explorerUrl;
+    public static Pair<String, Optional<String>> getNetworkInfo(Environment env, String genesisHash) {
+        final String networkNameKey = String.format("network.%s.networkName", genesisHash);
+        final String explorerUrlKey = String.format("network.%s.explorerUrl", genesisHash);
 
-    private final String genesisHash;
-
-    private final Long serverStartTime;
-
-    private final String nodeId;
-
-    private final Integer rpcPort;
-
-    private final boolean privateNetwork;
-
-    private final String portCheckerUrl;
-
-    private final String publicIp;
-
-    private final boolean featureContracts;
+        return Optional.ofNullable(env.getProperty(networkNameKey))
+                .map(name -> Pair.of(name, Optional.ofNullable(env.getProperty(explorerUrlKey))))
+                .orElse(Pair.of("Unknown network", Optional.empty()));
+    }
 }
