@@ -40,11 +40,11 @@
     </div>
 </script>
 
-<section class="content">
+<section class="content height-100p">
 
-    <div class="container-fluid">
+    <div class="container-fluid height-100p">
 
-        <div class="row">
+        <div class="row height-100p">
             <div class="col-lg-12">
                 <div class="view-header">
                     <div class="header-icon">
@@ -71,11 +71,11 @@
     </div>
 
 
-    <div class="row" id="contracts-scroll-container">
+    <div class="row">
 
-        <div class="col-lg-12" ng-cloak>
+        <div class="col-lg-12" ng-cloak id="scroll-top-marker">
 
-            <div class="panel panel-filled" ng-show="isAddingContract">
+            <div class="panel panel-filled" ng-if="isAddingContract">
                 <div class="row">
                     <div class="col-lg-6">
 
@@ -155,27 +155,26 @@
             </div>
 
 
-            <div class="panel panel-filled" ng-show="isViewingStorage">
+            <div class="panel panel-filled" ng-if="isViewingStorage">
 
                 <div class="panel-heading flex flex-justify-between">
-                    <h3>{{storage.contractName}}</h3>
+                    <div class="flex flex-align-center">
+                        <div class="m-r-md">
+                            <a href="#" ng-click="onBackToList()" class="btn btn-w-md btn-default">Back to list</a>
+                        </div>
+
+                        <h3>{{storage.contractName}}</h3>
+                    </div>
                     <!--<h3 class="font-monospace c-text">{{storage.address}}</h4>-->
                     <h3>Balance: {{storage.balanceString}} ETH</h3>
-                </div>
-
-                <div class="panel-heading">
-                    <a href="#" ng-click="onBackToList()" class="btn btn-w-md btn-default">Back to list</a>
                 </div>
 
                 <div class="panel-body">
 
                     <!-- -2 suites for contracts which has been imported -->
-                    <div ng-show="storage.blockNumber == -1 || syncedBlock == -1 || (storage.blockNumber < syncedBlock && storage.blockNumber != -2)" class="panel panel-filled panel-c-danger">
-                        <div class="panel-heading">
-                            Not all values may be displayed.
-                        </div>
+                    <div ng-if="storage.blockNumber == -1 || syncedBlock == -1 || (storage.blockNumber < syncedBlock && storage.blockNumber != -2)" class="panel panel-filled panel-c-danger">
                         <div class="panel-body">
-                            The Contracts deployed before fast sync load may show <span class="text-accent">incomplete</span> information.
+                            <span class="c-white">Not all values may be displayed.</span> The Contracts deployed before fast sync load may show <span class="text-accent">incomplete</span> information.
                         </div>
                         <div class="panel-footer" ng-show="explorerUrl != null">
                             <a href="#" ng-click="onImportContract()" ng-disabled="isImportingInProgress" class="btn btn-w-md btn-warning m-r-sm">
@@ -194,7 +193,7 @@
                         <!--</div>-->
                     <!--</div>-->
 
-                    <div class="storage-background">
+                    <div class="storage-background table-responsive" id="storage-scroll-container">
                         <div ng-controller="TreeController" style="list-style-type: none;margin-left: -17px;" ng-include="'tree_item_renderer.html'" ng-init="init(storage)">
                         </div>
                     </div>
@@ -202,20 +201,20 @@
             </div>
 
 
-            <div class="panel panel-filled">
+            <div class="panel panel-filled" ng-if="!isAddingContract && !isViewingStorage">
 
                 <div class="panel-heading">
 
                     <a href="#" ng-click="onWatchContract()" class="btn btn-w-md btn-primary"
-                       ng-show="!isAddingContract && !isViewingStorage">
+                       >
                         <i class="fa fa-eye m-r-sm"/>
                         Add contract for watching
                     </a>
                 </div>
 
-                <div class="panel-body">
+                <div class="panel-body" id="contracts-scroll-container">
 
-                    <div class="table-responsive">
+                    <div class="table-responsive" >
                         <table class="table peers-table">
                             <thead>
                             <tr>

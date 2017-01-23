@@ -193,6 +193,8 @@
             $scope.isAddingContract = false;
             $scope.isViewingStorage = false;
             $scope.storage.entries = [];
+
+            $scope.checkScrollsLater();
         };
 
         $scope.onViewStorage = function(value) {
@@ -241,7 +243,9 @@
                 //$scope.storage.size = result.data.size;
                 //$scope.storage.number = result.data.number;
                 $scope.storage.totalElements = result.data.totalElements;
+                $scope.checkScrollsLater();
             });
+            $scope.checkScrollsLater();
         };
 
         $scope.loadContracts = function() {
@@ -426,14 +430,23 @@
         function onResize() {
             console.log("Contracts page resize");
 
-            var scrollContainer = document.getElementById("contracts-scroll-container");
-            var rect = scrollContainer.getBoundingClientRect();
-            var newHeight = $(window).height() - rect.top - 20;
-            //$(scrollContainer).css('maxHeight', newHeight + 'px');
-            $scope.scrollConfig.setHeight = newHeight;
-            $timeout(function() {
-                $(scrollContainer).mCustomScrollbar($scope.scrollConfig);
-            }, 10);
+            ['storage-scroll-container', 'contracts-scroll-container'].forEach(function(elementId) {
+                var scrollContainer = document.getElementById(elementId);
+                if (!scrollContainer) {
+                    return;
+                }
+                var rect = scrollContainer.getBoundingClientRect();
+                var newHeight = $(window).height() - rect.top - 20;
+                //$(scrollContainer).css('maxHeight', newHeight + 'px');
+                $scope.scrollConfig.setHeight = newHeight;
+                $timeout(function() {
+                    $(scrollContainer).mCustomScrollbar($scope.scrollConfig);
+                    $(scrollContainer).mCustomScrollbar('update');
+                }, 10);
+                console.log('$(window).height() ' + $(window).height());
+                console.log('setHeight ' + newHeight);
+                console.log(rect);
+            });
         }
 
         function resetFormError() {
@@ -443,6 +456,12 @@
         function showFormError(topMessage, bottomMessage) {
             $scope.submitErrorMessage = bottomMessage;
         }
+
+        // can be fixed via global html layout changed
+        $scope.checkScrollsLater = function() {
+            $timeout(onResize, 10);
+        };
+        $scope.checkScrollsLater();
     }
 
     angular.module('HarmonyApp')
