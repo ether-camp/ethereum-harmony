@@ -69,6 +69,11 @@
             .when('/contracts', {
                 templateUrl : 'pages/contracts.html',
                 controller  : 'ContractsCtrl'
+            })
+
+            .when('/contractNew', {
+                templateUrl : 'pages/contract.new.html',
+                controller  : 'ContractNewCtrl'
             });
 
         $locationProvider.html5Mode(true);

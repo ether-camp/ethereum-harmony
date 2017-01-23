@@ -76,7 +76,7 @@ public class WebSocketController {
      * Defines request mapping for all site pages.
      * As we have angular routing - we return index.html here.
      */
-    @RequestMapping({"/", "/systemLog", "/peers", "/rpcUsage", "/terminal", "/wallet", "/contracts"})
+    @RequestMapping({"/", "/systemLog", "/peers", "/rpcUsage", "/terminal", "/wallet", "/contracts", "/contractNew"})
     public String index(HttpServletRequest request) {
         final boolean contractsEnabled = env.getProperty("feature.contract.enabled", "false").equalsIgnoreCase("true");
         if (!contractsEnabled && request.getRequestURI().equalsIgnoreCase("/contracts")) {

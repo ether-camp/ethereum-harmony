@@ -5,7 +5,7 @@
             <a ng-click="onExpand(entry)"
                href="#"
                ng-show="entry.expandable">
-                <i class="fa" ng-class="{'fa-plus-square-o': !entry.expanded, 'fa-minus-square-o': entry.expanded}"/>
+                <i class="fa" ng-class="{'fa-plus-square-o': !entry.expanded, 'fa-minus-square-o': entry.expanded}"></i>
             </a>
         </div>
         <span class="c-text font-16">{{entry.key.decoded}}</span> = <span class="font-16 storage-entry-value">{{entry.valueLabel}}</span><i class="m-l-sm font-monospace c-accent">{{entry.valueType}}</i>
@@ -27,7 +27,7 @@
 <script type="text/ng-template" id="tree_string_renderer.html">
 
     <div class="font-16 font-monospace storage-entry-div">
-        <div class="entry-icon-div"/>
+        <div class="entry-icon-div"></div>
         <span class="c-text font-16">{{entry.key.decoded}}</span> = <span class="font-16 storage-entry-value">{{entry.valueLabel}}</span>&nbsp;<i class="font-monospace c-accent">{{entry.type1Label}}</i>&nbsp;(<a href="#" ng-click="onSwitchString(entry)">{{entry.type2Label}}</a>)
     </div>
 </script>
@@ -35,14 +35,14 @@
 <script type="text/ng-template" id="tree_value_renderer.html">
 
     <div class="font-16 font-monospace storage-entry-div">
-        <div class="entry-icon-div"/>
+        <div class="entry-icon-div"></div>
         <span class="c-text font-16">{{entry.key.decoded}}</span> = <span class="font-16 storage-entry-value">{{entry.valueLabel}}</span>&nbsp;<span class="font-16 c-text">{{entry.valueSecondLabel}}</span><i class="font-monospace c-accent">{{entry.value.typeKind || entry.value.type}}</i>
     </div>
 </script>
 
 <section class="content height-100p">
 
-    <div class="container-fluid height-100p">
+    <div class="container-fluid">
 
         <div class="row height-100p">
             <div class="col-lg-12">
@@ -71,89 +71,9 @@
     </div>
 
 
-    <div class="row">
+    <div class="row height-100p">
 
-        <div class="col-lg-12" ng-cloak id="scroll-top-marker">
-
-            <div class="panel panel-filled" ng-if="isAddingContract">
-                <div class="row">
-                    <div class="col-lg-6">
-
-                        <div class="panel-heading flex flex-justify-between">
-                            <a href="#" ng-click="onBackToList()" class="btn btn-w-md btn-default">Back to list</a>
-                            <!--<span class="m-l-sm"/>-->
-                        </div>
-
-                        <div class="panel-heading">
-                            <h4>Add contact for watching it's storage</h4>
-                            <p ng-hide="isLoadingComplete" class="text-warning">
-                                * Sync is not finished. Contract block may not exist yet.
-                            </p>
-                        </div>
-
-                        <div class="panel-body">
-                            <form name="form" novalidate class="bs-example">
-                                <div class="form-group" show-errors>
-                                    <label>Address</label>
-                                    <input class="form-control" ng-model="newContract.address"
-                                           ethaddress
-                                           name="address" required="true" type="text">
-
-                                    <div ng-show="form.$submitted || form.address.$touched">
-                                        <div class="text-warning" ng-show="form.address.$error.required">Address is required</div>
-                                        <div class="text-warning" ng-show="form.address.$error.ethaddress">Address format is invalid</div>
-                                        <div class="text-warning" ng-show="form.address.$error.ethaddresschecksum">Checksum address format is invalid</div>
-                                    </div>
-                                </div>
-
-                                <div class="form-group" show-errors>
-
-                                    <div class="form-group">
-                                        <label>Solidity code</label>
-
-                                        <textarea name="sourceCode"
-                                                  class="form-control" rows="3"
-                                                  ng-model="newContract.sourceCode"
-                                                  placeholder=""
-                                                  autocomplete="off">
-                                        </textarea>
-                                    </div>
-                                </div>
-
-                                <div class="form-group">
-                                    <label>Solidity files</label>
-
-                                    <input id="fileInput" type="file" name="contracts" multiple="true"
-                                           style="visibility: hidden; height: 1px" />
-                                    <a href="#"
-                                       ng-click="onAddFile()"
-                                       class="btn btn-w-md btn-default">Attach file</a>
-
-                                    <div ng-repeat="file in files" class="m-t-sm">
-                                        {{file.name}}
-                                        <a href="#" ng-click="onRemoveFile(file)">remove</a>
-                                    </div>
-
-                                </div>
-
-                                <div ng-hide="submitErrorMessage == ''" class="text-danger">
-                                    {{submitErrorMessage}}
-                                </div>
-
-                            </form>
-
-                        </div>
-
-                        <div class="form-group flex flex-justify-center">
-                            <a href="#"
-                               ng-click="onFinalAddFiles()"
-                               class="btn btn-w-md btn-primary">Upload !!!</a>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-
+        <div class="col-lg-12 height-100p" ng-cloak>
 
             <div class="panel panel-filled" ng-if="isViewingStorage">
 
@@ -193,7 +113,7 @@
                         <!--</div>-->
                     <!--</div>-->
 
-                    <div class="storage-background table-responsive" id="storage-scroll-container">
+                    <div class="storage-background" id="storage-scroll-container">
                         <div ng-controller="TreeController" style="list-style-type: none;margin-left: -17px;" ng-include="'tree_item_renderer.html'" ng-init="init(storage)">
                         </div>
                     </div>
@@ -207,7 +127,7 @@
 
                     <a href="#" ng-click="onWatchContract()" class="btn btn-w-md btn-primary"
                        >
-                        <i class="fa fa-eye m-r-sm"/>
+                        <i class="fa fa-eye m-r-sm"></i>
                         Add contract for watching
                     </a>
                 </div>
@@ -233,12 +153,10 @@
                             <tbody>
 
                                 <tr ng-repeat="item in contracts"
-                                    ng-click="onViewStorage(item)"
                                     ng-cloak
-                                    ng-class="{'peer-active': item.isActive}"
-                                    class="peer-row">
+                                    class="contract-row">
                                     <td>
-                                        {{item.name}}
+                                        <a href="#" ng-click="onViewStorage(item)">{{item.name}}</a>
                                     </td>
                                     <td class="font-monospace">
                                         {{item.address}}
@@ -256,7 +174,6 @@
                     </div>
                 </div>
             </div>
-
 
         </div>
     </div>

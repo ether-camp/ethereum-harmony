@@ -126,15 +126,13 @@
         return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     }
 
-    function ContractsCtrl($scope, $timeout, scrollConfig, $http, jsonrpc, restService, $q, scopeUtil) {
+    function ContractsCtrl($scope, $timeout, scrollConfig, $http, jsonrpc, restService, $q, scopeUtil, $location) {
         var UNINITIALIZED_SYNCED_BLOCK = -1;
 
         console.log('Contracts controller activated.');
         $scope.contracts = $scope.contracts || [];
         $scope.scrollConfig = jQuery.extend(true, {}, scrollConfig);
-        $scope.isAddingContract = false;
         $scope.isViewingStorage = false;
-        $scope.newContract = {};
         $scope.storage = {entries: [], value: {decoded: ''}, blockNumber: -1};
         $scope.indexSizeString = 'n/a';
         $scope.solcVersionString = 'n/a';
@@ -158,6 +156,10 @@
             }
         });
 
+        $scope.onWatchContract = function() {
+            $location.path('contractNew');
+        }
+
         function loadStatus() {
             restService.Contracts.getIndexStatus().then(function(result) {
                 $scope.indexSizeString = filesize(result.indexSize);
@@ -176,21 +178,7 @@
         $(window).ready(onResize);
         $scope.$on('windowResizeEvent', onResize);
 
-        $scope.onWatchContract = function() {
-            $scope.newContract = {};
-            $scope.files = [];
-            $scope.isAddingContract = true;
-            $scope.isViewingStorage = false;
-
-            // reset form validation
-            $scope.$broadcast('show-errors-reset');
-            $scope.form.$setUntouched();
-            $scope.form.$setPristine();
-            resetFormError();
-        };
-
         $scope.onBackToList = function() {
-            $scope.isAddingContract = false;
             $scope.isViewingStorage = false;
             $scope.storage.entries = [];
 
@@ -205,7 +193,6 @@
             console.log('View contact ' + contract.address + ' from #' + contract.blockNumber);
 
             scopeUtil.safeApply(function() {
-                $scope.isAddingContract = false;
                 $scope.isViewingStorage = true;
                 $scope.storage.address = contract.address;
                 $scope.storage.balanceString = 'n/a';
@@ -280,105 +267,6 @@
             }
         };
 
-        $scope.onAddSourceCode = function() {
-            resetFormError();
-            console.log('onAddSourceCode');
-            $http({
-                method: 'POST',
-                url: '/contracts/add',
-                data: {
-                    address: remove0x($scope.newContract.address).toLowerCase(),
-                    sourceCode: $scope.newContract.sourceCode
-                }})
-                .success(function(result) {
-                    console.log('Add source result');
-                    console.log(result);
-                    if (result && result.success) {
-                        return $scope.loadContracts().then($scope.onBackToList);
-                    } else {
-                        showFormError('Upload failed', result.errorMessage || 'Unknown error');
-                    }
-                })
-        };
-
-        $scope.onAddFile = function() {
-            $('#fileInput').click();
-        };
-
-        $('#fileInput').on('change', function(event) {
-
-            event.preventDefault();
-            var files = event.target.files;
-
-            console.log('onAddFileEvent');
-            console.log(files);
-
-            var newArray = $scope.files.slice(0);
-            Array.prototype.push.apply(newArray, files);
-            $scope.files = newArray;
-            $scope.allowFileUpload = $scope.files.length > 0;
-            event.target.value = '';
-        });
-
-        $scope.onRemoveFile = function(file) {
-            var newArray = $scope.files.slice(0);
-            var index = newArray.indexOf(file);
-            if (index > -1) {
-                newArray.splice(index, 1);
-            }
-            $scope.files = newArray;
-            $scope.allowFileUpload = $scope.files.length > 0;
-        };
-
-        $scope.onUploadFiles = function() {
-            resetFormError();
-
-            var formData = new FormData();
-            $scope.files.forEach(function(f) {
-                formData.append('contracts', f);
-            });
-
-            $http.post(
-                '/contracts/' + remove0x($scope.newContract.address).toLowerCase() + '/files',
-                formData,
-                {
-                    withCredentials: false,
-                    headers: {
-                        'Content-Type': undefined
-                    },
-                    transformRequest: angular.identity
-                }
-            ).success(function(result) {
-                console.log('Upload complete');
-                console.log(result);
-                if (result && !result.success) {
-                    showFormError('Upload failed', result.errorMessage || 'Unknown error');
-                } else {
-                    return $scope.loadContracts().then($scope.onBackToList);
-                }
-            });
-        };
-
-        $scope.onFinalAddFiles = function() {
-            resetFormError();
-            // force showing validation
-            $scope.form.$setSubmitted();
-            $scope.$broadcast('show-errors-check-validity');
-
-            if (!$scope.form.$valid) {
-                showFormError('FORM VALIDATION', 'Please fill address.');
-                return;
-            }
-
-            if ($scope.files.length > 0) {
-                $scope.onUploadFiles();
-            } else if ($scope.newContract.sourceCode) {
-                $scope.onAddSourceCode();
-            } else {
-                showFormError('FORM VALIDATION', 'Please either fill contract source code or attach it\'s file.');
-            }
-        };
-
         $scope.onClearContract = function() {
             var lastItem = $scope.lastViewingItem;
             $http({
@@ -437,27 +325,14 @@
                 }
                 var rect = scrollContainer.getBoundingClientRect();
                 var newHeight = $(window).height() - rect.top - 20;
-                //$(scrollContainer).css('maxHeight', newHeight + 'px');
                 $scope.scrollConfig.setHeight = newHeight;
                 $timeout(function() {
                     $(scrollContainer).mCustomScrollbar($scope.scrollConfig);
-                    $(scrollContainer).mCustomScrollbar('update');
                 }, 10);
-                console.log('$(window).height() ' + $(window).height());
-                console.log('setHeight ' + newHeight);
-                console.log(rect);
             });
         }
 
-        function resetFormError() {
-            $scope.submitErrorMessage = '';
-        }
-
-        function showFormError(topMessage, bottomMessage) {
-            $scope.submitErrorMessage = bottomMessage;
-        }
-
-        // can be fixed via global html layout changed
+        // may be fixed via global html layout in future
         $scope.checkScrollsLater = function() {
             $timeout(onResize, 10);
         };
@@ -465,7 +340,7 @@
     }
 
     angular.module('HarmonyApp')
-        .controller('ContractsCtrl', ['$scope', '$timeout', 'scrollConfig', '$http', 'jsonrpc', 'restService', '$q', 'scopeUtil', ContractsCtrl])
+        .controller('ContractsCtrl', ['$scope', '$timeout', 'scrollConfig', '$http', 'jsonrpc', 'restService', '$q', 'scopeUtil', '$location', ContractsCtrl])
 
         /**
          * Controller for rendering contract storage in expandable tree view.
@@ -498,6 +373,7 @@
                     Array.prototype.push.apply(newArray, loadedEntries.map(updateEntry));
                     // set new array object to fire binding
                     entry.entries = newArray;
+                    entry.totalElements = result.data.totalElements;
                 });
             }
 

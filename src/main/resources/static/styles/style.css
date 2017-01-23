@@ -950,6 +950,7 @@ body {
     background: #2f323b;
     font-family: 'Roboto', sans-serif;
     color: #949ba2;
+    height: 100vh;
 }
 
 .content {
@@ -3163,6 +3164,11 @@ input[type="number"] {
 .topbar .tp-panel .panel-body {
     padding-top: 0;
     padding-bottom: 0;
+}
+
+.contract-row {
+    border: none;
+    background-color: #3b3c46;
 }
 
 /*.progress-bar-left {*/
