@@ -36,7 +36,7 @@ Ethereum network private peer. Based on EthereumJ implementation.
 
 * `git clone https://github.com/ether-camp/ethereum-harmony`
 * `cd ethereum-harmony`
-* Run Service: `gradlew bootRun`  ( live by default or any [other environment](#options) )
+* Run Service: `gradlew runMain`  ( live network by default or any [other environment](#options) )
 
 Navigate to `http://localhost:8080`
 JSON-RPC is available at `http://localhost:8080/rpc`
@@ -49,7 +49,7 @@ JSON-RPC is available at `http://localhost:8080/rpc`
 
 | Environment        | Run      | ... |
 | ------------- |:-------------|------------- |
-| Live      | `gradlew runMain` | Start server connecting to **Main** network |
+| Main      | `gradlew runMain` | Start server connecting to **Main** network |
 | Ropsten      | `gradlew runRopsten` | Start server connecting to **Ropsten** network |
 | Test      | `gradlew runTest`      | Start server connecting to **Test** network |
 | Classic | `gradlew runClassic`      | Start server connecting to **Ethereum Classic** network |   
