@@ -76,10 +76,6 @@
         $(window).ready(onResize);
         $scope.$on('windowResizeEvent', onResize);
 
-        $timeout(function() {
-            $scope.onWatchContract();
-        }, 1000);
-
         $scope.onWatchContract = function() {
             $scope.newContract = {};
 
@@ -90,7 +86,10 @@
             resetFormError();
         };
 
-        //$scope.onWatchContract();
+        $scope.$on('$viewContentLoaded', function() {
+            // form is ready, let's setup validation
+            $scope.onWatchContract();
+        });
 
         $scope.onBackToList = function() {
             $location.path('/contracts');
