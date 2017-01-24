@@ -19,10 +19,11 @@
 package com.ethercamp.harmony.jsonrpc;
 
 import com.ethercamp.harmony.keystore.Keystore;
-import com.ethercamp.harmony.service.contracts.compiler.SolidityCompiler;
 import com.ethercamp.harmony.util.ErrorCodes;
 import com.ethercamp.harmony.util.exception.HarmonyException;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.map.LRUMap;
@@ -40,11 +41,14 @@ import org.ethereum.listener.CompositeEthereumListener;
 import org.ethereum.listener.EthereumListenerAdapter;
 import org.ethereum.manager.WorldManager;
 import org.ethereum.mine.BlockMiner;
+import org.ethereum.mine.EthashAlgo;
+import org.ethereum.mine.MinerIfc;
 import org.ethereum.net.client.ConfigCapabilities;
 import org.ethereum.net.rlpx.Node;
 import org.ethereum.net.rlpx.discover.NodeManager;
 import org.ethereum.net.server.ChannelManager;
 import org.ethereum.net.server.PeerServer;
+import org.ethereum.solidity.compiler.SolidityCompiler;
 import org.ethereum.sync.SyncManager;
 import org.ethereum.util.BuildInfo;
 import org.ethereum.util.ByteUtil;
@@ -60,6 +64,7 @@ import javax.annotation.PostConstruct;
 import java.lang.reflect.Modifier;
 import java.math.BigInteger;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
@@ -67,8 +72,9 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.ethercamp.harmony.jsonrpc.TypeConverter.*;
-import static org.ethereum.util.ByteUtil.EMPTY_BYTE_ARRAY;
-import static org.ethereum.util.ByteUtil.bigIntegerToBytes;
+import static java.math.BigInteger.valueOf;
+import static org.ethereum.crypto.HashUtil.sha3;
+import static org.ethereum.util.ByteUtil.*;
 
 /**
  * @author Anton Nashatyrev
@@ -80,6 +86,8 @@ import static org.ethereum.util.ByteUtil.bigIntegerToBytes;
 public class EthJsonRpcImpl implements JsonRpc {
 
     private static final String BLOCK_LATEST = "latest";
+
+    private volatile String hashrate;
 
     public class BinaryCallArguments {
         public long nonce;
@@ -192,6 +200,28 @@ public class EthJsonRpcImpl implements JsonRpc {
     AtomicInteger filterCounter = new AtomicInteger(1);
     Map<Integer, Filter> installedFilters = new Hashtable<>();
     Map<ByteArrayWrapper, TransactionReceipt> pendingReceipts = Collections.synchronizedMap(new LRUMap<>(1024));
+
+    Map<ByteArrayWrapper, Block> miningBlocks = new ConcurrentHashMap<>();
+
+    volatile Block miningBlock;
+
+    volatile SettableFuture<MinerIfc.MiningResult> miningTask;
+
+    final MinerIfc externalMiner = new MinerIfc() {
+        @Override
+        public ListenableFuture<MiningResult> mine(Block block) {
+            miningBlock = block;
+            miningTask = SettableFuture.create();
+            return miningTask;
+        }
+
+        @Override
+        public boolean validate(BlockHeader blockHeader) {
+            return false;
+        }
+    };
+
+    boolean minerInitialized = false;
 
     @PostConstruct
     private void init() {
@@ -372,15 +402,9 @@ public class EthJsonRpcImpl implements JsonRpc {
         return blockMiner.isMining();
     }
 
-
-//    public String eth_hashrate() {
-//        String s = null;
-//        try {
-//            return s = null;
-//        } finally {
-//            if (log.isDebugEnabled()) log.debug("eth_hashrate(): " + s);
-//        }
-//    }
+    public String eth_hashrate() {
+        return hashrate;
+    }
 
     public String eth_gasPrice(){
         return TypeConverter.toJsonHex(eth.getGasPrice());
@@ -556,21 +580,19 @@ public class EthJsonRpcImpl implements JsonRpc {
     protected TransactionReceipt createCallTxAndExecute(CallArguments args, Block block, Repository repository, BlockStore blockStore) throws Exception {
         BinaryCallArguments bca = new BinaryCallArguments();
         bca.setArguments(args);
-        Transaction tx = CallTransaction.createRawTransaction(0,
+        Transaction rawTransaction = CallTransaction.createRawTransaction(0,
                 bca.gasPrice,
                 bca.gasLimit,
                 bca.toAddress,
                 bca.value,
                 bca.data);
+        LocalTransaction tx = new LocalTransaction(rawTransaction.getEncoded());
 
-        // sign if from address is present
+        // handle from address without signing
         if (args.from != null) {
-            Account account = getAccountFromKeystore(args.from);
-            tx.sign(account.getEcKey());
-        }
-
-        // put mock signature if not present
-        if (tx.getSignature() == null) {
+            tx.setSender(hexStringToBytes(args.from));
+        } else {
+            // put mock signature if not present
             tx.sign(ECKey.fromPrivate(new byte[32]));
         }
 
@@ -658,7 +680,7 @@ public class EthJsonRpcImpl implements JsonRpc {
         return getBlockResult(b, fullTransactionObjects);
     }
 
-    public BlockResult eth_getBlockByNumber(String bnOrId,Boolean fullTransactionObjects) throws Exception {
+    public BlockResult eth_getBlockByNumber(String bnOrId, Boolean fullTransactionObjects) throws Exception {
         final Block b;
         if ("pending".equalsIgnoreCase(bnOrId)) {
             b = blockchain.createNewBlock(blockchain.getBestBlock(), pendingState.getPendingTransactions(), Collections.<BlockHeader>emptyList());
@@ -1045,20 +1067,64 @@ public class EthJsonRpcImpl implements JsonRpc {
         return ret;
     }
 
-//    @Override
-//    public String eth_getWork() {
-//        throw new UnsupportedOperationException("JSON RPC method eth_getWork not implemented yet");
-//    }
-//
-//    @Override
-//    public String eth_submitWork() {
-//        throw new UnsupportedOperationException("JSON RPC method eth_submitWork not implemented yet");
-//    }
-//
-//    @Override
-//    public String eth_submitHashrate() {
-//        throw new UnsupportedOperationException("JSON RPC method eth_submitHashrate not implemented yet");
-//    }
+    @Override
+    public List<Object> eth_getWork() {
+        if (!minerInitialized) {
+            minerInitialized = true;
+            // this should initialize miningBlock
+            blockMiner.setExternalMiner(externalMiner);
+        }
+
+        final Block block = miningBlock;
+
+        if (block == null) {
+            throw new RuntimeException("Mining block is not ready");
+        }
+        final EthashAlgo ethash = new EthashAlgo();
+        final byte[] blockHash = sha3(block.getHeader().getEncodedWithoutNonce());
+        final byte[] seedHash = ethash.getSeedHash(block.getNumber());
+        final BigInteger target = valueOf(2).pow(256).divide(block.getDifficultyBI());
+
+        miningBlocks.put(new ByteArrayWrapper(blockHash), block);
+
+        return Arrays.asList(
+                toJsonHex(blockHash),
+                toJsonHex(seedHash),
+                toJsonHex(target)
+        );
+    }
+
+
+    @Override
+    public boolean eth_submitWork(String nonceHex, String headerHex, String digestHex) throws Exception {
+        try {
+            final long nonce = TypeConverter.HexToLong(nonceHex);
+            final byte[] digest = TypeConverter.StringHexToByteArray(digestHex);
+            final byte[] header = TypeConverter.StringHexToByteArray(headerHex);
+
+            final Block block = miningBlocks.remove(new ByteArrayWrapper(header));
+
+            if (block != null && miningTask != null) {
+                block.setNonce(longToBytes(nonce));
+                block.setMixHash(digest);
+
+                miningTask.set(new MinerIfc.MiningResult(nonce, digest, block));
+                miningTask = null;
+                return true;
+            } else {
+                return false;
+            }
+        } catch (Exception e) {
+            log.error("eth_submitWork", e);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean eth_submitHashrate(String hashrate, String id) {
+        this.hashrate = hashrate;
+        return true;
+    }
 //
 //    @Override
 //    public String db_putString() {

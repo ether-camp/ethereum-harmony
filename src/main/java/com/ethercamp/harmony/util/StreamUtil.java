@@ -16,37 +16,22 @@
  * along with Ethereum Harmony.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.ethercamp.harmony.dto;
+package com.ethercamp.harmony.util;
 
-import lombok.AllArgsConstructor;
-import lombok.Value;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 /**
- * Created by Stan Reshetnyk on 12.07.16.
+ * Created by Stan Reshetnyk on 13.01.17.
  */
-@Value
-@AllArgsConstructor
-public class BlockchainInfoDTO {
-
-    private final Long highestBlockNumber;
-
-    private final Long lastBlockNumber;
+public class StreamUtil {
 
     /**
-     * UTC time in seconds
+     * Stream or value or empty stream if value is null.
      */
-    private final Long lastBlockTime;
-
-    private final Integer lastBlockTransactions;
-
-    private final Long difficulty;
-
-    // Not used now
-    private final Long lastReforkTime;
-
-    private final Long networkHashRate;
-
-    private final Long gasPrice;
-
-    private final NetworkInfoDTO.SyncStatusDTO syncStatus;
+    public static <T> Stream<T> streamOf(T value) {
+        return Optional.ofNullable(value)
+                .map(Stream::of)
+                .orElseGet(Stream::empty);
+    }
 }

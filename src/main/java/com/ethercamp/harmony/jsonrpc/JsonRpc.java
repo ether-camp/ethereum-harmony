@@ -223,7 +223,7 @@ public interface JsonRpc {
     Object eth_syncing();
     String eth_coinbase();
     boolean eth_mining();
-//    String eth_hashrate();
+    String eth_hashrate();
     String eth_gasPrice();
     String[] eth_accounts();
     String eth_blockNumber();
@@ -281,9 +281,9 @@ public interface JsonRpc {
 
     Object[] eth_getLogs(FilterRequest fr) throws Exception;
 
-//    String eth_getWork();
-//    String eth_submitWork();
-//    String eth_submitHashrate();
+    List<Object> eth_getWork();
+    boolean eth_submitWork(String nonce, String header, String digest) throws Exception;
+    boolean eth_submitHashrate(String hashrate, String id);
 //    String db_putString();
 //    String db_getString();
 //    String db_putHex();

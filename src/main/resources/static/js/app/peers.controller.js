@@ -209,7 +209,7 @@
         });
 
         $scope.$on('newBlockFromEvent', function(event, item) {
-            console.log("New block from " + item.country3Code);
+            //console.log("New block from " + item.country3Code);
 
             $timeout.cancel($scope.promise);
 

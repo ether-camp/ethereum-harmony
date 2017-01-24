@@ -85,7 +85,10 @@ public class PeersService {
                             0,
                             true,
                             null,
-                            channel.getEthHandler().getBestKnownBlock().getNumber()));
+                            Optional.of(channel.getEthHandler().getBestKnownBlock())
+                                    .map(b -> b.getNumber())
+                                    .orElse(0L)
+                    ));
                 }
             }
         });
@@ -213,7 +216,7 @@ public class PeersService {
                                 path,
                                 LookupService.GEOIP_MEMORY_CACHE | LookupService.GEOIP_CHECK_CACHE));
                     } catch(IOException e) {
-                        log.error("Please download file and put to " + dbFilePath);
+                        log.error("Problem finding maxmind database at " + path + ". " + e.getMessage());
                         log.error("Wasn't able to create maxmind location service. Country information will not be available.");
                         return Optional.empty();
                     }

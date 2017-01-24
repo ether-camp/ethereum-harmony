@@ -43,24 +43,24 @@ public class StorageValuesTest {
 
     private static final String contractSrc =
             "pragma solidity ^0.4.2;\n" +
-                    "contract Calculator {" +
-                    "  int public result;" +  // public field can be accessed by calling 'result' function
-                    "  function add(int num) {" +
-                    "    result = result + num;" +
-                    "  }" +
-                    "  function sub(int num) {" +
-                    "    result = result - num;" +
-                    "  }" +
-                    "  function mul(int num) {" +
-                    "    result = result * num;" +
-                    "  }" +
-                    "  function div(int num) {" +
-                    "    result = result / num;" +
-                    "  }" +
-                    "  function clear() {" +
-                    "    result = 0;" +
-                    "  }" +
-                    "}";
+            "contract Calculator {" +
+            "  int public result;" +  // public field can be accessed by calling 'result' function
+            "  function add(int num) {" +
+            "    result = result + num;" +
+            "  }" +
+            "  function sub(int num) {" +
+            "    result = result - num;" +
+            "  }" +
+            "  function mul(int num) {" +
+            "    result = result * num;" +
+            "  }" +
+            "  function div(int num) {" +
+            "    result = result / num;" +
+            "  }" +
+            "  function clear() {" +
+            "    result = 0;" +
+            "  }" +
+            "}";
 
     @Test
     public void blockchain_shouldWork() throws Exception {
@@ -92,18 +92,12 @@ public class StorageValuesTest {
 //        assertEquals(BigInteger.valueOf(0), calc.callConstFunction("result")[0]);
         System.out.println("Done.");
 
-        bc.getBlockchain().getRepository().getAccountsKeys().stream()
-                .map(a -> Hex.toHexString(a))
-                .forEach(a -> System.out.println("Accounts in storage: " + a));
+//        bc.getBlockchain().getRepository().getAccountsKeys().stream()
+//            .map(a -> Hex.toHexString(a))
+//            .forEach(a -> System.out.println("Accounts in storage: " + a));
 
         final AccountState accountState = bc.getBlockchain().getRepository().getAccountState(calc.getAddress());
         final ContractDetails contractDetails = bc.getBlockchain().getRepository().getContractDetails(calc.getAddress());
-
-        contractDetails.getStorageKeys().stream()
-                .forEach(k -> {
-                    DataWord storageValue = bc.getBlockchain().getRepository().getStorageValue(calc.getAddress(), k);
-                    System.out.println("Key " + k.shortHex() + ": " + storageValue.bigIntValue());
-                });
 
         System.out.println("Done 2.");
     }

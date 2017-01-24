@@ -1,0 +1,121 @@
+<section class="content height-100p">
+
+    <div class="container-fluid">
+
+        <div class="row height-100p">
+            <div class="col-lg-12">
+                <div class="view-header">
+                    <div class="header-icon">
+                        <i class="pe page-header-icon pe-7s-albums"></i>
+                    </div>
+
+                    <div class="header-title">
+                        <div class="pull-right">
+                            <p ng-show="syncedBlock == 1">Index is full. We can show all properties</p>
+                            <p ng-show="syncedBlock == -1">Index is not ready</p>
+                            <p ng-show="syncedBlock > 1">Contracts, added since block <b class="c-white">#{{syncedBlockString}}</b>, will be displayed correctly</p>
+                            <p>Storage used for index <b class="c-white">{{indexSizeString}}</b> | Solc version <b class="c-white">{{solcVersionString}}</b></p>
+                        </div>
+
+                        <h3 class="m-b-xs">Contracts</h3>
+                        <small>
+                            Watch contracts' storage fields
+                        </small>
+                    </div>
+                    <hr>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="row height-100p">
+
+        <div class="col-lg-12" ng-cloak>
+
+            <div class="panel panel-filled">
+                <div class="row">
+                    <div class="col-lg-6">
+
+                        <div class="panel-heading flex flex-justify-between">
+                            <a href="#" ng-click="onBackToList()" class="btn btn-w-md btn-default">Back to list</a>
+                            <!--<span class="m-l-sm"/>-->
+                        </div>
+
+                        <div class="panel-heading">
+                            <h4>Add contact for watching it's storage</h4>
+                            <p ng-hide="isLoadingComplete" class="text-warning">
+                                * Sync is not finished. Contract block may not exist yet.
+                            </p>
+                        </div>
+
+                        <div class="panel-body">
+                            <form name="newContractForm" novalidate class="bs-example">
+                                <div class="form-group" show-errors>
+                                    <label>Address</label>
+                                    <input class="form-control" ng-model="newContract.address"
+                                           ethaddress
+                                           name="address" required="true" type="text">
+
+                                    <div ng-show="newContractForm.$submitted || newContractForm.address.$touched">
+                                        <div class="text-danger" ng-show="newContractForm.address.$error.required">Address is required</div>
+                                        <div class="text-danger" ng-show="newContractForm.address.$error.ethaddress">Address format is invalid</div>
+                                        <div class="text-danger" ng-show="newContractForm.address.$error.ethaddresschecksum">Checksum address format is invalid</div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group" show-errors>
+
+                                    <div class="form-group">
+                                        <label>Solidity code</label>
+
+                                        <textarea name="sourceCode"
+                                                  class="form-control" rows="3"
+                                                  ng-model="newContract.sourceCode"
+                                                  placeholder=""
+                                                  autocomplete="off">
+                                        </textarea>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Solidity files</label>
+
+                                    <input id="fileInput" type="file" name="contracts" multiple="true"
+                                           style="visibility: hidden; height: 1px" />
+                                    <a href="#"
+                                       ng-click="onAddFile()"
+                                       class="btn btn-w-md btn-default">Attach file</a>
+
+                                    <div ng-repeat="file in files" class="m-t-sm">
+                                        {{file.name}}
+                                        <a href="#" ng-click="onRemoveFile(file)">remove</a>
+                                    </div>
+
+                                </div>
+
+                                <div ng-hide="submitErrorMessage == ''" class="text-danger">
+                                    {{submitErrorMessage}}
+                                </div>
+
+                            </form>
+
+                        </div>
+
+                        <div class="form-group flex flex-justify-center">
+                            <a href="#"
+                               ng-click="onFinalAddFiles()"
+                               class="btn btn-w-md btn-primary">Upload !!!</a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+
+        </div>
+    </div>
+
+
+    </div>
+</section>

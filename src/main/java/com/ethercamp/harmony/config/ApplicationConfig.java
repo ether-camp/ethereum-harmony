@@ -19,11 +19,10 @@
 package com.ethercamp.harmony.config;
 
 import com.ethercamp.harmony.web.filter.JsonRpcUsageFilter;
-import com.googlecode.jsonrpc4j.spring.AutoJsonRpcServiceExporter;
-import org.springframework.boot.context.embedded.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.web.filter.HiddenHttpMethodFilter;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
@@ -43,8 +42,9 @@ public class ApplicationConfig extends WebMvcConfigurerAdapter {
      */
     @Bean
     @SuppressWarnings("deprecation")
-    public AutoJsonRpcServiceExporter exporter() {
-        return new AutoJsonRpcServiceExporter();
+    // full class path to avoid deprecation warning
+    public com.googlecode.jsonrpc4j.spring.AutoJsonRpcServiceExporter exporter() {
+        return new com.googlecode.jsonrpc4j.spring.AutoJsonRpcServiceExporter();
     }
 
     /**
@@ -52,8 +52,10 @@ public class ApplicationConfig extends WebMvcConfigurerAdapter {
      * Found at https://github.com/spring-projects/spring-boot/issues/4782
      */
     @Bean
-    public FilterRegistrationBean registration(HiddenHttpMethodFilter filter) {
-        FilterRegistrationBean registration = new FilterRegistrationBean(filter);
+    @SuppressWarnings("deprecation")
+    // full class path to avoid deprecation warning
+    public org.springframework.boot.context.embedded.FilterRegistrationBean registration(HiddenHttpMethodFilter filter) {
+        org.springframework.boot.context.embedded.FilterRegistrationBean registration = new org.springframework.boot.context.embedded.FilterRegistrationBean(filter);
         registration.setEnabled(false);
         return registration;
     }
@@ -72,6 +74,10 @@ public class ApplicationConfig extends WebMvcConfigurerAdapter {
             registry.addResourceHandler("/webjars/**").addResourceLocations(
                     "classpath:/META-INF/resources/webjars/");
         }
+    }
+
+    public static PropertySourcesPlaceholderConfigurer propertyConfigIn() {
+        return new PropertySourcesPlaceholderConfigurer();
     }
 
     @Bean

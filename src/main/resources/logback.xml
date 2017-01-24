@@ -69,12 +69,12 @@
     <logger level="INFO" name="contract-data"/>
     <logger level="INFO" name="stat"/>
 
+    <logger level="INFO" name="discover"/>
     <logger level="INFO" name="sync"/>
     <logger level="TRACE" name="notification"/>
     <logger level="ERROR" name="wallet"/>
     <logger level="INFO" name="net"/>
     <logger level="INFO" name="db"/>
-    <logger level="ERROR" name="peerdiscovery"/>
     <logger level="ERROR" name="peermonitor"/>
     <logger level="ERROR" name="java.nio"/>
     <logger level="ERROR" name="io.netty"/>
@@ -90,6 +90,8 @@
     <logger level="ERROR" name="vmtrace"/>
     <logger level="ERROR" name="execute"/>
     <logger level="INFO" name="import-contract"/>
-    <logger level="INFO" name="mine"/>
+    <logger level="DEBUG" name="mine"/>
+    <logger level="ERROR" name="o.s.web.servlet.DispatcherServlet"/>
+    <logger level="ERROR" name="com.ethercamp.harmony.Application"/>
 
 </configuration>

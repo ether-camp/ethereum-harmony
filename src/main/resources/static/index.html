@@ -29,6 +29,9 @@
 
     <script src="js/vendor/stomp.js"></script>
     <script src="webjars/jquery/2.2.4/jquery.js"></script>
+    <script src="webjars/jquery-mousewheel/3.1.13/jquery.mousewheel.min.js"></script>
+    <script src="webjars/malihu-custom-scrollbar-plugin/3.1.5/jquery.mCustomScrollbar.js"></script>
+
     <script src="webjars/bootstrap/3.3.6/dist/js/bootstrap.js"></script>
 
     <script src="js/vendor/angular-1.5.8.min.js"></script>
@@ -41,7 +44,7 @@
     <script src="webjars/pace/1.0.2/pace.min.js"></script>
     <script src="webjars/toastr/2.1.2/toastr.min.js"></script>
     <script src="webjars/moment/2.14.1/moment.js"></script>
-    <script src="webjars/malihu-custom-scrollbar-plugin/3.1.5/jquery.mCustomScrollbar.js"></script>
+
     <!--<script src="webjars/ng-scrollbars/0.0.10/dist/scrollbars.min.js"></script>-->
     <script src="webjars/underscore/1.8.3/underscore-min.js"></script>
     <script src="webjars/d3/3.5.17/d3.min.js"></script>
@@ -89,70 +92,92 @@
                     </a>
                 </div>
 
-                <ul class="list-inline navbar-right m-b-none">
-                    <li>
-                        <div class="panel tp-panel" ng-cloak>
-                            <div class="panel-body" data-toggle="tooltip" title="Created at {{vm.data.lastBlockTimeString}}">
-                                <span class="m-b-none">
-                                    #<span id="blockCounter" class="tp-title">0</span> ({{vm.data.lastBlockTimeMoment}})
-                                </span>
-                                <div class="top-bar-line"/>
-                                <div class="small">Block Imported</div>
+                <div class="topbar m-b-none" ng-cloak ng-show="syncStateReceived">
+
+                    <div ng-if="isSyncOff">
+                        <div class="tp-panel m-r-sm">
+                            <div class="tp-title m-r-sm">Sync is disabled</div>
+                        </div>
+                    </div>
+
+                    <div ng-if="isLoadingState && !isSyncOff">
+                        <div class="fast-sync-boxes panel tp-panel m-r-sm">
+                            <div class="tp-title m-r-sm">Fast Sync</div>
+                            <div class="c-text m-r-sm" ng-hide="isLoadingStateWithBlocks">({{loadingStateSpeed}} nodes/sec)</div>
+                            <div class="flex-justify-center flex-align-center">
+                                <div class="progress active">
+                                    <div class="progress-bar progress-bar-sync progress-bar-striped"
+                                         ng-style="{'width' : loadingItemsProgress + '%' }">
+                                    </div>
+                                </div>
+                                <div class="small m-t-xs" style="text-align: center;">{{syncProgressMessage}}</div>
                             </div>
                         </div>
-                    </li>
+                    </div>
 
-                    <li>
-                        <div class="panel tp-panel">
-                            <div class="panel-body" ng-cloak>
-                                <span class="m-b-none tp-title">
-                                    {{vm.data.lastBlockTransactions}}
-                                </span>
-                                <div class="top-bar-line"/>
-                                <div class="small">Transactions</div>
+                    <div class="loading-boxes panel tp-panel m-r-sm" ng-if="!isLoadingState && !isSyncComplete && !isRegularSync && !isSyncOff">
+
+                        <div class="progress m-t-xs">
+                            <div class="progress-bar progress-bar-sync"
+                                 role="progressbar"
+                                 ng-style="{'width' : loadingItemsProgress + '%' }">
                             </div>
                         </div>
-                    </li>
+                        <div class="small m-t-xs">{{syncProgressMessage}}</div>
+                    </div>
 
-                    <li>
-                        <div class="panel tp-panel">
-                            <div class="panel-body" ng-cloak>
-                                <span class="m-b-none tp-title">
-                                    {{vm.data.gasPrice}}
-                                </span>
-                                <div class="top-bar-line"/>
-                                <div class="small">Gas price</div>
-                            </div>
+                    <div class="panel tp-panel" ng-show="!isLoadingState || isLoadingStateWithBlocks">
+                        <div class="panel-body" data-toggle="tooltip" title="Created at {{vm.data.lastBlockTimeString}}">
+                            <span class="m-b-none">
+                                #<span id="blockCounter" class="tp-title">0</span> ({{vm.data.lastBlockTimeMoment}})
+                            </span>
+                            <div class="top-bar-line"></div>
+                            <div class="small">Block Imported</div>
                         </div>
-                    </li>
+                    </div>
 
-                    <li>
-                        <div class="panel tp-panel">
-                            <div class="panel-body" ng-cloak>
-                                <span class="m-b-none tp-title">
-                                    {{vm.data.difficulty}}
-                                </span>
-                                <div class="top-bar-line"/>
-                                <div class="small">Difficulty</div>
-                            </div>
+                    <div class="panel tp-panel" ng-show="!isLoadingState || isLoadingStateWithBlocks">
+                        <div class="panel-body">
+                            <span class="m-b-none tp-title">
+                                {{vm.data.lastBlockTransactions}}
+                            </span>
+                            <div class="top-bar-line"></div>
+                            <div class="small">Transactions</div>
                         </div>
-                    </li>
+                    </div>
 
-                    <li>
-                        <div class="panel tp-panel">
-                            <div class="panel-body" ng-cloak>
-                                <span class="m-b-none tp-title">
-                                    {{vm.data.networkHashRate}}
-                                </span>
-                                <div class="top-bar-line"/>
-                                <div class="small">Hash Rate</div>
-                            </div>
+                    <div class="panel tp-panel" ng-show="!isLoadingState || isLoadingStateWithBlocks">
+                        <div class="panel-body">
+                            <span class="m-b-none tp-title">
+                                {{vm.data.gasPrice}}
+                            </span>
+                            <div class="top-bar-line"></div>
+                            <div class="small">Gas price</div>
                         </div>
-                    </li>
-                </ul>
+                    </div>
 
-                <ul class="nav navbar-nav">
-                </ul>
+                    <div class="panel tp-panel" ng-show="!isLoadingState || isLoadingStateWithBlocks">
+                        <div class="panel-body">
+                            <span class="m-b-none tp-title">
+                                {{vm.data.difficulty}}
+                            </span>
+                            <div class="top-bar-line"></div>
+                            <div class="small">Difficulty</div>
+                        </div>
+                    </div>
+
+                    <div class="panel tp-panel" ng-show="!isLoadingState || isLoadingStateWithBlocks">
+                        <div class="panel-body">
+                            <span class="m-b-none tp-title">
+                                {{vm.data.networkHashRate}}
+                            </span>
+                            <div class="top-bar-line"></div>
+                            <div class="small">Hash Rate</div>
+                        </div>
+                    </div>
+
+                </div>
+
             </div>
         </div>
     </nav>
@@ -237,13 +262,13 @@
                         Free space: <span class="c-white" ng-cloak>{{vm.data.freeSpace}}</span>
                     </div>
 
-                    <div class="m-t-xl">
+                    <div class="m-t-xl" data-toggle="tooltip" title="{{vm.data.ethereumJBuildInfo}}">
                         <small>
                             Ethereum Harmony <span class="c-white m-l-xs">{{vm.data.appVersion}}</span>
                         </small>
                         <br>
                         <small>
-                            EthereumJ <span class="c-white m-l-xs">{{vm.data.ethereumJVersion}}</span>
+                            <small>EthereumJ <span class="c-white m-l-xs">{{vm.data.ethereumJVersion}}</span></small>
                         </small>
                     </div>
 
@@ -270,6 +295,7 @@
 <script src="js/vendor/ansi_up.js"></script>
 <script src="js/vendor/ng-stomp.js"></script>
 <script src="js/app/util/generateWord.js"></script>
+<script src="js/app/util/scope.util.js"></script>
 
 <script src="js/app/app.controller.js"></script>
 <script src="js/app/rest.factory.js"></script>
@@ -280,6 +306,7 @@
 <script src="js/app/rpcUsage.controller.js"></script>
 <script src="js/app/terminal.controller.js"></script>
 <script src="js/app/contracts.controller.js"></script>
+<script src="js/app/contract.new.controller.js"></script>
 <script src="js/app/popups.controller.js"></script>
 <script src="js/vendor/angular-jsonrpc-client.js"></script>
 <script src="js/vendor/angular-modal-service.js"></script>

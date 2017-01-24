@@ -20,34 +20,49 @@ package com.ethercamp.harmony.service;
 
 import com.ethercamp.contrdata.ContractDataService;
 import com.ethercamp.contrdata.contract.Ast;
+import com.ethercamp.contrdata.contract.ContractData;
 import com.ethercamp.contrdata.storage.Path;
+import com.ethercamp.contrdata.storage.Storage;
 import com.ethercamp.contrdata.storage.StorageEntry;
 import com.ethercamp.contrdata.storage.StoragePage;
+import com.ethercamp.contrdata.storage.dictionary.StorageDictionary;
+import com.ethercamp.contrdata.storage.dictionary.StorageDictionaryDb;
 import com.ethercamp.contrdata.storage.dictionary.StorageDictionaryVmHook;
 import com.ethercamp.harmony.service.contracts.Source;
-import com.ethercamp.harmony.service.contracts.compiler.SolidityCompiler;
+import com.ethercamp.harmony.util.SolcUtils;
+import com.ethercamp.harmony.util.TrustSSL;
 import com.ethercamp.harmony.util.exception.ContractException;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mashape.unirest.http.JsonNode;
+import com.mashape.unirest.http.Unirest;
 import fj.data.Validation;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.apache.commons.collections4.map.HashedMap;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ethereum.config.SystemProperties;
+import org.ethereum.core.Block;
+import org.ethereum.core.Blockchain;
 import org.ethereum.core.CallTransaction;
-import org.ethereum.datasource.KeyValueDataSource;
-import org.ethereum.datasource.LevelDbDataSource;
+import org.ethereum.core.TransactionReceipt;
+import org.ethereum.datasource.DbSource;
+import org.ethereum.datasource.leveldb.LevelDbDataSource;
+import org.ethereum.db.ByteArrayWrapper;
 import org.ethereum.facade.Ethereum;
-import org.ethereum.solcJ.SolcVersion;
+import org.ethereum.listener.EthereumListenerAdapter;
+import org.ethereum.solidity.compiler.SolidityCompiler;
 import org.ethereum.vm.program.Program;
+import org.json.JSONObject;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -63,6 +78,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static com.ethercamp.harmony.util.StreamUtil.streamOf;
 import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.joining;
@@ -71,7 +87,8 @@ import static java.util.stream.Collectors.toSet;
 import static org.apache.commons.lang3.StringUtils.*;
 import static com.ethercamp.harmony.util.exception.ContractException.compilationError;
 import static com.ethercamp.harmony.util.exception.ContractException.validationError;
-import static org.ethereum.util.ByteUtil.toHexString;
+import static org.ethereum.util.ByteUtil.*;
+
 import com.ethercamp.harmony.dto.ContractObjects.*;
 
 /**
@@ -90,6 +107,8 @@ public class ContractsService {
     private static final Pattern SOLIDITY_HEADER_PATTERN = Pattern.compile("^\\s{0,}PUSH1\\s+0x60\\s+PUSH1\\s+0x40\\s+MSTORE.+");
     private static final Charset UTF_8 = Charset.forName("UTF-8");
 
+    private static final byte[] SYNCED_BLOCK_KEY = "syncedBlock".getBytes(UTF_8);
+
     @Autowired
     StorageDictionaryVmHook storageDictionaryVmHook;
 
@@ -97,12 +116,34 @@ public class ContractsService {
     ContractDataService contractDataService;
 
     @Autowired
+    StorageDictionaryDb dictionaryDb;
+
+    @Autowired
     SystemProperties config;
 
     @Autowired
     Ethereum ethereum;
 
-    KeyValueDataSource contractsStorage;
+    @Autowired
+    Storage storage;
+
+    @Autowired
+    private Environment env;
+
+    @Autowired
+    private Blockchain blockchain;
+
+    DbSource<byte[]> contractsStorage;
+
+    DbSource<byte[]> settingsStorage;
+
+    DbSource<byte[]> contractCreation;
+
+    /**
+     * Contract data will be fully available from this block.
+     * Usually this is pivot block in fast sync or zero block for regular sync.
+     */
+    volatile Optional<Long> syncedBlock = Optional.empty();   // undetected yet
 
     ObjectToBytesFormat<ContractEntity> contractFormat = new ObjectToBytesFormat<>(ContractEntity.class);
 
@@ -110,6 +151,43 @@ public class ContractsService {
     public void init() {
         contractsStorage = new LevelDbDataSource("contractsStorage");
         contractsStorage.init();
+
+        settingsStorage = new LevelDbDataSource("settings");
+        settingsStorage.init();
+
+        contractCreation = new LevelDbDataSource("contractCreation");
+        contractCreation.init();
+
+        syncedBlock = Optional.ofNullable(settingsStorage.get(SYNCED_BLOCK_KEY))
+                .map(bytes -> byteArrayToLong(bytes));
+
+        // if first loaded block is null - let's save first imported block as starting point for contracts
+        if (!syncedBlock.isPresent()) {
+            ethereum.addListener(new EthereumListenerAdapter() {
+                @Override
+                public void onBlock(Block block, List<TransactionReceipt> receipts) {
+                    // track block from which we started sync
+                    if (!syncedBlock.isPresent()) {
+                        syncedBlock = Optional.of(block.getNumber());
+                        settingsStorage.put(SYNCED_BLOCK_KEY, longToBytesNoLeadZeroes(block.getNumber()));
+                        settingsStorage.flush();
+                        log.info("Synced block is set to #{}", block.getNumber());
+                    }
+
+                    // store block number of each new contract
+                    receipts.stream()
+                            .flatMap(r -> streamOf(r.getTransaction().getContractAddress()))
+                            .forEach(address -> {
+                                log.info("Marked contract creation block {} {}", Hex.toHexString(address), block.getNumber());
+                                contractCreation.put(address, longToBytesNoLeadZeroes(block.getNumber()));
+                                contractCreation.flush();
+                            });
+                }
+            });
+        }
+        log.info("Initialized contracts. Synced block is #{}", syncedBlock.map(Object::toString).orElseGet(() -> "Undefined"));
+
+        TrustSSL.apply();
     }
 
     public boolean deleteContract(String address) {
@@ -125,10 +203,15 @@ public class ContractsService {
         return contractsStorage.keys().stream()
                 .map(a -> {
                     final ContractEntity contract = loadContract(a);
-                    return new ContractInfoDTO(Hex.toHexString(a), contract.getName());
+                    final Long blockNumber = getContractBlock(a);
+                    return new ContractInfoDTO(Hex.toHexString(a), contract.getName(), blockNumber);
                 })
                 .sorted((c1, c2) -> c1.getName().compareToIgnoreCase(c2.getName()))
                 .collect(toList());
+    }
+
+    private long getContractBlock(byte[] address) {
+        return Optional.ofNullable(contractCreation.get(address)).map(b -> byteArrayToLong(b)).orElse(-1L);
     }
 
     public ContractInfoDTO uploadContract(String address, MultipartFile[] files) {
@@ -136,39 +219,69 @@ public class ContractsService {
     }
 
     public IndexStatusDTO getIndexStatus() throws IOException {
+        final long totalSize = Arrays.asList("/storageDict", "/contractCreation").stream()
+                .mapToLong(name -> FileUtils.sizeOfDirectory(new File(config.databaseDir() + name)))
+                .sum();
+
         return new IndexStatusDTO(
-                FileUtils.sizeOfDirectory(new File(config.databaseDir() + "/storageDict")), SolcVersion.VERSION);
+                totalSize,
+                SolcUtils.getSolcVersion(),
+                syncedBlock.orElse(-1L));
     }
 
     /**
      * Get contract storage entries.
      *
-     * @param address - address of contract
+     * @param hexAddress - address of contract
      * @param path - nested level of fields
      * @param pageable - for paging
      */
-    public Page<StorageEntry> getContractStorage(String address, String path, Pageable pageable) {
-        final ContractEntity contract = Optional.ofNullable(contractsStorage.get(Hex.decode(address)))
+    public Page<StorageEntry> getContractStorage(String hexAddress, String path, Pageable pageable) {
+        final byte[] address = Hex.decode(hexAddress);
+        final ContractEntity contract = Optional.ofNullable(contractsStorage.get(address))
                 .map(bytes -> contractFormat.decode(bytes))
                 .orElseThrow(() -> new RuntimeException("Contract sources not found"));
 
-        final StoragePage storagePage = contractDataService.getContractData(address, contract.getDataMembers(), Path.parse(path), pageable.getPageNumber(), pageable.getPageSize());
+        final StoragePage storagePage = getContractData(hexAddress, contract.getDataMembers(), Path.parse(path), pageable.getPageNumber(), pageable.getPageSize());
 
-        return new PageImpl<>(storagePage.getEntries(), pageable, storagePage.getTotal());
+        final PageImpl<StorageEntry> storage = new PageImpl<>(storagePage.getEntries(), pageable, storagePage.getTotal());
+
+        return storage;
+    }
+
+
+    protected StoragePage getContractData(String address, String contractDataJson, Path path, int page, int size) {
+        byte[] contractAddress = Hex.decode(address);
+        StorageDictionary dictionary = getDictionary(contractAddress);
+
+        ContractData contractData = ContractData.parse(contractDataJson, dictionary);
+
+        final boolean hasFullIndex = contractCreation.get(contractAddress) != null;
+
+        if (!hasFullIndex) {
+            contractDataService.fillMissingKeys(contractData);
+        }
+
+        return contractDataService.getContractData(contractAddress, contractData, false, path, page, size);
+    }
+
+    protected StorageDictionary getDictionary(byte[] address) {
+        return dictionaryDb.getOrCreate(StorageDictionaryDb.Layout.Solidity, address);
     }
 
     private String getValidatedAbi(String address, String contractName, CompilationResult result) {
         log.debug("getValidatedAbi address:{}, contractName: {}", address, contractName);
         final ContractMetadata metadata = result.getContracts().get(contractName);
         if (metadata == null) {
-            throw validationError("contract with name '%s' not found in uploaded sources.", contractName);
+            throw validationError("Contract with name '%s' not found in uploaded sources.", contractName);
         }
 
         final String abi = metadata.getAbi();
         final CallTransaction.Contract contract = new CallTransaction.Contract(abi);
         if (ArrayUtils.isEmpty(contract.functions)) {
-            throw validationError("contract with name '%s' not found in uploaded sources.", contractName);
+            throw validationError("Contract with name '%s' not found in uploaded sources.", contractName);
         }
+
         final List<CallTransaction.FunctionType> funcTypes = asList(CallTransaction.FunctionType.function, CallTransaction.FunctionType.constructor);
         final Set<String> funcHashes = stream(contract.functions)
                 .filter(function -> funcTypes.contains(function.type))
@@ -182,14 +295,14 @@ public class ContractsService {
         final String code = toHexString(ethereum.getRepository().getCode(Hex.decode(address)));
         final String asm = getAsm(code);
         if (isBlank(asm)) {
-            throw validationError("wrong account type: account with address '%s' hasn't any code.", address);
+            throw validationError("Wrong account type: account with address '%s' hasn't any code.", address);
         }
 
         final Set<String> extractFuncHashes = extractFuncHashes(asm);
         extractFuncHashes.forEach(h -> log.debug("Extracted ASM funcHash " + h));
         extractFuncHashes.forEach(funcHash -> {
             if (!funcHashes.contains(funcHash)) {
-                throw validationError("incorrect code version: function with hash '%s' not found.", funcHash);
+                throw validationError("Incorrect code version: function with hash '%s' not found.", funcHash);
             }
         });
         log.debug("Contract is valid " + contractName);
@@ -255,14 +368,16 @@ public class ContractsService {
      * Save contract if valid one is found, or merge names.
      * @return contract name(s) from matched file
      */
-    private ContractInfoDTO compileAndSave(String address, List<String> files) {
+    private ContractInfoDTO compileAndSave(String hexAddress, List<String> files) {
+        final byte[] address = Hex.decode(hexAddress);
+
         // get list of contracts which match to deployed code
         final List<Validation<ContractException, ContractEntity>> validationResult = files.stream()
                 .flatMap(src -> {
                     final CompilationResult result = compileAbi(src.getBytes());
 
                     return result.getContracts().entrySet().stream()
-                            .map(entry -> validateContracts(address, src, result, entry.getKey()));
+                            .map(entry -> validateContracts(hexAddress, src, result, entry.getKey()));
 
                 }).collect(Collectors.toList());
 
@@ -286,10 +401,11 @@ public class ContractsService {
                     .findFirst()
                     .ifPresent(entity -> {
                         entity.name = contractName;
-                        contractsStorage.put(Hex.decode(address), contractFormat.encode(entity));
+                        contractsStorage.put(address, contractFormat.encode(entity));
+                        contractsStorage.flush();
                     });
 
-            return new ContractInfoDTO(address, contractName);
+            return new ContractInfoDTO(hexAddress, contractName, getContractBlock(address));
         } else {
             if (validationResult.size() == 1) {
                 throw validationResult.stream()
@@ -325,6 +441,47 @@ public class ContractsService {
 
     private static CompilationResult parseCompilationResult(String rawJson) throws IOException {
         return new ObjectMapper().readValue(rawJson, CompilationResult.class);
+    }
+
+    private boolean equals(byte[] b1, byte[] b2) {
+        return new ByteArrayWrapper(b1).equals(new ByteArrayWrapper(b2));
+    }
+
+    public boolean importContractFromExplorer(String hexAddress) throws Exception {
+        final byte[] address = Hex.decode(hexAddress);
+        final String explorerHost = Optional.ofNullable(blockchain.getBlockByNumber(0l))
+                .map(block -> Hex.toHexString(block.getHash()))
+                .flatMap(hash -> BlockchainConsts.getNetworkInfo(env, hash).getSecond())
+                .orElseThrow(() -> new RuntimeException("Can't import contract for this network"));
+
+        final String url = String.format("%s/api/v1/accounts/%s/smart-storage/export", explorerHost, hexAddress);
+        log.info("Importing contract:{} from:{}", hexAddress, url);
+        final JsonNode result = Unirest.get(url).asJson().getBody();
+
+        final JSONObject resultObject = result.getObject();
+        final Map<String, String> map = new HashedMap<>();
+        resultObject.keySet().stream()
+                .forEach(k -> map.put((String) k, resultObject.getString((String) k)));
+
+        contractDataService.importDictionary(address, map);
+
+        contractCreation.put(address, longToBytesNoLeadZeroes(-2L));
+        contractCreation.flush();
+        return true;
+    }
+
+    /**
+     * For testing purpose.
+     */
+    public void clearContractStorage(String hexAddress) throws Exception {
+        final byte[] address = Hex.decode(hexAddress);
+        log.info("Clear storage of contract:{}", hexAddress);
+        contractDataService.clearDictionary(address);
+        contractCreation.delete(address);
+
+        // re-import to fill members
+        final ContractEntity contractEntity = loadContract(address);
+        compileAndSave(hexAddress, Arrays.asList(contractEntity.src));
     }
 
     @Data

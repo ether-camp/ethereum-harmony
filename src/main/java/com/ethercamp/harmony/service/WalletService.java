@@ -80,6 +80,9 @@ public class WalletService {
     Repository repository;
 
     @Autowired
+    Blockchain blockchain;
+
+    @Autowired
     FileSystemWalletStore fileSystemWalletStore;
 
     @Autowired
@@ -121,18 +124,20 @@ public class WalletService {
 
         ethereum.addListener(new EthereumListenerAdapter() {
             @Override
-            public void onSyncDone() {
-                ethereum.addListener(new EthereumListenerAdapter() {
-                    @Override
-                    public void onPendingTransactionsReceived(List<Transaction> list) {
-                        handlePendingTransactionsReceived(list);
-                    }
+            public void onSyncDone(SyncState state) {
+                if (state == SyncState.UNSECURE) {
+                    ethereum.addListener(new EthereumListenerAdapter() {
+                        @Override
+                        public void onPendingTransactionsReceived(List<Transaction> list) {
+                            handlePendingTransactionsReceived(list);
+                        }
 
-                    @Override
-                    public void onBlock(BlockSummary blockSummary) {
-                        handleBlock(blockSummary);
-                    }
-                });
+                        @Override
+                        public void onBlock(BlockSummary blockSummary) {
+                            handleBlock(blockSummary);
+                        }
+                    });
+                }
             }
         });
     }

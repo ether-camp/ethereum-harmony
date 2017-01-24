@@ -19,17 +19,40 @@
 package com.ethercamp.harmony;
 
 import com.ethercamp.harmony.config.EthereumHarmonyConfig;
+import org.ethereum.Start;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Import;
 import org.springframework.scheduling.annotation.EnableScheduling;
+
+import java.util.List;
+import java.util.Optional;
+
+import static java.util.Arrays.asList;
 
 @SpringBootApplication
 @EnableScheduling
 @Import({EthereumHarmonyConfig.class})
 public class Application {
 
-    public static void main(String[] args) {
-        SpringApplication.run(new Object[]{Application.class}, args);
+    /**
+     * Does one of:
+     * - start Harmony peer;
+     * - perform action and exit on completion.
+     */
+    public static void main(String[] args) throws Exception {
+        final List<String> actions = asList("importBlocks");
+
+        final Optional<String> foundAction = asList(args).stream()
+                .filter(arg -> actions.contains(arg))
+                .findFirst();
+
+        if (foundAction.isPresent()) {
+            foundAction.ifPresent(action -> System.out.println("Performing action: " + action));
+            Start.main(args);
+            // system is expected to exit after action performed
+        } else {
+            SpringApplication.run(new Object[]{Application.class}, args);
+        }
     }
 }

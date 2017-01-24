@@ -60,7 +60,7 @@
                             <div class="col-sm-4">
                                 Status:
                             </div>
-                            <div class="col-sm-6">
+                            <div class="col-sm-8">
                                 {{syncStatus}}
                             </div>
                         </div>
@@ -141,14 +141,14 @@
             </div>
 
             <div class="col-lg-6 height-100p">
-                <div id="chart-scroll-container" ng-hide="isLongSync">
+                <div id="chart-scroll-container" ng-hide="!isLoadingComplete">
                     <div id="blockchain-chart">
 
                     </div>
                 </div>
-                <div class="center-container" ng-hide="!isLongSync">
-                    <p class="block-import-message">Importing blocks in long sync mode.</p>
-                    <p class="block-import-message">Imported {{vm.data.lastBlockNumber}} blocks, highest known block is {{(vm.data.highestBlockNumber == 0) && 'not loaded yet' || vm.data.highestBlockNumber}}.</p>
+                <div class="center-container" ng-hide="isLoadingComplete">
+                    <p class="block-import-message">{{syncStatusMessageTop}}</p>
+                    <p class="block-import-message">{{syncStatusMessageBottom}}</p>
                 </div>
             </div>
         </div>

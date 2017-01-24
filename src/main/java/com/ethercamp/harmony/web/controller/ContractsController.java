@@ -90,6 +90,26 @@ public class ContractsController {
         }
     }
 
+    @RequestMapping(value = "/contracts/{address}/importFromExplorer", method = RequestMethod.POST)
+    public ActionStatus<Boolean> importContractDataFromExplorer(@PathVariable String address) {
+        try {
+            final boolean result = contractsService.importContractFromExplorer(address);
+            return createSuccessStatus(result);
+        } catch (Exception e) {
+            return createErrorStatus(e.getMessage());
+        }
+    }
+
+    @RequestMapping(value = "/contracts/{address}/clearContractStorage", method = RequestMethod.POST)
+    public ActionStatus<Boolean> clearStorage(@PathVariable String address) {
+        try {
+            contractsService.clearContractStorage(address);
+            return createSuccessStatus();
+        } catch (Exception e) {
+            return createErrorStatus(e.getMessage());
+        }
+    }
+
     @RequestMapping("/contracts/indexStatus")
     public ActionStatus<IndexStatusDTO> getIndexStatus() {
         try {

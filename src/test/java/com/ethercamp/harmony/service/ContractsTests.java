@@ -19,12 +19,13 @@
 package com.ethercamp.harmony.service;
 
 import com.ethercamp.harmony.dto.ContractObjects.*;
-import com.ethercamp.harmony.service.contracts.compiler.SolidityCompiler;
+import com.ethercamp.harmony.util.SolcUtils;
 import org.apache.commons.io.IOUtils;
-import org.ethereum.datasource.HashMapDB;
+import org.ethereum.datasource.inmem.HashMapDB;
 import org.ethereum.facade.Ethereum;
 import org.ethereum.facade.Repository;
 import org.ethereum.solidity.compiler.CompilationResult;
+import org.ethereum.solidity.compiler.SolidityCompiler;
 import org.junit.Before;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
@@ -53,7 +54,7 @@ public class ContractsTests {
     private static final String ADDRESS = "0C37520af9B346D413d90805E86064B47642478E".toLowerCase();
 
     private static final String SRC = "" +
-            "pragma solidity ^0.4.3;" +
+            "pragma solidity ^0.4.8;" +
             "contract Foo {\n" +
             "\n" +
             "        uint32 idCounter = 1;\n" +
@@ -74,11 +75,18 @@ public class ContractsTests {
         contractsService = new ContractsService();
         contractsService.ethereum = mock(Ethereum.class);
 
-        contractsService.contractsStorage = new HashMapDB();
+        contractsService.contractsStorage = new HashMapDB<>();
+        contractsService.settingsStorage = new HashMapDB<>();
+        contractsService.contractCreation = new HashMapDB<>();
         repository = mock(Repository.class);
 
         when(repository.getCode(any())).thenReturn(Hex.decode(CODE));
         when(contractsService.ethereum.getRepository()).thenReturn(repository);
+    }
+
+    @Test
+    public void contracts_readSolcVersion() {
+        assertThat(SolcUtils.getSolcVersion(), is("0.4.8"));
     }
 
     @Test

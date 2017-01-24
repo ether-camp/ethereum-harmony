@@ -20,6 +20,7 @@ package com.ethercamp.harmony.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Value;
+import org.ethereum.facade.SyncStatus;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,11 +34,29 @@ public class NetworkInfoDTO {
 
     private final Integer activePeers;
 
-    private final String syncStatus;
+    private final SyncStatusDTO syncStatus;
 
     private final Integer ethPort;
 
     private final Boolean ethAccessible;
 
     private final List<MinerDTO> miners = new ArrayList();
+
+    @Value
+    @AllArgsConstructor
+    public static class SyncStatusDTO {
+
+        private final org.ethereum.facade.SyncStatus.SyncStage stage;
+        private final long curCnt;
+        private final long knownCnt;
+        private final long blockLastImported;
+        private final long blockBestKnown;
+
+        public static SyncStatusDTO instanceOf(SyncStatus status) {
+            return new SyncStatusDTO(status.getStage(), status.getCurCnt(), status.getKnownCnt(),
+                    status.getBlockLastImported(), status.getBlockBestKnown());
+        }
+    }
 }
+
+

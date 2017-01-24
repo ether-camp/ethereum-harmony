@@ -16,37 +16,22 @@
  * along with Ethereum Harmony.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.ethercamp.harmony.dto;
+package com.ethercamp.harmony.jsonrpc;
 
-import lombok.AllArgsConstructor;
-import lombok.Value;
+import org.ethereum.core.Transaction;
 
 /**
- * Created by Stan Reshetnyk on 12.07.16.
+ * Transaction for making constant calls without changing network state.
+ *
+ * Created by Stan Reshetnyk on 22.12.16.
  */
-@Value
-@AllArgsConstructor
-public class BlockchainInfoDTO {
+public class LocalTransaction extends Transaction {
 
-    private final Long highestBlockNumber;
+    public LocalTransaction(byte[] rawData) {
+        super(rawData);
+    }
 
-    private final Long lastBlockNumber;
-
-    /**
-     * UTC time in seconds
-     */
-    private final Long lastBlockTime;
-
-    private final Integer lastBlockTransactions;
-
-    private final Long difficulty;
-
-    // Not used now
-    private final Long lastReforkTime;
-
-    private final Long networkHashRate;
-
-    private final Long gasPrice;
-
-    private final NetworkInfoDTO.SyncStatusDTO syncStatus;
+    public void setSender(byte[] sendAddress) {
+        this.sendAddress = sendAddress;
+    }
 }

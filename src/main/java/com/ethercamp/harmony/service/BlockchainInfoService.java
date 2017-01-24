@@ -25,6 +25,8 @@ import ch.qos.logback.classic.filter.ThresholdFilter;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.UnsynchronizedAppenderBase;
 
+import com.ethercamp.harmony.keystore.FileSystemKeystore;
+import org.ethereum.util.BuildInfo;
 import org.slf4j.LoggerFactory;
 import ch.qos.logback.classic.Logger;
 import com.ethercamp.harmony.dto.*;
@@ -44,6 +46,7 @@ import org.springframework.boot.context.embedded.EmbeddedServletContainerInitial
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.core.env.Environment;
+import org.springframework.data.util.Pair;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -52,7 +55,6 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.nio.file.*;
-import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
@@ -94,6 +96,9 @@ public class BlockchainInfoService implements ApplicationListener {
 
     @Autowired
     SystemProperties systemProperties;
+
+    @Autowired
+    FileSystemKeystore keystore;
 
     /**
      * Concurrent queue of last blocks.
@@ -144,9 +149,11 @@ public class BlockchainInfoService implements ApplicationListener {
             syncStatus = syncManager.isSyncDone() ? SyncStatus.SHORT_SYNC : SyncStatus.LONG_SYNC;
             ethereum.addListener(new EthereumListenerAdapter() {
                 @Override
-                public void onSyncDone() {
-                    log.info("Sync done");
-                    syncStatus = BlockchainInfoService.SyncStatus.SHORT_SYNC;
+                public void onSyncDone(SyncState state) {
+                    log.info("Sync done " + state);
+                    if (syncStatus != BlockchainInfoService.SyncStatus.SHORT_SYNC) {
+                        syncStatus = BlockchainInfoService.SyncStatus.SHORT_SYNC;
+                    }
                 }
             });
         }
@@ -186,23 +193,27 @@ public class BlockchainInfoService implements ApplicationListener {
             final boolean isPrivateNetwork = env.getProperty("networkProfile", "").equalsIgnoreCase("private");
             final boolean isClassicNetwork = env.getProperty("networkProfile", "").equalsIgnoreCase("classic");
 
+            // find out network name
             final Optional<String> blockHash = Optional.ofNullable(blockchain.getBlockByNumber(0l))
                     .map(block -> Hex.toHexString(block.getHash()));
-            final String networkName;
+            final Pair<String, Optional<String>> networkInfo;
             if (isPrivateNetwork) {
-                networkName = "Private Miner Network";
+                networkInfo = Pair.of("Private Miner Network", Optional.empty());
             } else if (isClassicNetwork) {
-                networkName = "Ethereum Classic";
+                networkInfo = Pair.of("Classic ETC", Optional.empty());
             } else {
-                networkName = blockHash
-                        .map(hash -> BlockchainConsts.GENESIS_BLOCK_HASH_MAP.getOrDefault(hash, "Unknown network"))
-                        .orElse("Undefined blockchain");
+                networkInfo = blockHash
+                        .flatMap(hash -> Optional.ofNullable(BlockchainConsts.getNetworkInfo(env, hash)))
+                        .orElse(Pair.of("Unknown network", Optional.empty()));
             }
+
 
             initialInfo.set(new InitialInfoDTO(
                     config.projectVersion() + "-" + config.projectVersionModifier(),
+                    "Hash: " + BuildInfo.buildHash + ",   Created: " + BuildInfo.buildTime,
                     env.getProperty("app.version"),
-                    networkName,
+                    networkInfo.getFirst(),
+                    networkInfo.getSecond().orElse(null),
                     blockHash.orElse(null),
                     System.currentTimeMillis(),
                     Hex.toHexString(config.nodeId()),
@@ -216,10 +227,8 @@ public class BlockchainInfoService implements ApplicationListener {
             final String ANSI_RESET = "\u001B[0m";
             final String ANSI_BLUE = "\u001B[34m";
             System.out.println("EthereumJ database dir location: " + systemProperties.databaseDir());
-
-            final boolean isSSL = env.containsProperty("server.ssl.key-store");
-            final String protocol = isSSL ? "https" : "http";
-            System.out.println(String.format("%sServer started at %s://localhost:%s%s", ANSI_BLUE, protocol, serverPort, ANSI_RESET));
+            System.out.println("EthereumJ keystore dir location: " + keystore.getKeyStoreLocation());
+            System.out.println(ANSI_BLUE + "Server started at http://localhost:" + serverPort + "" + ANSI_RESET);
 
             if (!config.getConfig().hasPath("logs.keepStdOut") || !config.getConfig().getBoolean("logs.keepStdOut")) {
                 createLogAppenderForMessaging();
@@ -270,7 +279,8 @@ public class BlockchainInfoService implements ApplicationListener {
                         bestBlock.getDifficultyBI().longValue(),
                         0l, // not implemented
                         calculateHashRate(),
-                        ethereum.getGasPrice()
+                        ethereum.getGasPrice(),
+                        NetworkInfoDTO.SyncStatusDTO.instanceOf(syncManager.getSyncStatus())
                 )
         );
 
@@ -281,7 +291,7 @@ public class BlockchainInfoService implements ApplicationListener {
     private void doUpdateNetworkInfo() {
         final NetworkInfoDTO info = new NetworkInfoDTO(
                 channelManager.getActivePeers().size(),
-                syncStatus.toString(),
+                NetworkInfoDTO.SyncStatusDTO.instanceOf(syncManager.getSyncStatus()),
                 config.listenPort(),
                 true
         );
@@ -409,21 +419,6 @@ public class BlockchainInfoService implements ApplicationListener {
 
     public String getGenesisDump() {
         return systemProperties.getGenesis().toString();
-    }
-
-    static class BlockchainConsts {
-
-        static final Map<String, String> GENESIS_BLOCK_HASH_MAP = new HashMap<>();
-
-        static {
-            GENESIS_BLOCK_HASH_MAP.put("d4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3", "Live ETH");
-            GENESIS_BLOCK_HASH_MAP.put("0cd786a2425d16f152c658316c423e6ce1181e15c3295826d7c9904cba9ce303", "Morden ETH");
-            GENESIS_BLOCK_HASH_MAP.put("41941023680923e0fe4d74a34bdac8141f2540e3ae90623718e47d66d1ca4a2d", "Ropsten ETH");
-            GENESIS_BLOCK_HASH_MAP.put("34288454de81f95812b9e20ad6a016817069b13c7edc99639114b73efbc21368", "Test ETH");
-
-            // not static as user can put changes into genesis, which cause hash to change
-            // GENESIS_BLOCK_HASH_MAP.put("???", "Private Miner Network");
-        }
     }
 
     /**

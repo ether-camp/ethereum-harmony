@@ -123,21 +123,29 @@ public class JsonRpcUsageFilter implements Filter {
     }
 
     private void notifyInvocation(JsonNode requestJson, JsonNode responseJson) throws IOException {
-        final String responseText = mapper.writeValueAsString(responseJson);
-        final String methodName = requestJson.get("method").asText();
-        final List<JsonNode> params = new ArrayList<>();
-        requestJson.get("params").forEach(n -> params.add(n));
+        if (responseJson.has("error")) {
+            final String errorMessage = responseJson.get("error").toString();
+            log.warn("Problem when invoking JSON-RPC " + requestJson.toString() + " response:" + errorMessage);
+        } else {
+            final String methodName = requestJson.get("method").asText();
+            final List<JsonNode> params = new ArrayList<>();
+            if (requestJson.has("params")) {
+                requestJson.get("params")
+                        .forEach(n -> params.add(n));
+            }
 
-        jsonRpcUsageService.methodInvoked(methodName, responseText);
+            final String responseText = mapper.writeValueAsString(responseJson);
+            jsonRpcUsageService.methodInvoked(methodName, responseText);
 
-        if (log.isInfoEnabled()) {
-            // passwords could be sent here
-            if (!EXCLUDE_LOGS.contains(methodName)) {
-                log.info(methodName + "(" + params.stream()
-                        .map(n -> n.asText())
-                        .collect(Collectors.joining(", ")) + "): " + responseText);
-            } else {
-                // logging is handled manually in service
+            if (log.isInfoEnabled()) {
+                // passwords could be sent here
+                if (!EXCLUDE_LOGS.contains(methodName)) {
+                    log.info(methodName + "(" + params.stream()
+                            .map(n -> n.asText())
+                            .collect(Collectors.joining(", ")) + "): " + responseText);
+                } else {
+                    // logging is handled manually in service
+                }
             }
         }
     }

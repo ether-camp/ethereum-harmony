@@ -16,46 +16,29 @@
  * along with Ethereum Harmony.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.ethercamp.harmony.dto;
+package com.ethercamp.harmony.util;
 
-import lombok.AllArgsConstructor;
-import lombok.Value;
+import org.ethereum.solidity.compiler.SolidityCompiler;
+import org.slf4j.LoggerFactory;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
- * Created by Stan Reshetnyk on 18.10.16.
+ * Created by Stan Reshetnyk on 20.01.17.
  */
-public class ContractObjects {
+public class SolcUtils {
 
-    @Value
-    @AllArgsConstructor
-    public static class ContractInfoDTO {
-
-        private final String address;
-
-        private final String name;
-
-        /**
-         * Block number when contract was introduced or -1.
-         */
-        private final long blockNumber;
-
-    }
-
-    @Value
-    @AllArgsConstructor
-    public static class IndexStatusDTO {
-
-        private final long indexSize;
-
-        private final String solcVersion;
-
-        /**
-         * Block number when indexing started or -1.
-         * Zero value is not possible
-         */
-        private final long syncedBlock;
-
+    public static String getSolcVersion() {
+        try {
+            // optimistic parsing of version string
+            final String versionOutput = SolidityCompiler.runGetVersionOutput();
+            final Matcher matcher = Pattern.compile("(\\d+.\\d+.\\d+)").matcher(versionOutput);
+            matcher.find();
+            return matcher.group(0);
+        } catch (Exception e) {
+            LoggerFactory.getLogger("general").error("Problem reading solidity version", e);
+            return null;
+        }
     }
 }
-
-

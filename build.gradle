@@ -1,10 +1,12 @@
 buildscript {
     repositories {
         mavenCentral()
+        maven { url "https://plugins.gradle.org/m2/" }
     }
 
     dependencies {
         classpath("org.springframework.boot:spring-boot-gradle-plugin:1.4.1.RELEASE")
+        classpath "com.github.jengelman.gradle.plugins:shadow:1.2.4"
     }
 }
 
@@ -12,6 +14,15 @@ apply plugin: 'java'
 apply plugin: 'maven'
 apply plugin: 'spring-boot'
 apply plugin: 'application'
+apply plugin: "com.github.johnrengelman.shadow"
+
+// check if -PuseMavenLocal is supplied
+if (project.hasProperty('useMavenLocal')) {
+    println "Flag enabled: using EthereumJ jar from maven local repo if exist"
+    repositories {
+        mavenLocal()
+    }
+}
 
 repositories {
 
@@ -23,10 +34,6 @@ repositories {
     maven { url "https://oss.jfrog.org/libs-snapshot/" }
     maven { url "https://dl.bintray.com/ethereum/maven/" }
     maven { url "https://repo.spring.io/libs-snapshot" }
-}
-
-configurations {
-    solcJar
 }
 
 dependencies {
@@ -41,18 +48,20 @@ dependencies {
 
 //    compile "com.google.guava:guava:19.0"
 
-    compile "org.ethereum:solcJ-all:0.4.6"                   // Solidity Compiler win/mac/linux binaries
+    // Be sure also change value inside `ContractsTests.java`
+    compile "org.ethereum:solcJ-all:0.4.8"                   // Solidity Compiler win/mac/linux binaries
 
     // don't forget to adjust {ethereumJ.version} in application.properties
-    compile ("org.ethereum:ethereumj-core:1.3.9-RELEASE") {
+    compile ("org.ethereum:ethereumj-core:1.4.0-RELEASE") {
         changing = true
 
         exclude group: "log4j"
         exclude group: "org.slf4j", module: "log4j-over-slf4j"
         exclude group: "org.slf4j", module: "slf4j-log4j12"
+        exclude group: "org.ethereum", module: "solcJ-all"
     }
 
-    compile "com.ethercamp:contract-data:1.2"
+    compile "com.ethercamp:contract-data:1.3.2"
 
     compile "org.projectlombok:lombok:1.16.4"
     compile "com.maxmind.geoip:geoip-api:1.3.1"
@@ -63,11 +72,13 @@ dependencies {
     compile "org.functionaljava:functionaljava:4.6"
     compile "org.functionaljava:functionaljava-java8:4.6"
 
+    compile "com.mashape.unirest:unirest-java:1.3.1"
+
     /* WEB DEPENDENCIES */
     compile("org.webjars.bower:bootstrap:3.3.6")
     compile("org.webjars:jquery:2.2.4")
 
-    compile("org.webjars.bower:angular:1.5.8")
+//    compile("org.webjars.bower:angular:1.5.8")
     compile("org.webjars.bower:angular-route:1.5.8")
     compile("org.webjars.bower:angular-animate:1.5.8")
 
@@ -84,18 +95,15 @@ dependencies {
     compile("org.webjars.bower:topojson:1.6.26")
 
 //    compile("org.webjars:jquery.terminal:0.10.11")
+    compile("org.webjars.bower:jquery-mousewheel:3.1.13")
     compile("org.webjars.bower:malihu-custom-scrollbar-plugin:3.1.5")
 //    compile("org.webjars.bower:ng-scrollbars:0.0.10")
     compile("org.webjars.bower:angular-ui:0.4.0")
     compile("org.webjars.bower:underscore:1.8.3")
     compile("org.webjars.npm:bignumber.js:2.4.0")
 
-
-    solcJar "org.ethereum:solcJ-all:0.4.6"
-
     testCompile "junit:junit"
     testCompile "org.springframework:spring-test"
-    testCompile "com.mashape.unirest:unirest-java:1.3.1"
     testCompile "org.springframework.boot:spring-boot-starter-test"
 //    compile group: 'org.springframework', name: 'spring-test', version: '2.5'
 }
@@ -109,14 +117,19 @@ task stage {
 }
 
 bootRun {
+    // point logback to config to use
+    // without this line logback will warn that it finds 2 files (in core.jar and in this app)
+    putIfEmpty System.properties, "logback.configurationFile", "src/main/resources/logback.xml"
+
     systemProperties = System.properties
 
-    def args = ["-server", "-Xss32m",
-                "-XX:+UseCompressedOops", "-XX:+HeapDumpOnOutOfMemoryError", "-XX:-OmitStackTraceInFastThrow",
-                "-Xmx3500M",
-                // point logback to config to use
-                // without this line logback will warn that it found 2 files (in core.jar and in this app)
-                "-Dlogback.configurationFile=src/main/resources/logback.xml"]
+    def args = ["-server",
+                "-Xss32m",
+                "-XX:+UseCompressedOops",
+                "-XX:+HeapDumpOnOutOfMemoryError",
+                "-XX:-OmitStackTraceInFastThrow",
+                "-Xmx1G",
+                ]
     if ( project.hasProperty('jvmArgs') ) {
         println "Adding properties from jvmArgs " + project.jvmArgs
         args.addAll(project.jvmArgs.split('\\s+'))
@@ -150,7 +163,13 @@ applicationDefaultJvmArgs = ["-server", "-Xss32m", "-XX:-OmitStackTraceInFastThr
  * Tasks for connecting to predefined networks.
  * It is not possible to override task defined values from command line.
  */
-task runMorden << { bootRunWithNetworkConfig('morden') }
+task runMain << {
+    addJvmArgIfEmpty "sync.fast.enabled", "true"
+    addJvmArgIfEmpty "ethereumj.conf.res", "ethereumj.conf"
+    addJvmArgIfEmpty "database.name", "database"
+    addJvmArgIfEmpty "networkProfile", "main"
+    bootRunWithNetworkConfig('main', false)
+}
 
 task runRopsten << { bootRunWithNetworkConfig('ropsten') }
 
@@ -160,11 +179,25 @@ task runPrivate << { bootRunWithNetworkConfig('private') }
 
 task runClassic << { bootRunWithNetworkConfig('classic') }
 
-def bootRunWithNetworkConfig(String name) {
-    bootRun.jvmArgs = bootRun.jvmArgs + ('-Dethereumj.conf.res=' + name + '.conf') + ('-Ddatabase.name=database-' + name)
-    tasks.extractSolc.execute()
+def bootRunWithNetworkConfig(String name, boolean includePresets = true) {
+    if (includePresets) {
+        bootRun.jvmArgs = bootRun.jvmArgs + ('-Dethereumj.conf.res=' + name + '.conf') + ('-Ddatabase.name=database-' + name) + ('-DnetworkProfile=' + name)
+    }
     tasks.compileJava.execute()
     tasks.bootRun.execute()
+}
+
+def putIfEmpty(Properties properties, String key, String value) {
+    // don't use System.hasProperty as it is groovy wrapper
+    if (System.getProperty(key) == null) {
+        properties.put key, value
+    }
+}
+
+def addJvmArgIfEmpty(String key, String value) {
+    if (System.getProperty(key) == null) {
+        bootRun.jvmArgs = bootRun.jvmArgs + ('-D' + key + '=' + value)
+    }
 }
 
 task webjar(type: Jar, dependsOn: "jar") {
@@ -173,12 +206,24 @@ task webjar(type: Jar, dependsOn: "jar") {
     }
 }
 
-task extractSolc(type: Copy) {
-    from zipTree(configurations.solcJar.singleFile)
-    into 'src/main/resources/solcJ-all'
+/**
+ * Run import blocks action.
+ * Be sure to pass genesis, database location and path to blocks.
+ * @example `./gradlew
+ *                  -Ddatabase.dir=database-private -Dgenesis=frontier-private.json
+ *                  -Dblocks.loader=blocks.rlp -Dblocks.format=rlp`
+ */
+task importBlocks(type: JavaExec) {
+    main                "org.ethereum.Start"
+    classpath           sourceSets.main.runtimeClasspath
+    description         "Running import blocks"
+
+    // pass CLI properties (set of -Dprop=value) to forked java process
+    systemProperties    System.properties
+    systemProperty      "logback.configurationFile", "src/main/resources/logback.xml"
+    systemProperty      "peer.discovery.enabled", false
+    systemProperty      "sync.enabled", false
 }
 
-compileJava.dependsOn extractSolc
-compileTestJava.dependsOn extractSolc
-build.dependsOn extractSolc
+
 

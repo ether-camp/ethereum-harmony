@@ -8,6 +8,10 @@
     var PAGE_SIZE = 30;
     var NULL = '<empty>';
 
+    function isTimestamp (value) {
+        return /^1[4-9]((\d{8})|(\d{11}))$/.test('' + value);
+    }
+
     function isBytesAreString(data) {
         var isString = false;
 
@@ -50,9 +54,11 @@
     function updateEntry(entry) {
         if (entry.key && entry.value) {
             var isStruct = entry.value.typeKind == 'struct';
+            var isContract = entry.value.typeKind == 'contract';
             entry.isCompositeObject = entry.value.container || isStruct;
             entry.template = 'tree_item_renderer.html';
 
+            entry.valueType = entry.value.typeKind || entry.value.type;
             // value label
             if (entry.value.container) {
                 if (entry.value.type.indexOf('mapping(') == 0) {
@@ -63,15 +69,22 @@
             } else if (isStruct) {
                 entry.valueLabel = entry.value.type;
             } else {
-                entry.valueLabel = entry.value.decoded ? entry.value.decoded : NULL;
-                var isString = isBytesAreString(entry.value.decoded);
-                if (isString) {
+                var decoded = entry.value.decoded;
+                entry.valueLabel = decoded ? decoded : NULL;
+                entry.valueSecondLabel = '';
+                var isString = isBytesAreString(decoded);
+                if (isContract) {
+                    entry.valueType = entry.value.type + ' contract';
+                } else if (isString) {
                     entry.type1Label = 'string';
                     entry.type2Label = entry.value.type;
-                    entry.valueLabel = '"' + bytesToString(entry.value.decoded) + '"';
+                    entry.valueLabel = '"' + bytesToString(decoded) + '"';
                     entry.isConverted = true;
                     entry.template = 'tree_string_renderer.html';
                 } else {
+                    if (isTimestamp(decoded)) {
+                        entry.valueSecondLabel = moment((('' + decoded).length == 10) ? (decoded * 1000) : decoded).format('(DD-MMM-YYYY HH:mm:ss Z)');
+                    }
                     entry.template = 'tree_value_renderer.html';
                 }
             }
@@ -89,8 +102,8 @@
         return entry;
     }
 
-    function showErrorToastr(topMessage, bottomMessage) {
-        toastr.clear()
+    function showToastr(isError, topMessage, bottomMessage) {
+        toastr.clear();
         toastr.options = {
             "positionClass": "toast-top-right",
             "closeButton": true,
@@ -98,23 +111,37 @@
             "showEasing": "swing",
             "timeOut": "4000"
         };
-        toastr.error('<strong>' + topMessage + '</strong> <br/><small>' + bottomMessage + '</small>');
+        if (isError) {
+            toastr.error('<strong>' + topMessage + '</strong> <br/><small>' + bottomMessage + '</small>');
+        } else {
+            toastr.success('<strong>' + topMessage + '</strong> <br/><small>' + bottomMessage + '</small>');
+        }
+
     }
 
-    function ContractsCtrl($scope, $timeout, scrollConfig, $http, jsonrpc, restService) {
+    /**
+     * @example 1000 -> "1,000"
+     */
+    function numberWithCommas(x) {
+        return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
+    function ContractsCtrl($scope, $timeout, scrollConfig, $http, jsonrpc, restService, $q, scopeUtil, $location) {
+        var UNINITIALIZED_SYNCED_BLOCK = -1;
+
         console.log('Contracts controller activated.');
         $scope.contracts = $scope.contracts || [];
         $scope.scrollConfig = jQuery.extend(true, {}, scrollConfig);
-        $scope.isAddingContract = false;
         $scope.isViewingStorage = false;
-        $scope.newContract = {};
-        $scope.storage = {entries: [], value: {decoded: ''}};
+        $scope.storage = {entries: [], value: {decoded: ''}, blockNumber: -1};
         $scope.indexSizeString = 'n/a';
         $scope.solcVersionString = 'n/a';
+        $scope.syncedBlock = UNINITIALIZED_SYNCED_BLOCK;
 
         // file upload
         $scope.files = [];
         $scope.allowFileUpload = false;
+        $scope.submitErrorMessage = '';
 
         var remove0x = Utils.Hex.remove0x;
 
@@ -122,12 +149,27 @@
             console.log('Contracts controller exited.');
         });
 
-        $timeout(function() {
+        // update status in case of synced block value changed
+        $scope.$on('newBlockFromEvent', function(event, item) {
+            if ($scope.syncedBlock == UNINITIALIZED_SYNCED_BLOCK) {
+                loadStatus();
+            }
+        });
+
+        $scope.onWatchContract = function() {
+            $location.path('contractNew');
+        }
+
+        function loadStatus() {
             restService.Contracts.getIndexStatus().then(function(result) {
                 $scope.indexSizeString = filesize(result.indexSize);
                 $scope.solcVersionString = result.solcVersion;
+                $scope.syncedBlock = result.syncedBlock;
+                $scope.syncedBlockString = numberWithCommas(result.syncedBlock);
             });
-        }, 100);
+        }
+
+        $timeout(loadStatus, 100);
 
         /**
          * Resize table to fit all available space.
@@ -136,30 +178,29 @@
         $(window).ready(onResize);
         $scope.$on('windowResizeEvent', onResize);
 
-        $scope.onWatchContract = function() {
-            $scope.newContract = {};
-            $scope.files = [];
-            $scope.isAddingContract = true;
-            $scope.isViewingStorage = false;
-
-            // reset form validation
-            $scope.$broadcast('show-errors-reset');
-            $scope.form.$setUntouched();
-            $scope.form.$setPristine();
-        };
-
         $scope.onBackToList = function() {
-            $scope.isAddingContract = false;
             $scope.isViewingStorage = false;
             $scope.storage.entries = [];
+
+            $scope.checkScrollsLater();
         };
 
-        $scope.onViewStorage = function(item) {
-            $scope.isAddingContract = false;
-            $scope.isViewingStorage = true;
-            $scope.storage.address = item.address;
-            $scope.storage.balanceString = 'n/a';
-            $scope.storage.contractName = item.name;
+        $scope.onViewStorage = function(value) {
+            var contract = $scope.contracts.filter(function(item) {
+                return item.address == value.address;
+            })[0];
+
+            console.log('View contact ' + contract.address + ' from #' + contract.blockNumber);
+
+            scopeUtil.safeApply(function() {
+                $scope.isViewingStorage = true;
+                $scope.storage.address = contract.address;
+                $scope.storage.balanceString = 'n/a';
+                $scope.storage.contractName = contract.name;
+                $scope.storage.blockNumber = contract.blockNumber;
+                $scope.lastViewingItem = contract;
+                $scope.importingError = '';
+            });
 
             // #1 Load balance
             jsonrpc.request('eth_getBalance', [$scope.storage.address, 'latest'])
@@ -181,29 +222,38 @@
                     size: PAGE_SIZE
                 }
             }).then(function(result) {
-                console.log('Initial contract fields');
-                console.log(result.data);
+                //console.log('Initial contract fields');
+                //console.log(result.data);
                 // copy values to keep binding working
                 $scope.storage.entries = result.data.content
                     .map(updateEntry);
                 //$scope.storage.size = result.data.size;
                 //$scope.storage.number = result.data.number;
                 $scope.storage.totalElements = result.data.totalElements;
+                $scope.checkScrollsLater();
             });
+            $scope.checkScrollsLater();
         };
 
         $scope.loadContracts = function() {
-            return $http({
+            var deferred = $q.defer();
+            $http({
                 method: 'GET',
                 url: '/contracts/list'
-            }).then(function(result) {
-                console.log(result);
-                $scope.contracts = (result.data || [])
-                    .map(function(c) {
-                        c.address = EthUtil.toChecksumAddress(c.address);
-                        return c;
-                    });
-            });
+            }).then(
+                function(result) {
+                    //console.log(result);
+                    $scope.contracts = (result.data || [])
+                        .map(function(c) {
+                            c.address = EthUtil.toChecksumAddress(c.address);
+                            return c;
+                        });
+                    deferred.resolve();
+                }),
+                function(error) {
+                    deferred.reject(error);
+                };
+            return deferred.promise;
         };
 
         $scope.onRemoveClick = function(item) {
@@ -217,99 +267,50 @@
             }
         };
 
-        $scope.onAddSourceCode = function() {
-            console.log('onAddSourceCode');
+        $scope.onClearContract = function() {
+            var lastItem = $scope.lastViewingItem;
             $http({
-                method: 'POST',
-                url: '/contracts/add',
-                data: {
-                    address: remove0x($scope.newContract.address).toLowerCase(),
-                    sourceCode: $scope.newContract.sourceCode
-                }})
-                .success(function(result) {
-                    console.log('Add source result');
-                    console.log(result);
-                    if (result && result.success) {
-                        return $scope.loadContracts().then($scope.onBackToList);
-                    } else {
-                        showErrorToastr('Upload failed', result.errorMessage || 'Unknown error');
-                    }
+                    method: 'POST',
+                    url: '/contracts/' + remove0x($scope.storage.address).toLowerCase() + '/clearContractStorage',
+                    params: {}
+            })
+                .then(function() {
+                    return $scope.loadContracts()
+                        .then(function() {
+                            $scope.onViewStorage(lastItem);
+                        });
                 })
         };
 
-        $scope.onAddFile = function() {
-            $('#fileInput').click();
-        };
+        $scope.onImportContract = function() {
+            $scope.isImportingInProgress = true;
+            $scope.importingError = '';
 
-        $('#fileInput').on('change', function(event) {
-
-            event.preventDefault();
-            var files = event.target.files;
-
-            console.log('onAddFileEvent');
-            console.log(files);
-
-            var newArray = $scope.files.slice(0);
-            Array.prototype.push.apply(newArray, files);
-            $scope.files = newArray;
-            $scope.allowFileUpload = $scope.files.length > 0;
-            event.target.value = '';
-        });
-
-        $scope.onRemoveFile = function(file) {
-            var newArray = $scope.files.slice(0);
-            var index = newArray.indexOf(file);
-            if (index > -1) {
-                newArray.splice(index, 1);
-            }
-            $scope.files = newArray;
-            $scope.allowFileUpload = $scope.files.length > 0;
-        };
-
-        $scope.onUploadFiles = function() {
-            var formData = new FormData();
-            $scope.files.forEach(function(f) {
-                formData.append('contracts', f);
-            });
-
-            $http.post(
-                '/contracts/' + remove0x($scope.newContract.address).toLowerCase() + '/files',
-                formData,
-                {
-                    withCredentials: false,
-                    headers: {
-                        'Content-Type': undefined
-                    },
-                    transformRequest: angular.identity
-                }
-            ).success(function(result) {
-                console.log('Upload complete');
+            var lastItem = $scope.lastViewingItem;
+            $http({
+                method: 'POST',
+                url: '/contracts/' + remove0x($scope.storage.address).toLowerCase() + '/importFromExplorer',
+                params: {}
+            }).then(function(result) {
+                console.log('Imported addition result');
                 console.log(result);
-                if (result && !result.success) {
-                    showErrorToastr('Upload failed', result.errorMessage || 'Unknown error');
+                if (result.data.success) {
+                    showToastr(false, "", "Successfully imported contract data");
+                    $scope.loadContracts()
+                        .then(function() {
+                            $scope.onViewStorage(lastItem);
+                        });
                 } else {
-                    return $scope.loadContracts().then($scope.onBackToList);
+                    $scope.importingError = result.data.errorMessage;
+                    showToastr(false, "Work done", "Imported contract data");
                 }
+                $scope.isImportingInProgress = false;
+            }).catch(function(error) {
+                console.log('Import error');
+                console.log(error);
+                $scope.isImportingInProgress = false;
+                $scope.importingError = 'Problem importing data. Server might not be available';
             });
-        };
-
-        $scope.onFinalAddFiles = function() {
-            // force showing validation
-            $scope.form.$setSubmitted();
-            $scope.$broadcast('show-errors-check-validity');
-
-            if (!$scope.form.$valid) {
-                showErrorToastr('FORM VALIDATION', 'Please fill address.');
-                return;
-            }
-
-            if ($scope.files.length > 0) {
-                $scope.onUploadFiles();
-            } else if ($scope.newContract.sourceCode) {
-                $scope.onAddSourceCode();
-            } else {
-                showErrorToastr('FORM VALIDATION', 'Please fill either contract source code or attach it\'s file.');
-            }
         };
 
         $scope.loadContracts();
@@ -317,19 +318,29 @@
         function onResize() {
             console.log("Contracts page resize");
 
-            var scrollContainer = document.getElementById("contracts-scroll-container");
-            var rect = scrollContainer.getBoundingClientRect();
-            var newHeight = $(window).height() - rect.top - 20;
-            //$(scrollContainer).css('maxHeight', newHeight + 'px');
-            $scope.scrollConfig.setHeight = newHeight;
-            $timeout(function() {
-                $(scrollContainer).mCustomScrollbar($scope.scrollConfig);
-            }, 10);
+            ['storage-scroll-container', 'contracts-scroll-container'].forEach(function(elementId) {
+                var scrollContainer = document.getElementById(elementId);
+                if (!scrollContainer) {
+                    return;
+                }
+                var rect = scrollContainer.getBoundingClientRect();
+                var newHeight = $(window).height() - rect.top - 20;
+                $scope.scrollConfig.setHeight = newHeight;
+                $timeout(function() {
+                    $(scrollContainer).mCustomScrollbar($scope.scrollConfig);
+                }, 10);
+            });
         }
+
+        // may be fixed via global html layout in future
+        $scope.checkScrollsLater = function() {
+            $timeout(onResize, 10);
+        };
+        $scope.checkScrollsLater();
     }
 
     angular.module('HarmonyApp')
-        .controller('ContractsCtrl', ['$scope', '$timeout', 'scrollConfig', '$http', 'jsonrpc', 'restService', ContractsCtrl])
+        .controller('ContractsCtrl', ['$scope', '$timeout', 'scrollConfig', '$http', 'jsonrpc', 'restService', '$q', 'scopeUtil', '$location', ContractsCtrl])
 
         /**
          * Controller for rendering contract storage in expandable tree view.
@@ -362,6 +373,7 @@
                     Array.prototype.push.apply(newArray, loadedEntries.map(updateEntry));
                     // set new array object to fire binding
                     entry.entries = newArray;
+                    entry.totalElements = result.data.totalElements;
                 });
             }
 
