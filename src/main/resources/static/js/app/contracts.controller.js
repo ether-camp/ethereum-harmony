@@ -222,8 +222,8 @@
                     size: PAGE_SIZE
                 }
             }).then(function(result) {
-                console.log('Initial contract fields');
-                console.log(result.data);
+                //console.log('Initial contract fields');
+                //console.log(result.data);
                 // copy values to keep binding working
                 $scope.storage.entries = result.data.content
                     .map(updateEntry);
@@ -242,7 +242,7 @@
                 url: '/contracts/list'
             }).then(
                 function(result) {
-                    console.log(result);
+                    //console.log(result);
                     $scope.contracts = (result.data || [])
                         .map(function(c) {
                             c.address = EthUtil.toChecksumAddress(c.address);
