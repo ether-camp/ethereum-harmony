@@ -17,13 +17,15 @@ Ethereum network private peer. Based on EthereumJ implementation.
  
  * Keeping private keys in filesystem **keystore** compatible with go-ethereum;
  
- * In Browser command line terminal
+ * In Browser command line terminal;
  
- * Blockchain canonical tracing   
+ * Blockchain canonical tracing;   
  
  * Monitoring peers connectivity;
  
- * Easy go Ethereum **wallet** 
+ * Easy go Ethereum **wallet**;
+  
+ * Full trace of contract storage locally; 
 
 .
 
