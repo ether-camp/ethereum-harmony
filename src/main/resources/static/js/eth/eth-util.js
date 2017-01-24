@@ -40,6 +40,12 @@
         return ethUtil.toChecksumAddress(address);
       },
       isValidChecksumAddress: function(address) {
+        if (!address) {
+          return false;
+        }
+        if (address.indexOf('0x') != 0) {
+          address = '0x' + address;
+        }
         return ethUtil.isValidChecksumAddress(address);
       },
       BN: BN
