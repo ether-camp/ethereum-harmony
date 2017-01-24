@@ -128,7 +128,7 @@ bootRun {
                 "-XX:+UseCompressedOops",
                 "-XX:+HeapDumpOnOutOfMemoryError",
                 "-XX:-OmitStackTraceInFastThrow",
-                "-Xmx1G",
+                "-Xmx3500M",
                 ]
     if ( project.hasProperty('jvmArgs') ) {
         println "Adding properties from jvmArgs " + project.jvmArgs
