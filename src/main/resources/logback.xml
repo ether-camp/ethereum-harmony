@@ -45,6 +45,7 @@
         <appender-ref ref="FILE"/>
     </root>
 
+    <logger level="DEBUG" name="desktop"/>
     <logger level="DEBUG" name="contracts"/>
     <logger level="DEBUG" name="keystore"/>
     <logger level="DEBUG" name="wallet"/>

@@ -102,6 +102,9 @@ dependencies {
     compile("org.webjars.bower:underscore:1.8.3")
     compile("org.webjars.npm:bignumber.js:2.4.0")
 
+    // desktop GUI
+    compile group: 'com.dorkbox', name: 'SystemTray', version: '2.20'
+
     testCompile "junit:junit"
     testCompile "org.springframework:spring-test"
     testCompile "org.springframework.boot:spring-boot-starter-test"
@@ -114,6 +117,12 @@ task wrapper(type: Wrapper) {
 
 task stage {
     dependsOn bootRepackage
+}
+
+bootRepackage {
+    enabled = true
+    excludeDevtools = true
+//    classifier = "exec"
 }
 
 bootRun {
@@ -138,6 +147,7 @@ bootRun {
     jvmArgs = jvmArgs + args
 
     addResources = true
+
 }
 
 springBoot {
@@ -224,6 +234,22 @@ task importBlocks(type: JavaExec) {
     systemProperty      "peer.discovery.enabled", false
     systemProperty      "sync.enabled", false
 }
+
+task desktop << {
+    task unpackJar(type:Exec) {
+        workingDir  "build/libs"
+        commandLine "jar", "xf", "harmony.ether.camp.jar"
+    }
+
+    task createInstaller(type:Exec) {
+        workingDir "."
+        commandLine "install4jc", "EthereumHarmony.install4j"
+    }
+
+    unpackJar.execute();
+    createInstaller.execute();
+}
+desktop.dependsOn bootRepackage
 
 
 
