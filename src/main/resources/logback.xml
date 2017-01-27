@@ -1,8 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
 
-    <!-- point logback to properties, to read Spring variables -->
-    <property resource="application.properties" />
+    <!--
+        If variable is not defined in system properties -> try to load it from application.properties
+    -->
+    <if condition='!isDefined("logs.dir")'>
+        <then>
+            <property resource="application.properties" />
+        </then>
+    </if>
+
 
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${logs.dir}/state.log</file>

@@ -104,6 +104,8 @@ dependencies {
 
     // desktop GUI
     compile group: 'com.dorkbox', name: 'SystemTray', version: '2.20'
+    compile group: 'org.codehaus.janino', name: 'janino', version: '3.0.6'  // for having if-statement in logback.xml
+
 
     testCompile "junit:junit"
     testCompile "org.springframework:spring-test"
@@ -235,7 +237,13 @@ task importBlocks(type: JavaExec) {
     systemProperty      "sync.enabled", false
 }
 
+/**
+ * Create installers.
+ * Note: license must be set either in env variable or passed via `-PINSTALL4J_LICENSE=AAAAAAA`
+ */
 task desktop << {
+    String license = project.hasProperty('INSTALL4J_LICENSE') ? project.property('INSTALL4J_LICENSE') : System.properties['INSTALL4J_LICENSE']
+
     task unpackJar(type:Exec) {
         workingDir  "build/libs"
         commandLine "jar", "xf", "harmony.ether.camp.jar"
@@ -243,7 +251,7 @@ task desktop << {
 
     task createInstaller(type:Exec) {
         workingDir "."
-        commandLine "install4jc", "EthereumHarmony.install4j"
+        commandLine "install4jc", "--license", license, "EthereumHarmony.install4j"
     }
 
     unpackJar.execute();

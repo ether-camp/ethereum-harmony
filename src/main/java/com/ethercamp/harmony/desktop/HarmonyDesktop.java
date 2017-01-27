@@ -22,9 +22,6 @@ import com.ethercamp.harmony.Application;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.boot.context.embedded.EmbeddedServletContainerInitializedEvent;
-import org.springframework.context.ApplicationEvent;
-import org.springframework.context.ApplicationListener;
 import org.springframework.context.ConfigurableApplicationContext;
 
 import javax.swing.*;
@@ -87,8 +84,7 @@ public class HarmonyDesktop {
                         .web(true)
                         .run();
                 serverPort = Integer.valueOf(context.getEnvironment().getProperty("local.server.port"));
-                log.info("Spring context created at port1 " + serverPort);
-                System.out.println("Spring context created at port2 " + serverPort);
+                log.info("Spring context created at port " + serverPort);
                 trayIcon.setImage(new ImageIcon(imageEnabledUrl).getImage());
                 setTrayMenu(trayIcon, browserMenu, quitMenu);
                 openBrowser();
@@ -147,6 +143,7 @@ public class HarmonyDesktop {
 
     private static void setTrayMenu(TrayIcon trayIcon, MenuItem ...items) {
         if (!SystemTray.isSupported()) {
+            log.error("System tray is not supported");
             return;
         }
         final SystemTray systemTray = SystemTray.getSystemTray();
@@ -159,7 +156,7 @@ public class HarmonyDesktop {
             stream(systemTray.getTrayIcons()).forEach(t -> systemTray.remove(t));
             systemTray.add(trayIcon);
         } catch (AWTException e) {
-            e.printStackTrace();
+            log.error("Problem set tray", e);
         }
     }
 
@@ -169,7 +166,7 @@ public class HarmonyDesktop {
             try {
                 desktop.browse(URI.create(url));
             } catch (Exception e) {
-                e.printStackTrace();
+                log.error("Problem opening browser", e);
             }
         }
     }
