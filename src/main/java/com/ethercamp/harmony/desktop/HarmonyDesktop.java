@@ -49,11 +49,11 @@ public class HarmonyDesktop {
         System.setProperty("apple.awt.UIElement", "true");
     }
 
-    final Logger log = LoggerFactory.getLogger("desktop");
+    private final static Logger log = LoggerFactory.getLogger("desktop");
 
     private volatile int serverPort = 8080;
 
-    private volatile boolean exitRequested = false;
+    private volatile ConfigurableApplicationContext context;
 
     public static void main(String[] args) throws Exception {
         new HarmonyDesktop().start();
@@ -72,37 +72,27 @@ public class HarmonyDesktop {
 
 
     private void start() throws Exception {
-        log.info("Starting... " + System.getProperty("logs.dir"));
+        log.info("Starting...");
 
         final TrayIcon trayIcon = new TrayIcon(new ImageIcon(imageDisabledUrl).getImage(), "Ethereum Harmony");
-
         trayIcon.setImageAutoSize(true);    // Auto-size icon base on space
+
+        // doesn't work
+//        Runtime.getRuntime().addShutdownHook(new Thread(() -> closeContext()));
 
         executor.submit(() -> {
             try {
-                final ConfigurableApplicationContext run = new SpringApplicationBuilder(Application.class)
+                context = new SpringApplicationBuilder(Application.class)
                         .headless(true)
                         .web(true)
-                        .listeners(new ApplicationListener<ApplicationEvent>() {
-                            @Override
-                            public void onApplicationEvent(ApplicationEvent event) {
-                                if (event instanceof EmbeddedServletContainerInitializedEvent) {
-                                    log.info("Spring boot started at " + serverPort);
-                                    serverPort = ((EmbeddedServletContainerInitializedEvent) event).getEmbeddedServletContainer().getPort();
-
-                                    trayIcon.setImage(new ImageIcon(imageEnabledUrl).getImage());
-                                    setTrayMenu(trayIcon, browserMenu, quitMenu);
-                                    openBrowser();
-                                }
-                            }
-                        })
                         .run();
-//                run.get
+                serverPort = Integer.valueOf(context.getEnvironment().getProperty("local.server.port"));
+                log.info("Spring context created at port1 " + serverPort);
+                System.out.println("Spring context created at port2 " + serverPort);
+                trayIcon.setImage(new ImageIcon(imageEnabledUrl).getImage());
+                setTrayMenu(trayIcon, browserMenu, quitMenu);
+                openBrowser();
 
-//                if (!exitRequested) {
-//                    log.error("Spring boot finished execution unexpectedly");
-//                    showErrorWindow("", "Wasn't able to start peer");
-//                }
             } catch (Exception e) {
                 final StringBuilder sb = new StringBuilder(e.toString());
                 for (StackTraceElement ste : e.getStackTrace()) {
@@ -110,7 +100,7 @@ public class HarmonyDesktop {
                     sb.append(ste);
                 }
                 String message = sb.toString();
-                showErrorWindow("", "Problem running Harmony: " + message);
+                showErrorWindow("", "Problem running Harmony:\n\n " + message);
             }
         });
 
@@ -120,14 +110,25 @@ public class HarmonyDesktop {
         }
 
         browserMenu.addActionListener(e -> openBrowser());
-        quitMenu.addActionListener(e -> {
-            exitRequested = true;
+        quitMenu.addActionListener(event -> {
+            log.info("Quit action was requested from tray menu");
+            closeContext();
             trayIcon.setImage(new ImageIcon(imageDisabledUrl).getImage());
             setTrayMenu(trayIcon, quitingMenu);
             System.exit(0);
         });
 
         setTrayMenu(trayIcon, loadingMenu, quitMenu);
+    }
+
+    private void closeContext() {
+        if (context != null) {
+            try {
+                context.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private void showErrorWindow(String title, String body) {
