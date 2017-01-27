@@ -164,7 +164,7 @@
         toastr.options = {
             "positionClass": "toast-top-right",
             "closeButton": true,
-            "progressBar": true,
+            "progressBar": false,
             "showEasing": "swing",
             "timeOut": "4000"
         };
@@ -178,7 +178,7 @@
         toastr.options = {
             "positionClass": "toast-top-right",
             "closeButton": true,
-            "progressBar": true,
+            "progressBar": false,
             "showEasing": "swing",
             "timeOut": "4000"
         };
