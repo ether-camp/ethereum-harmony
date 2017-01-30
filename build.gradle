@@ -1,3 +1,43 @@
+/*
+ * Copyright 2015, 2016 Ether.Camp Inc. (US)
+ * This file is part of Ethereum Harmony.
+ *
+ * Ethereum Harmony is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Ethereum Harmony is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Ethereum Harmony.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/**
+ * Tasks:
+ *  - runMain
+ *  - runClassic
+ *  - runRopsten
+ *  - runTest
+ *  - runPrivate
+ *  - bootRun
+ *
+ * Gradle options (supplied with `-P` prefix):
+ *  - jvmArgs - adding Java VM options;
+ *  - useMavenLocal - prefer locally installed maven libraries.
+ *
+ * System properties (supplied with `-D` prefix):
+ *  - see `user.conf` or https://github.com/ethereum/ethereumj/blob/master/ethereumj-core/src/main/resources/ethereumj.conf
+ *
+ * Default heap size is 1G, unless user change via command line or run `runPrivate` task,
+ * which sets 3.5 GB.
+ */
+
+ext.maxHeapSize = '-Xmx1G' // default is 1G, but could be changed via command line or launched task type
+
 buildscript {
     repositories {
         mavenCentral()
@@ -113,6 +153,15 @@ dependencies {
 //    compile group: 'org.springframework', name: 'spring-test', version: '2.5'
 }
 
+mainClassName = 'com.ethercamp.harmony.Application'
+def defaultJvmArgs = ["-server",
+                      "-Xss32m",
+                      "-XX:+UseCompressedOops",
+                      "-XX:+HeapDumpOnOutOfMemoryError",
+                      "-XX:-OmitStackTraceInFastThrow"]
+applicationDefaultJvmArgs = []
+
+
 task wrapper(type: Wrapper) {
     gradleVersion = '2.3'
 }
@@ -121,12 +170,8 @@ task stage {
     dependsOn bootRepackage
 }
 
-bootRepackage {
-    enabled = true
-    excludeDevtools = true
-//    classifier = "exec"
-}
-
+// note that the code in the block below get executed at early beginning
+// when gradle parses script
 bootRun {
     // point logback to config to use
     // without this line logback will warn that it finds 2 files (in core.jar and in this app)
@@ -134,22 +179,22 @@ bootRun {
 
     systemProperties = System.properties
 
-    def args = ["-server",
-                "-Xss32m",
-                "-XX:+UseCompressedOops",
-                "-XX:+HeapDumpOnOutOfMemoryError",
-                "-XX:-OmitStackTraceInFastThrow",
-                "-Xmx3500M",
-                ]
-    if ( project.hasProperty('jvmArgs') ) {
-        println "Adding properties from jvmArgs " + project.jvmArgs
-        args.addAll(project.jvmArgs.split('\\s+'))
-    }
-
-    jvmArgs = jvmArgs + args
-
     addResources = true
 
+    def args = []
+    args.addAll(defaultJvmArgs)
+    if ( project.hasProperty('jvmArgs') ) {
+        println "Adding properties from jvmArgs " + project.jvmArgs
+
+        project.jvmArgs.split('\\s+').each {
+            if (it) {       // prevent empty string, which could cause "Error: Could not find or load main class"
+                args.add(it)
+            }
+        }
+    }
+
+    jvmArgs.addAll(args)
+//    println "After adding " + jvmArgs
 }
 
 springBoot {
@@ -168,8 +213,6 @@ sourceCompatibility=1.8
 //    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
 //}
 
-mainClassName = 'com.ethercamp.harmony.Application'
-applicationDefaultJvmArgs = ["-server", "-Xss32m", "-XX:-OmitStackTraceInFastThrow"]
 
 /**
  * Tasks for connecting to predefined networks.
@@ -183,21 +226,43 @@ task runMain << {
     bootRunWithNetworkConfig('main', false)
 }
 
-task runRopsten << { bootRunWithNetworkConfig('ropsten') }
+task runRopsten << { bootRunWithNetworkConfig('ropsten', true) }
 
 task runTest << { bootRunWithNetworkConfig('test') }
 
-task runPrivate << { bootRunWithNetworkConfig('private') }
+task runPrivate << {
+    // change default max heap value for this task as it involves mining
+    maxHeapSize = "-Xmx3500M"
+
+    bootRunWithNetworkConfig('private', true)
+}
 
 task runClassic << { bootRunWithNetworkConfig('classic') }
 
-def bootRunWithNetworkConfig(String name, boolean includePresets = true) {
+def bootRunWithNetworkConfig(String name, boolean includePresets) {
+    def newArgs = []
     if (includePresets) {
-        bootRun.jvmArgs = bootRun.jvmArgs + ('-Dethereumj.conf.res=' + name + '.conf') + ('-Ddatabase.name=database-' + name) + ('-DnetworkProfile=' + name)
+        newArgs.addAll([
+                '-Dethereumj.conf.res=' + name + '.conf',
+                '-Ddatabase.name=database-' + name,
+                '-DnetworkProfile=' + name])
     }
+
+    // set heap size configure in task
+    if (!project.hasProperty('jvmArgs') || project.jvmArgs.indexOf('-Xmx') == -1) {
+        println('Set default heap size for task ' + maxHeapSize)
+        newArgs.add(maxHeapSize)
+    } else {
+        println('Using heap size from user input ' + project.jvmArgs)
+    }
+
+    bootRun.jvmArgs.addAll(newArgs)
+    println 'Running Java with ' + bootRun.jvmArgs
+
     tasks.compileJava.execute()
     tasks.bootRun.execute()
 }
+
 
 def putIfEmpty(Properties properties, String key, String value) {
     // don't use System.hasProperty as it is groovy wrapper
@@ -207,10 +272,13 @@ def putIfEmpty(Properties properties, String key, String value) {
 }
 
 def addJvmArgIfEmpty(String key, String value) {
-    if (System.getProperty(key) == null) {
-        bootRun.jvmArgs = bootRun.jvmArgs + ('-D' + key + '=' + value)
+    boolean hasSystemProperty = System.getProperty(key) != null;
+    if (!hasSystemProperty) {
+        bootRun.jvmArgs.add('-D' + key + '=' + value)
     }
 }
+
+
 
 task webjar(type: Jar, dependsOn: "jar") {
     from(fileTree("dist")) {
@@ -258,6 +326,7 @@ task desktop << {
     createInstaller.execute();
 }
 desktop.dependsOn bootRepackage
+
 
 
 
