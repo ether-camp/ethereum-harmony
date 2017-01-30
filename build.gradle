@@ -310,7 +310,12 @@ task importBlocks(type: JavaExec) {
  * Note: license must be set either in env variable or passed via `-PINSTALL4J_LICENSE=AAAAAAA`
  */
 task desktop << {
-    String license = project.hasProperty('INSTALL4J_LICENSE') ? project.property('INSTALL4J_LICENSE') : System.properties['INSTALL4J_LICENSE']
+    String license = project.hasProperty('INSTALL4J_LICENSE') ? project.property('INSTALL4J_LICENSE') : System.getenv('INSTALL4J_LICENSE')
+    int buildNumber = getNextBuildNumber()
+
+    if (license == null) {
+        throw new GradleException('License must be provided') // or remove it from command line
+    }
 
     task unpackJar(type:Exec) {
         workingDir  "build/libs"
@@ -319,13 +324,49 @@ task desktop << {
 
     task createInstaller(type:Exec) {
         workingDir "."
-        commandLine "install4jc", "--license", license, "EthereumHarmony.install4j"
+        commandLine "install4jc", "--license", license, "EthereumHarmony.install4j", "-r", ('2.0.' + buildNumber)
     }
 
     unpackJar.execute();
     createInstaller.execute();
 }
 desktop.dependsOn bootRepackage
+
+tasks.processResources.doLast() {
+    println 'This will be printed after the build task even if something else calls the build task'
+
+    File versionfile = file(new File('build/resources/main/build-info.properties'))
+    versionfile.text = [
+//            'build.hash=' + gitCommitHash(),
+//            'build.time=' + buildTime(),
+//            'build.branch=' + gitCurBranch(),
+            'build.number=' + getNextBuildNumber()
+    ].join('\n')
+}
+
+
+def getNextBuildNumber() {
+    String key = 'build.number'
+
+    String filePath = System.getProperty('user.home') + "/ether.camp.properties"
+    println(filePath)
+
+    def props = new Properties()
+    file(filePath).withInputStream { props.load(it) }
+
+    int buildNumber = 0
+    if (props) {
+        buildNumber = Integer.parseInt(props[key]) + 1
+    }
+
+    ant.propertyfile(file: filePath) {
+        entry(key: key, value: buildNumber)
+    }
+
+    println('Next version is ' + buildNumber + ' from ' + filePath)
+    return buildNumber
+}
+
 
 
 
