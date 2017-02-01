@@ -331,18 +331,18 @@ task desktop << {
     createInstaller.execute();
 }
 desktop.dependsOn bootRepackage
-
-tasks.processResources.doLast() {
-    println 'This will be printed after the build task even if something else calls the build task'
-
-    File versionfile = file(new File('build/resources/main/build-info.properties'))
-    versionfile.text = [
-//            'build.hash=' + gitCommitHash(),
-//            'build.time=' + buildTime(),
-//            'build.branch=' + gitCurBranch(),
-            'build.number=' + getNextBuildNumber()
-    ].join('\n')
-}
+//
+//tasks.processResources.doLast() {
+//    println 'This will be printed after the build task even if something else calls the build task'
+//
+//    File versionfile = file(new File('build/resources/main/build-info.properties'))
+//    versionfile.text = [
+////            'build.hash=' + gitCommitHash(),
+////            'build.time=' + buildTime(),
+////            'build.branch=' + gitCurBranch(),
+//            'build.number=' + getNextBuildNumber()
+//    ].join('\n')
+//}
 
 
 def getNextBuildNumber() {
@@ -352,7 +352,9 @@ def getNextBuildNumber() {
     println(filePath)
 
     def props = new Properties()
-    file(filePath).withInputStream { props.load(it) }
+
+    File file = file(filePath)
+    file.withInputStream { props.load(it) }
 
     int buildNumber = 0
     if (props) {
