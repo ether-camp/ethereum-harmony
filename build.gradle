@@ -92,7 +92,7 @@ dependencies {
     compile "org.ethereum:solcJ-all:0.4.8"                   // Solidity Compiler win/mac/linux binaries
 
     // don't forget to adjust {ethereumJ.version} in application.properties
-    compile ("org.ethereum:ethereumj-core:1.4.0-RELEASE") {
+    compile ("org.ethereum:ethereumj-core:EXP-Par-0.1.0-SNAPSHOT") {
         changing = true
 
         exclude group: "log4j"
@@ -219,7 +219,7 @@ sourceCompatibility=1.8
  * It is not possible to override task defined values from command line.
  */
 task runMain << {
-    addJvmArgIfEmpty "sync.fast.enabled", "true"
+//    addJvmArgIfEmpty "sync.fast.enabled", "true"
     addJvmArgIfEmpty "ethereumj.conf.res", "ethereumj.conf"
     addJvmArgIfEmpty "database.name", "database"
     addJvmArgIfEmpty "networkProfile", "main"

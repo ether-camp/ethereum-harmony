@@ -39,6 +39,7 @@
         var syncStatuses = {
             'PivotBlock': 'Preparing for fast sync',
             'StateNodes': 'Fast sync',
+            'StateChunks': 'Warp sync',
             'Headers': 'Synced. Headers ({curCnt} of {knownCnt})',
             'BlockBodies': 'Synced. Bodies ({curCnt} of {knownCnt})',
             'Receipts': 'Synced. Receipts ({curCnt} of {knownCnt})',
@@ -48,16 +49,21 @@
         };
 
         var syncStatusesMessageTop = {
+            'SnapshotManifest': 'Warp sync: looking for a Snapshot Manifest',
             'PivotBlock': 'Loading state in fast sync mode.',
             'StateNodes': 'Loading state in fast sync mode.',
+            'StateChunks': 'Loading state in warp sync mode.',
+            'BlockChunks': 'Loading blocks in warp sync mode.',
             'Regular': 'Loading state in long sync mode.'
         };
 
         var syncStatusesMessageBottom = {
             'PivotBlock': 'Preparing for fast sync. Best known block {blockBestKnown}.',
             'StateNodes': 'Imported {curCnt} of {knownCnt} known state nodes.',
+            'StateChunks': 'Imported {curCnt} of {knownCnt} known state chunks.',
             // this one happens when state has been loaded and blocks are loading till last
             'StateNodesBlocks': 'State loaded. Imported {blockLastImported} of {blockBestKnown} known best block.',
+            'BlockChunks': 'State loaded. Loading {blockLastImported} of {blockBestKnown} block chunks.',
             'Regular': 'Imported {blockLastImported} blocks, highest known block is {blockBestKnown}.'
         };
 
