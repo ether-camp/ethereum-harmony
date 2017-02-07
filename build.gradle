@@ -32,11 +32,11 @@
  * System properties (supplied with `-D` prefix):
  *  - see `user.conf` or https://github.com/ethereum/ethereumj/blob/master/ethereumj-core/src/main/resources/ethereumj.conf
  *
- * Default heap size is 1G, unless user change via command line or run `runPrivate` task,
+ * Default heap size is 1.5G, unless user change via command line or run `runPrivate` task,
  * which sets 3.5 GB.
  */
 
-ext.maxHeapSize = '-Xmx1G' // default is 1G, but could be changed via command line or launched task type
+ext.maxHeapSize = '-Xmx1500m' // default is 1G, but could be changed via command line or launched task type
 
 buildscript {
     repositories {
