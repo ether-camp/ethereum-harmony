@@ -47,6 +47,7 @@ import java.util.stream.Collectors;
 import static com.ethercamp.harmony.jsonrpc.TypeConverter.*;
 import static java.math.BigInteger.valueOf;
 import static java.util.Arrays.stream;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.ethereum.crypto.HashUtil.sha3;
 import static org.junit.Assert.*;
 
@@ -211,8 +212,9 @@ public class JsonRpcTest {
             System.out.println("Balance: " + bal0);
             assertTrue(TypeConverter.StringHexToBigInteger(bal0).compareTo(TypeConverter.StringHexToBigInteger(bal1)) > 0);
 
-            JsonRpc.CompilationResult compRes = jsonRpc.eth_compileSolidity(
+            final JsonRpc.CompilationResult compRes = jsonRpc.eth_compileSolidity(
                     "contract A { " +
+                    "   event message(string msg);" +
                     "   uint public num; " +
                     "   function set(uint a) {" +
                     "       num = a; " +
@@ -221,13 +223,15 @@ public class JsonRpcTest {
                     "   function getPublic() public constant returns (address) {" +
                     "        return msg.sender;" +
                     "   }" +
+                    "   function fire() {" +
+                    "       message(\"fire\");" +
+                    "   }" +
                     "}");
-
 
             boolean compiledAllMethods = stream(compRes.info.abiDefinition)
                     .map(abi -> abi.name)
                     .collect(Collectors.toSet())
-                    .containsAll(Arrays.asList("num", "set", "getPublic"));
+                    .containsAll(Arrays.asList("num", "set", "getPublic", "fire"));
             assertTrue(compiledAllMethods);
 
             assertTrue(compRes.code.length() > 10);
@@ -317,6 +321,39 @@ public class JsonRpcTest {
                 args.from = "0x" + newAddress;
                 String result = jsonRpc.eth_call(args, blockResult2.number);
                 assertEquals("0x000000000000000000000000" + newAddress, result);
+            }
+
+            {
+                // Ensure event fired in contract is catched via JSON-RPC filter
+
+                final String contractAddress = receipt2.contractAddress;
+                final JsonRpc.FilterRequest fr = new JsonRpc.FilterRequest();
+                fr.address = contractAddress;
+                final String hexFilterId = jsonRpc.eth_newFilter(fr);
+
+                assertEquals(0, jsonRpc.eth_getFilterChanges(hexFilterId).length);
+
+                CallTransaction.Function fun = CallTransaction.Function.fromSignature("fire");
+                Transaction tx = ethereum.createTransaction(valueOf(3),
+                        valueOf(50_000_000_000L),
+                        valueOf(3_000_000),
+                        StringHexToByteArray(contractAddress),
+                        valueOf(0), fun.encode());
+                tx.sign(ECKey.fromPrivate(sha3("cow".getBytes())));
+
+                String txHash = jsonRpc.eth_sendRawTransaction(TypeConverter.toJsonHex(tx.getEncoded()));
+
+                final String blockHash = mineBlock();
+                final TransactionReceiptDTOExt receipt = jsonRpc.ethj_getTransactionReceipt(txHash);
+                assertTrue(isBlank(receipt.error));
+
+                final JsonRpc.BlockResult block = jsonRpc.eth_getBlockByHash(blockHash, true);
+                assertEquals(1, block.transactions.length);
+                assertEquals(txHash, ((com.ethercamp.harmony.jsonrpc.TransactionResultDTO) block.transactions[0]).hash);
+
+                final Object[] fLogs = jsonRpc.eth_getFilterLogs(hexFilterId);
+
+                assertEquals(1, fLogs.length);
             }
         }
 
