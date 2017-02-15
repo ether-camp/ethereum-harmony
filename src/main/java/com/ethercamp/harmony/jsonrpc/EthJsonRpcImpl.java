@@ -1004,7 +1004,7 @@ public class EthJsonRpcImpl implements JsonRpc {
         int id = filterCounter.getAndIncrement();
         installedFilters.put(id, filter);
 
-        Block blockFrom = fr.fromBlock == null ? null : getByJsonBlockId(fr.fromBlock);
+        final Block blockFrom = fr.fromBlock == null ? null : getByJsonBlockId(fr.fromBlock);
         Block blockTo = fr.toBlock == null ? null : getByJsonBlockId(fr.toBlock);
 
         if (blockFrom != null) {
@@ -1018,7 +1018,7 @@ public class EthJsonRpcImpl implements JsonRpc {
         // the following is not precisely documented
         if ("pending".equalsIgnoreCase(fr.fromBlock) || "pending".equalsIgnoreCase(fr.toBlock)) {
             filter.onPendingTx = true;
-        } else if ("latest".equalsIgnoreCase(fr.fromBlock) || "latest".equalsIgnoreCase(fr.toBlock)) {
+        } else if (fr.toBlock == null || "latest".equalsIgnoreCase(fr.fromBlock) || "latest".equalsIgnoreCase(fr.toBlock)) {
             filter.onNewBlock = true;
         }
 
