@@ -119,6 +119,7 @@ public class WebSocketController {
 
         return "<html><body>"
                 + Arrays.asList(files).stream()
+                    .sorted()
                     .map(f -> "<a href='logs/" + f.getName() + "'>" + f.getName() + "</a> " + readableFileSize(f.length()))
                     .collect(Collectors.joining("<br>"))
 
