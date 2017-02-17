@@ -396,8 +396,13 @@
                 console.log(entry);
                 entry.entries = entry.entries || [];
                 entry.totalElements = entry.totalElements || 0;
-                load(entry, 0, PAGE_SIZE);
                 entry.expanded = !entry.expanded;
+                if (!entry.expanded) {
+                    // clear all loaded items
+                    entry.entries = [];
+                } else {
+                    load(entry, 0, PAGE_SIZE);
+                }
             };
 
             $scope.onSwitchString = function(entry) {
