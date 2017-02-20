@@ -164,8 +164,6 @@
         toastr.options = {
             "positionClass": "toast-top-right",
             "closeButton": true,
-            "progressBar": true,
-            "showEasing": "swing",
             "timeOut": "4000"
         };
         toastr.warning('<strong>' + topMessage + '</strong> <br/><small>' + bottomMessage + '</small>');
@@ -178,8 +176,6 @@
         toastr.options = {
             "positionClass": "toast-top-right",
             "closeButton": true,
-            "progressBar": true,
-            "showEasing": "swing",
             "timeOut": "4000"
         };
         toastr.success('<strong>' + topMessage + '</strong> <br/><small>' + bottomMessage + '</small>');

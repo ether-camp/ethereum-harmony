@@ -3179,4 +3179,11 @@ input[type="number"] {
     /*border-radius: 0 6px 6px 0 !important;*/
 /*}*/
 
+.toast {
+    opacity: 1 !important;
+}
+
+#toast-container > div {
+    opacity: 1 !important;
+}
 
