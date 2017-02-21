@@ -27,6 +27,7 @@ import com.ethercamp.harmony.service.wallet.WalletAddressItem;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
+import org.ethereum.config.SystemProperties;
 import org.ethereum.core.*;
 import org.ethereum.crypto.ECKey;
 import org.ethereum.db.ByteArrayWrapper;
@@ -102,6 +103,9 @@ public class WalletService {
 
     EmbeddedDatabase wordsDatabase;
 
+    @Autowired
+    SystemProperties config;
+
     /**
      * key - hex address in lower case
      * value - address user friendly name
@@ -110,6 +114,8 @@ public class WalletService {
 
     final Map<String, TransactionInfo> pendingSendTransactions = new ConcurrentHashMap<>();
     final Map<String, TransactionInfo> pendingReceiveTransactions = new ConcurrentHashMap<>();
+
+    private boolean subscribedForEvents;
 
     @PostConstruct
     public void init() {
@@ -122,24 +128,36 @@ public class WalletService {
         fileSystemWalletStore.fromStore().stream()
                 .forEach(a -> addresses.put(a.address, a.name));
 
-        ethereum.addListener(new EthereumListenerAdapter() {
-            @Override
-            public void onSyncDone(SyncState state) {
-                if (state == SyncState.UNSECURE) {
-                    ethereum.addListener(new EthereumListenerAdapter() {
-                        @Override
-                        public void onPendingTransactionsReceived(List<Transaction> list) {
-                            handlePendingTransactionsReceived(list);
-                        }
-
-                        @Override
-                        public void onBlock(BlockSummary blockSummary) {
-                            handleBlock(blockSummary);
-                        }
-                    });
+        // workaround issue in ethereumJ-core, where single miner could never got sync done event
+        if (config.minerStart()) {
+            subscribeOnce();
+        } else {
+            ethereum.addListener(new EthereumListenerAdapter() {
+                @Override
+                public void onSyncDone(SyncState state) {
+                    if (state == SyncState.UNSECURE || state == SyncState.COMPLETE) {
+                        subscribeOnce();
+                    }
                 }
-            }
-        });
+            });
+        }
+    }
+
+    private void subscribeOnce() {
+        if (!subscribedForEvents) {
+            subscribedForEvents = true;
+            ethereum.addListener(new EthereumListenerAdapter() {
+                @Override
+                public void onPendingTransactionsReceived(List<Transaction> list) {
+                    handlePendingTransactionsReceived(list);
+                }
+
+                @Override
+                public void onBlock(BlockSummary blockSummary) {
+                    handleBlock(blockSummary);
+                }
+            });
+        }
     }
 
     public void handleBlock(BlockSummary blockSummary) {
