@@ -232,7 +232,7 @@ task runMain << {
 
 task runRopsten << { bootRunWithNetworkConfig('ropsten', true) }
 
-task runTest << { bootRunWithNetworkConfig('test') }
+task runTest << { bootRunWithNetworkConfig('test', true) }
 
 task runPrivate << {
     // change default max heap value for this task as it involves mining
@@ -241,7 +241,7 @@ task runPrivate << {
     bootRunWithNetworkConfig('private', true)
 }
 
-task runClassic << { bootRunWithNetworkConfig('classic') }
+task runClassic << { bootRunWithNetworkConfig('classic', true) }
 
 def bootRunWithNetworkConfig(String name, boolean includePresets) {
     def newArgs = []
