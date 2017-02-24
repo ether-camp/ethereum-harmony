@@ -81,7 +81,7 @@ dependencies {
     compile "org.springframework.boot:spring-boot-starter-actuator"
     compile "org.springframework.boot:spring-boot-starter-websocket"
     compile "org.springframework.boot:spring-boot-starter-data-jpa"
-    compile "org.springframework.boot:spring-boot-devtools"
+//    compile "org.springframework.boot:spring-boot-devtools"
 
     compile "org.hsqldb:hsqldb"
     compile 'com.h2database:h2:1.4.191'
@@ -195,6 +195,10 @@ bootRun {
 
     jvmArgs.addAll(args)
 //    println "After adding " + jvmArgs
+}
+
+bootRepackage {
+    excludeDevtools = true
 }
 
 springBoot {
