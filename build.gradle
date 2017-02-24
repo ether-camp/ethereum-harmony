@@ -155,7 +155,7 @@ dependencies {
 
 mainClassName = 'com.ethercamp.harmony.Application'
 def defaultJvmArgs = ["-server",
-                      "-Xss32m",
+                      "-Xss2M",
                       "-XX:+UseCompressedOops",
                       "-XX:+HeapDumpOnOutOfMemoryError",
                       "-XX:-OmitStackTraceInFastThrow"]

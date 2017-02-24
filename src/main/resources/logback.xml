@@ -10,48 +10,78 @@
         </then>
     </if>
 
+    <!-- Be sure to flush latest logs on exit -->
+    <shutdownHook class="ch.qos.logback.core.hook.DelayingShutdownHook"/>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} %p [%c{1}]  %m%n</pattern>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+    </appender>
 
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${logs.dir}/state.log</file>
-        <!--
-                <append>true</append>
-                <withJansi>true</withJansi>
-                <encoder>
-                    <pattern>%d %highlight(%-5level) [%thread] %cyan(%logger{35}) - %msg%n</pattern>
-                </encoder>
-        -->
-        <encoder>
-            <pattern>%d %-5level [%thread] %logger{35} - %msg%n</pattern>
-        </encoder>
-
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${logs.dir}/state-%d{yyyy-MM-dd_HH}.%i.log</fileNamePattern>
-            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
-                <maxFileSize>100MB</maxFileSize>
-            </timeBasedFileNamingAndTriggeringPolicy>
-            <maxHistory>30</maxHistory>
+            <!-- rollover hourly -->
+            <fileNamePattern>${logs.dir}/state-%d{yyyy-MM-dd_HH}.log.zip</fileNamePattern>
+            <!-- ~1 month -->
+            <maxHistory>720</maxHistory>
+            <totalSizeCap>50GB</totalSizeCap>
         </rollingPolicy>
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} %p [%c{1}]  %m%n</pattern>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>TRACE</level>
+        </filter>
     </appender>
 
-    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <appender name="ASYNC" class="ch.qos.logback.classic.AsyncAppender">
+        <!-- Don't discard INFO, DEBUG, TRACE events in case of queue is 80% full -->
+        <discardingThreshold>0</discardingThreshold>
+        <!-- Default is 256 -->
+        <!-- Logger will block incoming events (log calls) until queue will free some space -->
+        <!-- (the smaller value -> flush occurs often) -->
+        <queueSize>100</queueSize>
 
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>DEBUG</level>
-        </filter>
-
-        <encoder>
-            <pattern>%d %-5level [%thread] %logger{35} - %msg%n</pattern>
-        </encoder>
+        <appender-ref ref="FILE" />
     </appender>
 
     <root level="DEBUG">
         <appender-ref ref="STDOUT"/>
+        <appender-ref ref="ASYNC"/>
     </root>
 
-    <root level="ERROR">
-        <appender-ref ref="FILE"/>
-    </root>
 
+    <!-- Copied from core -->
+    <logger name="org.springframework" level="ERROR"/>
+    <logger name="state" level="WARN"/>
+    <logger name="trie" level="ERROR"/>
+    <logger name="net" level="DEBUG"/>
+    <logger name="execute" level="ERROR"/>
+    <logger name="VM" level="ERROR"/>
+    <logger name="pending" level="DEBUG"/>
+    <logger name="sync" level="TRACE"/>
+    <logger name="wire" level="ERROR"/>
+    <logger name="db" level="DEBUG"/>
+    <logger name="general" level="DEBUG"/>
+    <logger name="TCK-Test" level="ERROR"/>
+    <logger name="org.hibernate" level="ERROR"/>
+    <logger name="repository" level="INFO"/>
+    <logger name="blockchain" level="INFO"/>
+    <logger name="mine" level="DEBUG"/>
+    <logger name="blockqueue" level="DEBUG"/>
+    <logger name="rlp" level="ERROR"/>
+    <logger name="java.nio" level="ERROR"/>
+    <logger name="io.netty" level="ERROR"/>
+    <logger name="discover" level="DEBUG"/>
+    <logger name="hsqldb.db" level="ERROR"/>
+
+
+    <!-- Harmony -->
     <logger level="DEBUG" name="desktop"/>
     <logger level="DEBUG" name="contracts"/>
     <logger level="DEBUG" name="keystore"/>
@@ -60,15 +90,8 @@
     <logger level="DEBUG" name="jsonrpc"/>
     <logger level="INFO" name="org.springframework.web.servlet.DispatcherServlet"/>
     <logger level="DEBUG" name="com.ethercamp.harmony"/>
-    <logger level="ERROR" name="blockchain"/>
-    <logger level="ERROR" name="blockqueue"/>
-    <logger level="INFO" name="ethereum-service"/>
-    <logger level="INFO" name="report"/>
-    <logger level="INFO" name="general"/>
-    <logger level="INFO" name="system"/>
-    <logger level="INFO" name="facade"/>
-    <logger level="INFO" name="block"/>
 
+    <!-- Contract data -->
     <logger level="INFO" name="web-profiler"/>
     <logger level="DEBUG" name="block-saver"/>
     <logger level="DEBUG" name="batch-size-adviser"/>
@@ -80,26 +103,5 @@
     <logger level="INFO" name="discover"/>
     <logger level="INFO" name="sync"/>
     <logger level="TRACE" name="notification"/>
-    <logger level="ERROR" name="wallet"/>
-    <logger level="INFO" name="net"/>
-    <logger level="INFO" name="db"/>
-    <logger level="ERROR" name="peermonitor"/>
-    <logger level="ERROR" name="java.nio"/>
-    <logger level="ERROR" name="io.netty"/>
-    <logger level="ERROR" name="wire"/>
-    <logger level="ERROR" name="VM"/>
-    <logger level="ERROR" name="main"/>
-    <logger level="ERROR" name="trie"/>
-    <logger level="ERROR" name="state"/>
-    <logger level="ERROR" name="repository"/>
-    <logger level="ERROR" name="txs"/>
-    <logger level="ERROR" name="ui"/>
-    <logger level="ERROR" name="gas"/>
-    <logger level="ERROR" name="vmtrace"/>
-    <logger level="ERROR" name="execute"/>
-    <logger level="INFO" name="import-contract"/>
-    <logger level="DEBUG" name="mine"/>
-    <logger level="ERROR" name="o.s.web.servlet.DispatcherServlet"/>
-    <logger level="ERROR" name="com.ethercamp.harmony.Application"/>
 
 </configuration>

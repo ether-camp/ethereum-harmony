@@ -1356,6 +1356,13 @@ public class EthJsonRpcImpl implements JsonRpc {
 
     @Override
     public boolean miner_start() {
+        log.info("miner_start requested. MaxMemory: " + Runtime.getRuntime().maxMemory());
+        final long requiredMemoryBytes = 2000L << 20;   // ~2G
+        if (Runtime.getRuntime().maxMemory() < requiredMemoryBytes) {
+            final String errorMessage = "Not enough JVM heap (" + (Runtime.getRuntime().maxMemory() >> 20) + "Mb) to generate DAG for mining (DAG requires min 1G). It is recommended to set -Xmx3G JVM option";
+            log.error(errorMessage);
+            throw new RuntimeException(errorMessage);
+        }
         blockMiner.startMining();
         return true;
     }
