@@ -23,10 +23,10 @@
     </appender>
 
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${logs.dir}/state.log</file>
+        <file>${logs.dir}/harmony.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!-- rollover hourly -->
-            <fileNamePattern>${logs.dir}/state-%d{yyyy-MM-dd_HH}.log.zip</fileNamePattern>
+            <fileNamePattern>${logs.dir}/harmony-%d{yyyy-MM-dd_HH}.log.zip</fileNamePattern>
             <!-- ~1 month -->
             <maxHistory>720</maxHistory>
             <totalSizeCap>50GB</totalSizeCap>
