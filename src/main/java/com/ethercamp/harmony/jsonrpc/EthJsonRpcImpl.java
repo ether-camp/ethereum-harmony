@@ -1199,7 +1199,9 @@ public class EthJsonRpcImpl implements JsonRpc {
 //
     @Override
     public boolean admin_addPeer(String enodeUrl) {
-        eth.connect(new Node(enodeUrl));
+        final Node node = new Node(enodeUrl);
+        eth.connect(node);
+        nodeManager.getNodeHandler(node).getNodeStatistics().setPredefined(true);
         return true;
     }
 //

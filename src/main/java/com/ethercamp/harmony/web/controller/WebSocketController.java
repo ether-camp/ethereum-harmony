@@ -96,22 +96,26 @@ public class WebSocketController {
     /**
      * @return logs file to be able to download from browser
      */
-    @RequestMapping(value = "/logs/{logName}", method = RequestMethod.GET)
+    @RequestMapping(value = "/logs/{logName:.+}", method = RequestMethod.GET)
     @ResponseBody
     public FileSystemResource logFile(@PathVariable("logName") String logName, HttpServletResponse response) {
-        final String fileName = logName + ".log";
+        final String fileName = logName;
+
+        if (!fileName.endsWith(".log") && !fileName.endsWith(".zip")) {
+            throw new RuntimeException("Forbidden file requested: " + fileName);
+        }
 
         // force file downloading, otherwise line breaks will gone in web view
         response.setContentType("text/plain");
         response.setHeader("Content-Disposition", "attachment; filename=" + fileName);
 
-        return new FileSystemResource(new File("logs/" + fileName));
+        return new FileSystemResource(new File(getLogsDir() + "/" + fileName));
     }
 
     @RequestMapping(value = "/logs", method = RequestMethod.GET)
     @ResponseBody
     public String listLogFiles() {
-        final File logsLocation = new File("logs");
+        final File logsLocation = new File(getLogsDir());
         final File[] files = logsLocation.listFiles();
         if (files == null) {
             return "No logs found";
@@ -124,6 +128,10 @@ public class WebSocketController {
                     .collect(Collectors.joining("<br>"))
 
                 + "</body></html>";
+    }
+
+    private String getLogsDir() {
+        return env.getProperty("logs.dir", "logs");
     }
 
     @RequestMapping(value = "/config", method = RequestMethod.GET)

@@ -64,9 +64,9 @@ public class Application {
 
             Ethereum ethereum = context.getBean(Ethereum.class);
 
-            if (!SystemProperties.getDefault().blocksLoader().equals(""))
+            if (!SystemProperties.getDefault().blocksLoader().equals("")) {
                 ethereum.getBlockLoader().loadBlocks();
-
+            }
         }
     }
 }
