@@ -163,7 +163,7 @@ applicationDefaultJvmArgs = []
 
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '2.3'
+    gradleVersion = '3.4'
 }
 
 task stage {
