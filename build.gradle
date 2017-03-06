@@ -222,26 +222,42 @@ sourceCompatibility=1.8
  * Tasks for connecting to predefined networks.
  * It is not possible to override task defined values from command line.
  */
-task runMain << {
-    addJvmArgIfEmpty "sync.fast.enabled", "true"
-    addJvmArgIfEmpty "ethereumj.conf.res", "ethereumj.conf"
-    addJvmArgIfEmpty "database.name", "database"
-    addJvmArgIfEmpty "networkProfile", "main"
-    bootRunWithNetworkConfig('main', false)
+task runMain() {
+    doLast {
+        addJvmArgIfEmpty "sync.fast.enabled", "true"
+        addJvmArgIfEmpty "ethereumj.conf.res", "ethereumj.conf"
+        addJvmArgIfEmpty "database.name", "database"
+        addJvmArgIfEmpty "networkProfile", "main"
+        bootRunWithNetworkConfig('main', false)
+    }
 }
 
-task runRopsten << { bootRunWithNetworkConfig('ropsten', true) }
-
-task runTest << { bootRunWithNetworkConfig('test', true) }
-
-task runPrivate << {
-    // change default max heap value for this task as it involves mining
-    maxHeapSize = "-Xmx3500M"
-
-    bootRunWithNetworkConfig('private', true)
+task runRopsten() {
+    doLast {
+        bootRunWithNetworkConfig('ropsten', true)
+    }
 }
 
-task runClassic << { bootRunWithNetworkConfig('classic', true) }
+task runTest() {
+    doLast {
+        bootRunWithNetworkConfig('test', true)
+    }
+}
+
+task runPrivate() {
+    doLast {
+        // change default max heap value for this task as it involves mining
+        maxHeapSize = "-Xmx3500M"
+
+        bootRunWithNetworkConfig('private', true)
+    }
+}
+
+task runClassic() {
+    doLast {
+        bootRunWithNetworkConfig('classic', true)
+    }
+}
 
 def bootRunWithNetworkConfig(String name, boolean includePresets) {
     def newArgs = []
@@ -306,6 +322,7 @@ task importBlocks(type: JavaExec) {
     systemProperties    System.properties
     systemProperty      "logback.configurationFile", "src/main/resources/logback.xml"
     systemProperty      "peer.discovery.enabled", false
+    systemProperty      "peer.listen.port", 0
     systemProperty      "sync.enabled", false
 }
 
@@ -313,26 +330,28 @@ task importBlocks(type: JavaExec) {
  * Create installers.
  * Note: license must be set either in env variable or passed via `-PINSTALL4J_LICENSE=AAAAAAA`
  */
-task desktop << {
-    String license = project.hasProperty('INSTALL4J_LICENSE') ? project.property('INSTALL4J_LICENSE') : System.getenv('INSTALL4J_LICENSE')
-    int buildNumber = getNextBuildNumber()
+task desktop() {
+    doLast {
+        String license = project.hasProperty('INSTALL4J_LICENSE') ? project.property('INSTALL4J_LICENSE') : System.getenv('INSTALL4J_LICENSE')
+        int buildNumber = getNextBuildNumber()
 
-    if (license == null) {
-        throw new GradleException('License must be provided') // or remove it from command line
+        if (license == null) {
+            throw new GradleException('License must be provided') // or remove it from command line
+        }
+
+        task unpackJar(type: Exec) {
+            workingDir "build/libs"
+            commandLine "jar", "xf", "harmony.ether.camp.jar"
+        }
+
+        task createInstaller(type: Exec) {
+            workingDir "."
+            commandLine "install4jc", "--license", license, "EthereumHarmony.install4j", "-r", ('2.0.' + buildNumber)
+        }
+
+        unpackJar.execute();
+        createInstaller.execute();
     }
-
-    task unpackJar(type:Exec) {
-        workingDir  "build/libs"
-        commandLine "jar", "xf", "harmony.ether.camp.jar"
-    }
-
-    task createInstaller(type:Exec) {
-        workingDir "."
-        commandLine "install4jc", "--license", license, "EthereumHarmony.install4j", "-r", ('2.0.' + buildNumber)
-    }
-
-    unpackJar.execute();
-    createInstaller.execute();
 }
 desktop.dependsOn bootRepackage
 //
