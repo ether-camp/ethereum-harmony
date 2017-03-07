@@ -30,7 +30,7 @@ Ethereum network private peer. Based on EthereumJ implementation.
 .
 
 ## Prerequisites Installed: 
-* Java 8
+ * Java 8 (64 bit)
 
 .
 
