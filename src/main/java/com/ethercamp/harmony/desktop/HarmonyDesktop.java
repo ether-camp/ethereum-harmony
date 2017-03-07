@@ -50,7 +50,7 @@ public class HarmonyDesktop {
         // Hide Dock icon on Mac
         System.setProperty("apple.awt.UIElement", "true");
 
-//        System.setProperty("database.dir", "/Users/stan/ethereumj/database-morden-v1");
+        System.setProperty("database.dir", "/Users/stan/ethereumj/database-morden-v1");
     }
 
     private final static Logger log = LoggerFactory.getLogger("desktop");
@@ -152,6 +152,7 @@ public class HarmonyDesktop {
             JTextArea textArea = new JTextArea(body);
             JScrollPane scrollPane = new JScrollPane(textArea);
             textArea.setLineWrap(true);
+            textArea.setFont(Font.getFont(Font.MONOSPACED));
             textArea.setEditable(false);
             textArea.setWrapStyleWord(true);
             scrollPane.setPreferredSize( new Dimension( 500, 500 ) );
