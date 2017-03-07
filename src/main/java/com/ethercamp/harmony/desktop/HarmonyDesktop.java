@@ -19,6 +19,7 @@
 package com.ethercamp.harmony.desktop;
 
 import com.ethercamp.harmony.Application;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -26,6 +27,8 @@ import org.springframework.context.ConfigurableApplicationContext;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
 import java.util.concurrent.ExecutorService;
@@ -34,16 +37,20 @@ import java.util.concurrent.Executors;
 import static java.util.Arrays.stream;
 
 /**
- * Created by Stan Reshetnyk on 25.01.17.
+ * Created by Stan Reshetnyk on 25.01.17
  */
 public class HarmonyDesktop {
 
+    private static String LOGS_PATH = System.getProperty("user.home") + "/ethereumj/harmony-logs";
+
     static {
-        System.setProperty("logs.dir", System.getProperty("user.home") + "/ethereumj/harmony-logs");
+        System.setProperty("logs.dir", LOGS_PATH);
         System.setProperty("logback.configurationFile", "src/main/resources/logback.xml");
 
         // Hide Dock icon on Mac
         System.setProperty("apple.awt.UIElement", "true");
+
+//        System.setProperty("database.dir", "/Users/stan/ethereumj/database-morden-v1");
     }
 
     private final static Logger log = LoggerFactory.getLogger("desktop");
@@ -61,7 +68,8 @@ public class HarmonyDesktop {
     final MenuItem loadingMenu = new MenuItem("Starting...") {{setEnabled(false);}};
     final MenuItem quitingMenu = new MenuItem("Quitting...") {{setEnabled(false);}};
 
-    final MenuItem browserMenu = new MenuItem("Open browser");
+    final MenuItem browserMenu = new MenuItem("Open Browser");
+    final MenuItem logsMenu = new MenuItem("Open Logs");
     final MenuItem quitMenu = new MenuItem("Quit");
 
     final URL imageDisabledUrl = ClassLoader.getSystemResource("desktop/camp-disabled-icon-2x.png");
@@ -86,17 +94,13 @@ public class HarmonyDesktop {
                 serverPort = Integer.valueOf(context.getEnvironment().getProperty("local.server.port"));
                 log.info("Spring context created at port " + serverPort);
                 trayIcon.setImage(new ImageIcon(imageEnabledUrl).getImage());
-                setTrayMenu(trayIcon, browserMenu, quitMenu);
+                setTrayMenu(trayIcon, browserMenu, logsMenu, quitMenu);
                 openBrowser();
 
             } catch (Exception e) {
-                final StringBuilder sb = new StringBuilder(e.toString());
-                for (StackTraceElement ste : e.getStackTrace()) {
-                    sb.append("\n\tat ");
-                    sb.append(ste);
-                }
-                String message = sb.toString();
-                showErrorWindow("", "Problem running Harmony:\n\n " + message);
+                final Throwable cause = DesktopUtil.findCauseFromSpringException(e);
+                showErrorWindow(cause.getMessage(), "Problem running Harmony:\n\n"
+                        + ExceptionUtils.getStackTrace(cause));
             }
         });
 
@@ -108,13 +112,23 @@ public class HarmonyDesktop {
         browserMenu.addActionListener(e -> openBrowser());
         quitMenu.addActionListener(event -> {
             log.info("Quit action was requested from tray menu");
-            closeContext();
             trayIcon.setImage(new ImageIcon(imageDisabledUrl).getImage());
-            setTrayMenu(trayIcon, quitingMenu);
+            setTrayMenu(trayIcon, logsMenu, quitingMenu);
+            closeContext();
             System.exit(0);
         });
 
-        setTrayMenu(trayIcon, loadingMenu, quitMenu);
+        logsMenu.addActionListener(event -> {
+            log.info("Logs action was requested from tray menu");
+            final File logsFile = new File(LOGS_PATH);
+            try {
+                Desktop.getDesktop().open(logsFile);
+            } catch (IOException e) {
+                log.error("Problem opening logs dir", e);
+            }
+        });
+
+        setTrayMenu(trayIcon, loadingMenu, logsMenu, quitMenu);
     }
 
     private void closeContext() {
@@ -122,7 +136,7 @@ public class HarmonyDesktop {
             try {
                 context.close();
             } catch (Exception e) {
-                e.printStackTrace();
+                log.error("Problem closing context: " + e.getMessage(), e);
             }
         }
     }
@@ -130,11 +144,44 @@ public class HarmonyDesktop {
     private void showErrorWindow(String title, String body) {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            JOptionPane.showMessageDialog(null, body, null, JOptionPane.PLAIN_MESSAGE);
+//            System.setProperty("apple.awt.UIElement", "false");
+
+            JPanel panel = new JPanel();
+            panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+
+            JTextArea textArea = new JTextArea(body);
+            JScrollPane scrollPane = new JScrollPane(textArea);
+            textArea.setLineWrap(true);
+            textArea.setEditable(false);
+            textArea.setWrapStyleWord(true);
+            scrollPane.setPreferredSize( new Dimension( 500, 500 ) );
+
+            JTextPane titleLabel = new JTextPane();
+            titleLabel.setContentType("text/html"); // let the text pane know this is what you want
+            titleLabel.setText("<html>" + "<b>" + title + "</b>" +  "</html>"); // showing off
+            titleLabel.setEditable(false);
+            titleLabel.setBackground(null);
+            titleLabel.setBorder(null);
+
+            panel.add(titleLabel);
+            panel.add(scrollPane);
+
+            final JFrame frame = new JFrame();
+            frame.setAlwaysOnTop(true);
+            moveCenter(frame);
+            frame.setVisible(true);
+
+            JOptionPane.showMessageDialog(frame, panel, "Oops. Ethereum Harmony stopped with error.",
+                    JOptionPane.CLOSED_OPTION);
             System.exit(1);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Problem showing error window", e);
         }
+    }
+
+    private static void moveCenter(JFrame frame) {
+        Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
+        frame.setLocation(dim.width / 2 - frame.getSize().width / 2, dim.height / 2 - frame.getSize().height / 2);
     }
 
     private void openBrowser() {

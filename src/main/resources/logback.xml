@@ -29,7 +29,7 @@
             <fileNamePattern>${logs.dir}/harmony-%d{yyyy-MM-dd_HH}.log.zip</fileNamePattern>
             <!-- ~1 month -->
             <maxHistory>720</maxHistory>
-            <totalSizeCap>50GB</totalSizeCap>
+            <totalSizeCap>500MB</totalSizeCap>
         </rollingPolicy>
         <encoder>
             <pattern>%d{HH:mm:ss.SSS} %p [%c{1}]  %m%n</pattern>
