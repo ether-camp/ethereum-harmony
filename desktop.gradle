@@ -63,7 +63,7 @@ github {
 # Implemented:
  ...
 """
-    assets = getBinFileNames().stream().map{ "build/" + it }
+    assets = getBinFileNames()
 }
 
 /**
@@ -97,15 +97,15 @@ task desktop() {
         getBinFileNames().each {
             final String to = it;
             final String from = to.replace(versionNormal, versionUnderscored)
-            new File("build/$from").renameTo(new File("build/$to"))
+            new File(from).renameTo(new File(to))
         }
     }
 }
 desktop.dependsOn bootRepackage
 
 def getBinFileNames() {
-    return ["${productName}-macos-${versionNameValue}.${buildNumber}.dmg",
-            "${productName}-windows-x64-${versionNameValue}.${buildNumber}.exe"]
+    return ["build/${productName}-macos-${versionNameValue}.${buildNumber}.dmg",
+            "build/${productName}-windows-x64-${versionNameValue}.${buildNumber}.exe"]
 }
 
 def getNextBuildNumber() {
