@@ -59,13 +59,13 @@ JSON-RPC is available at `http://localhost:8080/rpc`
 
 .
 
+.
 
 .
 
+### Special thanks
 
-.
-
-
+Powered by [![multi-platform installer builder](https://www.ej-technologies.com/images/product_banners/install4j_medium.png)](https://www.ej-technologies.com/products/install4j/overview.html)
 
 ### License
 
