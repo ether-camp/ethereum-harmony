@@ -227,6 +227,7 @@ sourceCompatibility=1.8
  */
 task runMain() {
     doLast {
+        addJvmArgIfEmpty "database.dir", getDatabaseDir("database")
         addJvmArgIfEmpty "sync.fast.enabled", "true"
         addJvmArgIfEmpty "ethereumj.conf.res", "ethereumj.conf"
         addJvmArgIfEmpty "database.name", "database"
@@ -258,13 +259,19 @@ task runPrivate() {
 
 task runClassic() {
     doLast {
+        addJvmArgIfEmpty "sync.fast.enabled", "true"
         bootRunWithNetworkConfig('classic', true)
     }
+}
+
+def getDatabaseDir(String name) {
+    return System.getProperty("user.home") + "/ethereumj/" + name
 }
 
 def bootRunWithNetworkConfig(String name, boolean includePresets) {
     def newArgs = []
     if (includePresets) {
+        addJvmArgIfEmpty "database.dir", getDatabaseDir("database-" + name)
         newArgs.addAll([
                 '-Dethereumj.conf.res=' + name + '.conf',
                 '-Ddatabase.name=database-' + name,
