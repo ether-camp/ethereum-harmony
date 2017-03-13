@@ -20,6 +20,7 @@ package com.ethercamp.harmony.service;
 
 import com.ethercamp.contrdata.config.ContractDataConfig;
 import com.ethercamp.contrdata.storage.Storage;
+import com.ethercamp.contrdata.storage.dictionary.Layout;
 import com.ethercamp.contrdata.storage.dictionary.StorageDictionary;
 import com.ethercamp.contrdata.storage.dictionary.StorageDictionaryDb;
 import org.ethereum.core.Repository;
@@ -83,8 +84,7 @@ public class BaseContextAwareTest {
 
         @Bean
         public StorageDictionaryDb storageDictionaryDb() {
-            StorageDictionaryDb db = new StorageDictionaryDb();
-            db.setDataSource(storageDict());
+            StorageDictionaryDb db = new StorageDictionaryDb(storageDict());
             return db;
         }
     }
@@ -119,7 +119,7 @@ public class BaseContextAwareTest {
         @Override
         public Set<DataWord> keys(byte[] address) {
 //            return repository.getContractDetails(address).getStorageKeys();
-            StorageDictionary storageDictionary = storageDictionaryDb.get(StorageDictionaryDb.Layout.Solidity, address);
+            StorageDictionary storageDictionary = storageDictionaryDb.getDictionaryFor(Layout.Lang.solidity, address);
             if (storageDictionary == null) {
                 return Collections.emptySet();
             }

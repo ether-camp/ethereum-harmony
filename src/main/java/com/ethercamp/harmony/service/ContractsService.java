@@ -25,6 +25,7 @@ import com.ethercamp.contrdata.storage.Path;
 import com.ethercamp.contrdata.storage.Storage;
 import com.ethercamp.contrdata.storage.StorageEntry;
 import com.ethercamp.contrdata.storage.StoragePage;
+import com.ethercamp.contrdata.storage.dictionary.Layout;
 import com.ethercamp.contrdata.storage.dictionary.StorageDictionary;
 import com.ethercamp.contrdata.storage.dictionary.StorageDictionaryDb;
 import com.ethercamp.contrdata.storage.dictionary.StorageDictionaryVmHook;
@@ -266,7 +267,7 @@ public class ContractsService {
     }
 
     protected StorageDictionary getDictionary(byte[] address) {
-        return dictionaryDb.getOrCreate(StorageDictionaryDb.Layout.Solidity, address);
+        return dictionaryDb.getDictionaryFor(Layout.Lang.solidity, address);
     }
 
     private String getValidatedAbi(String address, String contractName, CompilationResult result) {

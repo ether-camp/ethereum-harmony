@@ -20,6 +20,7 @@ package com.ethercamp.harmony.service;
 
 import com.ethercamp.contrdata.ContractDataService;
 import com.ethercamp.contrdata.storage.StorageEntry;
+import com.ethercamp.contrdata.storage.dictionary.Layout;
 import com.ethercamp.contrdata.storage.dictionary.StorageDictionary;
 import com.ethercamp.contrdata.storage.dictionary.StorageDictionaryDb;
 import com.ethercamp.harmony.dto.ContractObjects;
@@ -108,7 +109,7 @@ public class ImportContractIndexTest extends BaseContextAwareTest {
 
         System.out.println("");
 
-        final StorageDictionary dictionary = dictionaryDb.getOrCreate(StorageDictionaryDb.Layout.Solidity, Hex.decode(hexAddress));
+        final StorageDictionary dictionary = dictionaryDb.getDictionaryFor(Layout.Lang.solidity, Hex.decode(hexAddress));
         final StorageDictionary.PathElement root = dictionary.getByPath();
 //        System.out.println(dictionary.dump());
 //        System.out.println();
