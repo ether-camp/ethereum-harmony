@@ -14,13 +14,5 @@
     "0000000000000000000000000000000000000004": { "balance": "1" },
     "102e61f5d8f9bc71d0ad4a084df4e65e05ce0e1c": { "balance": "1606938044258990275541962092341162602522202993782792835301376" },
     "cd2a3d9f938e13cd947ec05abc7fe734df8dd826": { "balance": "10000000000000000" }
-  },
-  "config": {
-    "homesteadBlock": 20,
-    "daoForkBlock": 20,
-    "daoForkSupport": false,
-    "eip150Block": 20,
-    "eip158Block": 20,
-    "eip155Block": 20
   }
 }
