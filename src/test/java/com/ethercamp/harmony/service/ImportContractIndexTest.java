@@ -121,7 +121,7 @@ public class ImportContractIndexTest extends BaseContextAwareTest {
     }
 
     private void loadEntries(StorageDictionary.PathElement root, String path) throws UnirestException {
-        final String url = "https://test-state.ether.camp/api/v1/accounts/a9be82e93628abaac5ab557a9b3b02f711c0151c/smart-storage?page=0&size=600&path=" + path;
+        final String url = "https://temp.ether.camp/api/v1/accounts/a9be82e93628abaac5ab557a9b3b02f711c0151c/smart-storage?page=0&size=600&path=" + path;
         final JsonNode result = Unirest.get(url).asJson().getBody();
 
         final JSONArray entities = result.getObject().getJSONArray("content");
