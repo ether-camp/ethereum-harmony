@@ -42,6 +42,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabase;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -161,7 +162,8 @@ public class WalletService {
     }
 
     public void handleBlock(BlockSummary blockSummary) {
-        checkForChangesInWallet(blockSummary
+        checkForChangesInWallet(blockSummary,
+                blockSummary
                         .getReceipts().stream()
                         .map(receipt -> receipt.getTransaction())
                         .collect(Collectors.toList()),
@@ -179,12 +181,13 @@ public class WalletService {
     }
 
     public void handlePendingTransactionsReceived(List<Transaction> list) {
-        checkForChangesInWallet(list,
+        checkForChangesInWallet(null,
+                list,
                 (info) -> pendingSendTransactions.put(info.getHash(), info),
                 (info) -> pendingReceiveTransactions.put(info.getHash(), info));
     }
 
-    private void checkForChangesInWallet(List<Transaction> transactions, Consumer<TransactionInfo> sendHandler, Consumer<TransactionInfo> receiveHandler) {
+    private void checkForChangesInWallet(BlockSummary blockSummary, List<Transaction> transactions, Consumer<TransactionInfo> sendHandler, Consumer<TransactionInfo> receiveHandler) {
         final Set<ByteArrayWrapper> subscribed = addresses.keySet().stream()
                 .map(a -> cleanAddress(a))
                 .flatMap(a -> {
@@ -218,10 +221,20 @@ public class WalletService {
             }
         });
 
-        if (!confirmedTransactions.isEmpty()) {
+        // check if balance changes due to block reward
+        final Optional<ByteArrayWrapper> coinbase = Optional.ofNullable(blockSummary).map(bs -> new ByteArrayWrapper(bs.getBlock().getCoinbase()));
+        final Boolean matchCoinbase = coinbase.map(c -> subscribed.stream().anyMatch(a -> c.equals(a))).orElse(false);
+
+        final boolean needToSendUpdate = matchCoinbase || !confirmedTransactions.isEmpty();
+        if (needToSendUpdate) {
             // update wallet if transactions are related to wallet addresses
             clientMessageService.sendToTopic("/topic/getWalletInfo", getWalletInfo());
         }
+    }
+
+    @Scheduled(fixedRate = 60000)
+    private void doSendWalletInfo() {
+        clientMessageService.sendToTopic("/topic/getWalletInfo", getWalletInfo());
     }
 
     private String cleanAddress(String input) {
