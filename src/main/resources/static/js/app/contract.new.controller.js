@@ -205,7 +205,7 @@
                     return;
                 }
                 var rect = scrollContainer.getBoundingClientRect();
-                var newHeight = $(window).height() - rect.top - 20;
+                var newHeight = $(window).height() - rect.top;
                 //$(scrollContainer).css('maxHeight', newHeight + 'px');
                 $scope.scrollConfig.setHeight = newHeight;
                 $timeout(function() {

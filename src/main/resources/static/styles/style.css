@@ -2989,6 +2989,8 @@ input[type="number"] {
 }
 
 .peer-details {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
     white-space: pre-wrap;
     word-wrap: break-word;
 }
