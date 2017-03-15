@@ -49,7 +49,7 @@
                             </p>
                         </div>
 
-                        <div class="panel-body">
+                        <div class="panel-body" id="newcontract-scroll-container">
                             <form name="newContractForm" novalidate class="bs-example">
                                 <div class="form-group" show-errors>
                                     <label>Address</label>
@@ -100,13 +100,15 @@
 
                             </form>
 
+                            <div class="form-group flex flex-justify-center m-t-md">
+                                <a href="#"
+                                   ng-click="onFinalAddFiles()"
+                                   class="btn btn-w-md btn-primary">Upload !!!</a>
+                            </div>
+
                         </div>
 
-                        <div class="form-group flex flex-justify-center">
-                            <a href="#"
-                               ng-click="onFinalAddFiles()"
-                               class="btn btn-w-md btn-primary">Upload !!!</a>
-                        </div>
+
                     </div>
                 </div>
 

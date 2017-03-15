@@ -1,0 +1,150 @@
+/*
+ * Copyright 2015, 2016 Ether.Camp Inc. (US)
+ * This file is part of Ethereum Harmony.
+ *
+ * Ethereum Harmony is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Ethereum Harmony is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Ethereum Harmony.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/**
+ * Tasks:
+ *  - desktop
+ *  - githubRelease
+ */
+
+apply plugin: 'co.riiid.gradle'                 // upload to github releases
+
+project.ext.productName = "EthereumHarmony"
+
+project.ext.versionNameValue = "2.1";
+
+project.ext.buildNumberFilePath = System.getProperty('user.home') + "/harmony.desktop.number.properties"
+
+// Build number is zero for debug or incremented for release
+project.ext.buildNumber = 0;
+
+// pass via -PgithubToken=1234567890
+def githubAccessToken = project.hasProperty('githubToken') ? project.property('githubToken') : System.getenv('githubToken')
+
+// Increase version code if releasing binaries for QA or Production
+if (project.gradle.startParameter.taskNames.indexOf('desktop') > -1) {
+    buildNumber = getNextBuildNumber()
+}
+
+// Check github token presence
+if (project.gradle.startParameter.taskNames.indexOf('githubRelease') > -1) {
+    if (!githubAccessToken) {
+        throw new RuntimeException("Please set github access token via -PgithubToken=1234567890")
+    }
+    buildNumber = getCurrentBuildNumber()
+    println("Using github token " + githubAccessToken.substring(0, 6) + "...")
+}
+
+github {
+    baseUrl = "https://api.github.com"
+
+    owner = "ether-camp"
+    repo = "ethereum-harmony"
+    token = "$githubAccessToken"
+    tagName = "v${versionNameValue}b${buildNumber}"
+    name = "${productName} $versionNameValue Build $buildNumber"
+    draft = true
+    body = """
+# Implemented:
+ ...
+"""
+    assets = getBinFileNames()
+}
+
+/**
+ * Create installers.
+ * Note: license must be set either in env variable or passed via `-PINSTALL4J_LICENSE=AAAAAAA`
+ */
+task desktop() {
+    doLast {
+        String license = project.hasProperty('INSTALL4J_LICENSE') ? project.property('INSTALL4J_LICENSE') : System.getenv('INSTALL4J_LICENSE')
+
+        if (license == null) {
+            throw new GradleException('License must be provided') // or remove it from command line
+        }
+
+        task unpackJar(type: Exec) {
+            workingDir "build/libs"
+            commandLine "jar", "xf", "harmony.ether.camp.jar"
+        }
+
+        task createInstaller(type: Exec) {
+            workingDir "."
+            commandLine "install4jc", "--license", license, "EthereumHarmony.install4j", "-r", (versionNameValue + '.' + buildNumber)
+        }
+
+        unpackJar.execute();
+        createInstaller.execute();
+
+        // rename to proper pattern
+        final versionNormal = "${versionNameValue}.${buildNumber}"
+        final versionUnderscored = versionNormal.replaceAll("\\.", "_")
+        getBinFileNames().each {
+            final String to = it;
+            final String from = to.replace(versionNormal, versionUnderscored)
+            new File(from).renameTo(new File(to))
+        }
+    }
+}
+desktop.dependsOn bootRepackage
+
+def getBinFileNames() {
+    return ["build/${productName}-macos-${versionNameValue}.${buildNumber}.dmg",
+            "build/${productName}-windows-x64-${versionNameValue}.${buildNumber}.exe"]
+}
+
+def getNextBuildNumber() {
+    String key = 'build.number'
+
+    def props = new Properties()
+    int result = 0
+
+    File file = file(buildNumberFilePath)
+    if (file.exists()) {
+        file.withInputStream { props.load(it) }
+        if (props) {
+            result = Integer.parseInt(props[key]) + 1
+        }
+    }
+
+    ant.propertyfile(file: buildNumberFilePath) {
+        entry(key: key, value: result)
+    }
+
+    println('Next build number is ' + result + ' from ' + buildNumberFilePath)
+    return result
+}
+
+def getCurrentBuildNumber() {
+    String key = 'build.number'
+
+    def props = new Properties()
+    int buildNumber = 0
+
+    File file = file(buildNumberFilePath)
+    if (file.exists()) {
+        file.withInputStream { props.load(it) }
+        if (props) {
+            buildNumber = Integer.parseInt(props[key])
+        }
+    }
+
+    println('Current build number is ' + buildNumber + ' from ' + buildNumberFilePath)
+    return buildNumber
+}
+

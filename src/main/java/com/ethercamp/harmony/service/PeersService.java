@@ -167,9 +167,9 @@ public class PeersService {
             final String os = "OS: " + StringUtils.capitalize(array[2]);
             final String version = "Version: " + array[3];
 
-            return String.join(delimiter, type, os, version, countryRow, "", details, "", supports, "", blockNumber);
+            return String.join(delimiter, type, os, version, countryRow, "", details, supports, blockNumber);
         } else {
-            return String.join(delimiter, countryRow, details, supports, "", blockNumber);
+            return String.join(delimiter, countryRow, details, supports, blockNumber);
         }
     }
 

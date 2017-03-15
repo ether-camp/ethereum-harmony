@@ -20,8 +20,11 @@ package com.ethercamp.harmony;
 
 import com.ethercamp.harmony.config.EthereumHarmonyConfig;
 import org.ethereum.Start;
+import org.ethereum.config.SystemProperties;
+import org.ethereum.facade.Ethereum;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Import;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
@@ -52,7 +55,18 @@ public class Application {
             Start.main(args);
             // system is expected to exit after action performed
         } else {
-            SpringApplication.run(new Object[]{Application.class}, args);
+            if (!SystemProperties.getDefault().blocksLoader().equals("")) {
+                SystemProperties.getDefault().setSyncEnabled(false);
+                SystemProperties.getDefault().setDiscoveryEnabled(false);
+            }
+
+            ConfigurableApplicationContext context = SpringApplication.run(new Object[]{Application.class}, args);
+
+            Ethereum ethereum = context.getBean(Ethereum.class);
+
+            if (!SystemProperties.getDefault().blocksLoader().equals("")) {
+                ethereum.getBlockLoader().loadBlocks();
+            }
         }
     }
 }
