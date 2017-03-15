@@ -26,7 +26,7 @@ apply plugin: 'co.riiid.gradle'                 // upload to github releases
 
 project.ext.productName = "EthereumHarmony"
 
-project.ext.versionNameValue = "2.0";
+project.ext.versionNameValue = "2.1";
 
 project.ext.buildNumberFilePath = System.getProperty('user.home') + "/harmony.desktop.number.properties"
 
