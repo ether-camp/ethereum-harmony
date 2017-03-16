@@ -84,7 +84,8 @@ public class JsonRpcTest {
          */
         @Bean
         public SystemProperties systemProperties() {
-            SystemProperties props = new SystemProperties();
+            SystemProperties.resetToDefault();
+            SystemProperties props = SystemProperties.getDefault();
             props.overrideParams(ConfigFactory.parseString(config.replaceAll("'", "\"")));
             FrontierConfig config = new FrontierConfig(new FrontierConfig.FrontierConstants() {
                 @Override
@@ -92,7 +93,6 @@ public class JsonRpcTest {
                     return BigInteger.ONE;
                 }
             });
-            SystemProperties.getDefault().setBlockchainConfig(config);
             props.setBlockchainConfig(config);
             return props;
         }
