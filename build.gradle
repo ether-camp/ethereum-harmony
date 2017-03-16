@@ -208,6 +208,11 @@ springBoot {
     mainClass = "com.ethercamp.harmony.Application"
 }
 
+test {
+    dependsOn cleanTest
+    testLogging.showStandardStreams = true
+}
+
 sourceCompatibility=1.8
 
 // to keep method arguments names in bytecode
