@@ -26,12 +26,14 @@ import org.ethereum.core.*;
 import org.ethereum.crypto.ECKey;
 import org.ethereum.facade.Ethereum;
 import org.ethereum.util.ByteUtil;
+import org.ethereum.util.blockchain.StandaloneBlockchain;
 import org.junit.Before;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.Collections;
 
 import static org.ethereum.crypto.HashUtil.sha3;
 import static org.mockito.Mockito.*;
@@ -98,8 +100,11 @@ public class WalletTests {
 
         TransactionReceipt transactionReceipt = new TransactionReceipt();
         transactionReceipt.setTransaction(transaction);
-        BlockSummary blockSummary = new BlockSummary(null, null, Arrays.asList(transactionReceipt), null);
 
+        final StandaloneBlockchain sb = new StandaloneBlockchain();
+        final Block block = sb.createBlock();
+
+        BlockSummary blockSummary = new BlockSummary(block, null, Arrays.asList(transactionReceipt), null);
 
         {
             when(walletService.repository.getBalance(Hex.decode(ADDRESS_1))).thenReturn(BALANCE_1_1);

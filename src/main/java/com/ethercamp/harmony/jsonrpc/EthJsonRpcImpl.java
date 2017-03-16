@@ -500,7 +500,7 @@ public class EthJsonRpcImpl implements JsonRpc {
         return TypeConverter.toJsonHex(signatureBytes);
     }
 
-    public byte[] toByteArray(ECKey.ECDSASignature signature) {
+    private byte[] toByteArray(ECKey.ECDSASignature signature) {
         final byte fixedV = signature.v >= 27
                 ? (byte) (signature.v - 27)
                 :signature.v;

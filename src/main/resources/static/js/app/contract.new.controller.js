@@ -105,15 +105,20 @@
                     address: remove0x($scope.newContract.address).toLowerCase(),
                     sourceCode: $scope.newContract.sourceCode
                 }})
-                .success(function(result) {
+                .then(function(result) {
                     console.log('Add source result');
                     console.log(result);
-                    if (result && result.success) {
+                    if (result && result.data && result.data.success) {
                         $location.path('/contracts');
                     } else {
-                        showFormError('Upload failed', result.errorMessage || 'Unknown error');
+                        showFormError('Upload failed', result.data.errorMessage || 'Unknown error');
                     }
                 })
+                .catch(function(error) {
+                    console.log('Failed request');
+                    console.log(error);
+                    showFormError('', 'Problem processing request');
+                });
         };
 
         $scope.onAddFile = function() {
