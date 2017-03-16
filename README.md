@@ -10,6 +10,10 @@ Ethereum network private peer. Based on EthereumJ implementation.
 
 [![Ethereum Harmony Demo](http://i.imgur.com/zeJMQ94.png)](https://www.youtube.com/watch?v=3qASGOy3qrw )
 
+Smart contract trace sample: 
+
+https://www.youtube.com/watch?v=leaAMTgjvxg
+
  
 ### Features: 
 
