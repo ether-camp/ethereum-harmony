@@ -371,6 +371,11 @@ public class ContractsService {
     private ContractInfoDTO compileAndSave(String hexAddress, List<String> files) {
         final byte[] address = Hex.decode(hexAddress);
 
+        final byte[] codeBytes = ethereum.getRepository().getCode(address);
+        if (codeBytes == null || codeBytes.length == 0) {
+            throw validationError("Account with address '%s' hasn't any code. Please ensure blockchain is fully synced.", hexAddress);
+        }
+
         // get list of contracts which match to deployed code
         final List<Validation<ContractException, ContractEntity>> validationResult = files.stream()
                 .flatMap(src -> {
