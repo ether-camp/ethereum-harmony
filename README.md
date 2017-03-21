@@ -47,7 +47,7 @@ https://www.youtube.com/watch?v=leaAMTgjvxg
 Navigate to `http://localhost:8080`
 JSON-RPC is available at `http://localhost:8080/rpc`
 
-(*) Use `gradlew bootRun -Dserver.port=9999` option to change web interface port number.
+(*) Use `gradlew runMain -Dserver.port=9999` option to change web interface port number.
 
 .
 
