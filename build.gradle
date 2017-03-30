@@ -237,6 +237,7 @@ task runMain() {
         addJvmArgIfEmpty "ethereumj.conf.res", "ethereumj.conf"
         addJvmArgIfEmpty "database.name", "database"
         addJvmArgIfEmpty "networkProfile", "main"
+        addJvmArgIfEmpty "errorResolver.web3jCompliant", "false"
         bootRunWithNetworkConfig('main', false)
     }
 }
@@ -277,6 +278,7 @@ def bootRunWithNetworkConfig(String name, boolean includePresets) {
     def newArgs = []
     if (includePresets) {
         addJvmArgIfEmpty "database.dir", getDatabaseDir("database-" + name)
+        addJvmArgIfEmpty "errorResolver.web3jCompliant", "false"
         newArgs.addAll([
                 '-Dethereumj.conf.res=' + name + '.conf',
                 '-Ddatabase.name=database-' + name,
