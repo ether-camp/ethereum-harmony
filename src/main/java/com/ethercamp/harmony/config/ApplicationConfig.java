@@ -38,7 +38,7 @@ import com.ethercamp.harmony.util.exception.Web3jSafeAnnotationsErrorResolver;
 @ComponentScan("com.ethercamp")
 public class ApplicationConfig extends WebMvcConfigurerAdapter {
 
-    private final String errorResolverKey = "errorResolver.web3jCompliant";
+    private static final String ERROR_RESOLVER_KEY = "jsonrpc.web3jCompliantError";
 
     /**
      * Export bean which will find our json-rpc bean with @JsonRpcService and publish it.
@@ -50,8 +50,7 @@ public class ApplicationConfig extends WebMvcConfigurerAdapter {
     public com.googlecode.jsonrpc4j.spring.AutoJsonRpcServiceExporter exporter() {
         com.googlecode.jsonrpc4j.spring.AutoJsonRpcServiceExporter serviceExporter = new com.googlecode.jsonrpc4j.spring.AutoJsonRpcServiceExporter();
 
-        if (System.getProperty(this.errorResolverKey) != null && 
-            System.getProperty(this.errorResolverKey).toUpperCase().equals("TRUE")) {
+        if ("true".equalsIgnoreCase(System.getProperty(ERROR_RESOLVER_KEY, ""))) {
           serviceExporter.setErrorResolver(Web3jSafeAnnotationsErrorResolver.INSTANCE);
         }
 
