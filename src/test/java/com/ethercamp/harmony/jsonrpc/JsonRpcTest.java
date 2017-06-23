@@ -121,7 +121,7 @@ public class JsonRpcTest {
 
         @Bean
         @Scope("prototype")
-        public DbSource<byte[]> keyValueDataSource() {
+        public DbSource<byte[]> keyValueDataSource(String s) {
             System.out.println("Sample DB created name");
             return new HashMapDB<byte[]>();
         }
