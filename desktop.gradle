@@ -83,12 +83,22 @@ task desktop() {
             commandLine "jar", "xf", "harmony.ether.camp.jar"
         }
 
+        // workaround for Windows installer
+        // after "jar xf" has been executed, filenames started with "nul" become appended by '%' under the Windows
+        // i.e. nul.json => nul%.json, nul.topo.json => nul%.topo.json
+        // that '%' symbol causes an installation problem: files can't be extracted
+        // remove whole src/ folder containing problem files
+        task cleanUpDatamaps(type: Delete) {
+            delete "./build/libs/BOOT-INF/classes/static/bower_components/datamaps/src/"
+        }
+
         task createInstaller(type: Exec) {
             workingDir "."
             commandLine "install4jc", "--license", license, "EthereumHarmony.install4j", "-r", (versionNameValue + '.' + buildNumber)
         }
 
         unpackJar.execute();
+        cleanUpDatamaps.execute();
         createInstaller.execute();
 
         // rename to proper pattern
