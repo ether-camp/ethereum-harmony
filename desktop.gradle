@@ -83,11 +83,13 @@ task desktop() {
             commandLine "jar", "xf", "harmony.ether.camp.jar"
         }
 
-        // workaround for Windows installer
-        // after "jar xf" has been executed, filenames started with "nul" become appended by '%' under the Windows
-        // i.e. nul.json => nul%.json, nul.topo.json => nul%.topo.json
-        // that '%' symbol causes an installation problem: files can't be extracted
-        // remove whole src/ folder containing problem files
+		// ** Workaround for Windows installer **
+        // Ages ago at MS-DOS days, Microsoft defined a short list of reserved words that cannot be used as first part of a filename.
+        // That list still lasts now with Windows 10 and it includes: NUL, CON, PRN, AUX, COM1, COM2, COM3, COM4, COM5, COM6, COM7,
+        // COM8, COM9, LPT1, LPT2, LPT3, LPT4, LPT5, LPT6, LPT7, LPT8, LPT9.
+        // Datamaps source code cointains files named like nul.json, nul.topo.json, and so on, so when the installer tries to extract
+        // those files it fails with a "Could not create this file" error. To fix this we remove the whole src/ folder containing
+        // the offending files.
         task cleanUpDatamaps(type: Delete) {
             delete "./build/libs/BOOT-INF/classes/static/bower_components/datamaps/src/"
         }
