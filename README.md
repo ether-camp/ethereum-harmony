@@ -60,11 +60,13 @@ JSON-RPC is available at either `http://localhost:8080/rpc` or `http://localhost
 | Test      | `gradlew runTest`      | Start server connecting to **Test** network |
 | Classic | `gradlew runClassic`      | Start server connecting to **Ethereum Classic** network |   
 | Private | `gradlew runPrivate`      | Start server, no network connection, single miner running|    
-| Custom | `gradlew runCustom`      | Start server connecting to custom network, check [custom network section](#custom-net) |    
+| Custom | `gradlew runCustom`      | Start server connecting to custom network (check [custom network](#custom-net)) |
 
 .
 
 ## Run in a custom network <a id="custom-net"></a>
+* `git clone https://github.com/ether-camp/ethereum-harmony`
+* `cd ethereum-harmony`
 * Create a custom config file formatted as [ethereumj.conf](https://github.com/ethereum/ethereumj/blob/master/ethereumj-core/src/main/resources/ethereumj.conf) and amend necessary options. File content should look like that:
   ```
   genesisFile = /path/to/custom/genesis.json
@@ -83,7 +85,7 @@ JSON-RPC is available at either `http://localhost:8080/rpc` or `http://localhost
 
   sync.fast.enabled = false
   ```
-  *Note:* options that haven't been substituted by custom config will be supplied from [ethereumj.conf](https://github.com/ethereum/ethereumj/blob/master/ethereumj-core/src/main/resources/ethereumj.conf)
+  **Note:** options that haven't been substituted by custom config will be supplied from [ethereumj.conf](https://github.com/ethereum/ethereumj/blob/master/ethereumj-core/src/main/resources/ethereumj.conf)
 
 * Place Genesis file to the path specified by `genesisFile`; good sample is [ropsten.json](https://github.com/ethereum/ethereumj/blob/master/ethereumj-core/src/main/resources/genesis/ropsten.json)
 
