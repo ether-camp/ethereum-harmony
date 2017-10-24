@@ -269,6 +269,38 @@ task runClassic() {
     }
 }
 
+task runCustom() {
+    doLast {
+        def newArgs = []
+        newArgs.add('-DnetworkProfile=custom')
+
+        if (System.getProperty('ethereumj.conf.file') == null) {
+            println("Config file is not supplied")
+            println("Run 'gradlew runCustom -Dethereumj.conf.file=/path/to/custom.conf' to pass the config")
+            throw new StopExecutionException('Custom config file is not supplied')
+        }
+
+        if (!file(System.getProperty('ethereumj.conf.file')).exists()) {
+            println("File '" + System.getProperty('ethereumj.conf.file') + "' does not exist")
+            throw new StopExecutionException('Custom config file does not exist')
+        }
+
+        // set heap size configure in task
+        if (!project.hasProperty('jvmArgs') || project.jvmArgs.indexOf('-Xmx') == -1) {
+            println('Set default heap size for task ' + maxHeapSize)
+            newArgs.add(maxHeapSize)
+        } else {
+            println('Using heap size from user input ' + project.jvmArgs)
+        }
+
+        bootRun.jvmArgs.addAll(newArgs)
+        println 'Running Java with ' + bootRun.jvmArgs
+
+        tasks.compileJava.execute()
+        tasks.bootRun.execute()
+    }
+}
+
 def getDatabaseDir(String name) {
     return System.getProperty("user.home") + "/ethereumj/" + name
 }

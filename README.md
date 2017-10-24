@@ -45,7 +45,7 @@ https://www.youtube.com/watch?v=leaAMTgjvxg
 * Run Service: `gradlew runMain`  ( live network by default or any [other environment](#options) )
 
 Navigate to `http://localhost:8080`
-JSON-RPC is available at `http://localhost:8080/rpc`
+JSON-RPC is available at either `http://localhost:8080/rpc` or `http://localhost:8080`
 
 (*) Use `gradlew runMain -Dserver.port=9999` option to change web interface port number.
 
@@ -60,6 +60,39 @@ JSON-RPC is available at `http://localhost:8080/rpc`
 | Test      | `gradlew runTest`      | Start server connecting to **Test** network |
 | Classic | `gradlew runClassic`      | Start server connecting to **Ethereum Classic** network |   
 | Private | `gradlew runPrivate`      | Start server, no network connection, single miner running|    
+| Custom | `gradlew runCustom`      | Start server connecting to custom network, check [custom network section](#custom-net) |    
+
+.
+
+## Run in a custom network <a id="custom-net"></a>
+* Create a custom config file formatted as [ethereumj.conf](https://github.com/ethereum/ethereumj/blob/master/ethereumj-core/src/main/resources/ethereumj.conf) and amend necessary options. File content should look like that:
+  ```
+  genesisFile = /path/to/custom/genesis.json
+  database.dir = database-private
+
+  peer {
+    networkId = 10101
+    listen.port = 50505
+
+    discovery.enabled = false
+    active = [
+      {url = "enode://6ce05930c72abc632c58e2e4324f7c7ea478cec0ed4fa2528982cf34483094e9cbc9216e7aa349691242576d552a2a56aaeae426c5303ded677ce455ba1acd9d@13.84.180.240:30303"}
+      {url = "enode://20c9ad97c081d63397d7b685a412227a40e23c8bdc6688c6f37e97cfbc22d2b4d1db1510d8f61e6a8866ad7f0e17c02b14182d37ea7c3c8b9c2683aeb6b733a1@52.169.14.227:30303"}
+    ]
+  }
+
+  sync.fast.enabled = false
+  ```
+  *Note:* options that haven't been substituted by custom config will be supplied from [ethereumj.conf](https://github.com/ethereum/ethereumj/blob/master/ethereumj-core/src/main/resources/ethereumj.conf)
+
+* Place Genesis file to the path specified by `genesisFile`; good sample is [ropsten.json](https://github.com/ethereum/ethereumj/blob/master/ethereumj-core/src/main/resources/genesis/ropsten.json)
+
+* Run Service: `gradlew runCustom -Dethereumj.conf.file=/path/to/custom.conf`
+
+Navigate to `http://localhost:8080`
+JSON-RPC is available at either `http://localhost:8080/rpc` or `http://localhost:8080`
+
+(*) Use `gradlew runCustom -Dethereumj.conf.file=/path/to/custom.conf -Dserver.port=8545` option to change web interface port number.
 
 .
 

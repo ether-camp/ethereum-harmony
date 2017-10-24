@@ -193,6 +193,7 @@ public class BlockchainInfoService implements ApplicationListener {
 
             final boolean isPrivateNetwork = env.getProperty("networkProfile", "").equalsIgnoreCase("private");
             final boolean isClassicNetwork = env.getProperty("networkProfile", "").equalsIgnoreCase("classic");
+            final boolean isCustomNetwork = env.getProperty("networkProfile", "").equalsIgnoreCase("custom");
 
             // find out network name
             final Optional<String> blockHash = Optional.ofNullable(blockchain.getBlockByNumber(0l))
@@ -202,6 +203,8 @@ public class BlockchainInfoService implements ApplicationListener {
                 networkInfo = Pair.of("Private Miner Network", Optional.empty());
             } else if (isClassicNetwork) {
                 networkInfo = Pair.of("Classic ETC", Optional.empty());
+            } else if (isCustomNetwork) {
+                networkInfo = Pair.of("Custom", Optional.empty());
             } else {
                 networkInfo = blockHash
                         .flatMap(hash -> Optional.ofNullable(BlockchainConsts.getNetworkInfo(env, hash)))
