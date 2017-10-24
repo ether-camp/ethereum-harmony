@@ -67,8 +67,14 @@ JSON-RPC is available at either `http://localhost:8080/rpc` or `http://localhost
 ## Run in a custom network <a id="custom-network"></a>
 * `git clone https://github.com/ether-camp/ethereum-harmony`
 * `cd ethereum-harmony`
-* Run Service with custom config: `gradlew runCustom -Dethereumj.conf.file=/path/to/custom.conf`
-* It is also possible to use CLI to pass parameters: `gradlew runCustom -Dpeer.networkId=10101 -DgenesisFile=/path/to/custom/genesis.json -Dpeer.discovery.enabled=false -Dpeer.active.0.url=enode://0f4a5f92835a4604ecd9639ddcfb86d2a2999ad9328bc088452efffe4a7c6cd0eaaef77c779dc56fc1d0f21cd578eeb92cb5@23.101.151.28:30303`
+* Run Service with custom config: 
+```
+gradlew runCustom -Dethereumj.conf.file=/path/to/custom.conf
+```
+* It is also possible to use CLI to pass parameters: 
+```
+gradlew runCustom -Dpeer.networkId=10101 -DgenesisFile=/path/to/custom/genesis.json -Dpeer.discovery.enabled=false -Dpeer.active.0.url=enode://0f4a5f92835a4604ecd9639ddcfb86d2a2999ad9328bc088452efffe4a7c6cd0eaaef77c779dc56fc1d0f21cd578eeb92cb5@23.101.151.28:30303
+```
 
 **Note:** parameters that haven't been substituted by either custom config or CLI will be supplied from [ethereumj.conf](https://github.com/ethereum/ethereumj/blob/master/ethereumj-core/src/main/resources/ethereumj.conf)
 
