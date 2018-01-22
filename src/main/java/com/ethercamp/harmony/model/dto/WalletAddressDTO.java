@@ -16,38 +16,27 @@
  * along with Ethereum Harmony.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.ethercamp.harmony.dto;
+package com.ethercamp.harmony.model.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Value;
 
+import java.math.BigInteger;
+
 /**
- * Created by Stan Reshetnyk on 14.07.16.
+ * Created by Stan Reshetnyk on 24.08.16.
  */
 @Value
 @AllArgsConstructor
-public class PeerDTO {
+public class WalletAddressDTO {
 
-    private final String nodeId;
+    private final String name;
 
-    private final String ip;
+    private final String publicAddress;
 
-    // 3 letter code, used for map in UI
-    private final String country3Code;
+    private final BigInteger amount;
 
-    // 2 letter code, used for flags in UI
-    private final String country2Code;
+    private final BigInteger pendingAmount;
 
-    // seconds???
-    private final Long lastPing;
-
-    // ms
-    private final Double pingLatency;
-
-    private final Integer reputation;
-
-    private final Boolean isActive;
-
-    private final String details;
-
+    private final boolean hasKeystoreKey;
 }

@@ -33,7 +33,6 @@ import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.security.*;
 import java.util.Arrays;
-import java.util.Random;
 import java.util.UUID;
 
 /**
@@ -93,7 +92,7 @@ public class KeystoreFormat {
 
     private byte[] generateRandomBytes(int size) {
         final byte[] bytes = new byte[size];
-        Random random = new Random();
+        SecureRandom random = new SecureRandom();
         random.nextBytes(bytes);
         return bytes;
     }

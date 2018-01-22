@@ -21,24 +21,14 @@ package com.ethercamp.harmony.service;
 import lombok.extern.slf4j.Slf4j;
 import org.ethereum.core.Block;
 import org.ethereum.core.Repository;
-import org.ethereum.core.Transaction;
-import org.ethereum.core.TransactionReceipt;
-import org.ethereum.crypto.ECKey;
 import org.ethereum.facade.Ethereum;
 import org.ethereum.mine.MinerListener;
-import org.ethereum.solidity.compiler.CompilationResult;
-import org.ethereum.solidity.compiler.SolidityCompiler;
-import org.ethereum.util.ByteUtil;
-import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
-import java.math.BigInteger;
-
-import static org.ethereum.crypto.HashUtil.sha3;
 
 /**
  * Created by Stan Reshetnyk on 19.08.16.

@@ -90,7 +90,7 @@ import static com.ethercamp.harmony.util.exception.ContractException.compilation
 import static com.ethercamp.harmony.util.exception.ContractException.validationError;
 import static org.ethereum.util.ByteUtil.*;
 
-import com.ethercamp.harmony.dto.ContractObjects.*;
+import com.ethercamp.harmony.model.dto.ContractObjects.*;
 
 /**
  * Viewing contract storage variables.

@@ -16,25 +16,38 @@
  * along with Ethereum Harmony.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.ethercamp.harmony.dto;
+package com.ethercamp.harmony.model.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Value;
 
 /**
- * Created by Stan Reshetnyk on 22.07.16.
+ * Created by Stan Reshetnyk on 14.07.16.
  */
 @Value
 @AllArgsConstructor
-public class MethodCallDTO {
+public class PeerDTO {
 
-    private final String methodName;
+    private final String nodeId;
 
-    private final Long count;
+    private final String ip;
 
-    private final Long lastTime;
+    // 3 letter code, used for map in UI
+    private final String country3Code;
 
-    private final String lastResult;
+    // 2 letter code, used for flags in UI
+    private final String country2Code;
 
-    private final String curl;
+    // seconds???
+    private final Long lastPing;
+
+    // ms
+    private final Double pingLatency;
+
+    private final Integer reputation;
+
+    private final Boolean isActive;
+
+    private final String details;
+
 }

@@ -18,12 +18,9 @@
 
 package com.ethercamp.harmony.service;
 
-import lombok.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.data.util.Pair;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 
 /**

@@ -1,7 +1,7 @@
 var generateWord = (function () {
 
     function generate2250Word() {
-        var number = Math.floor(1000 + Math.random() * 1000 * 1000 * 1000);
+        var number = secureRandUtil.getRandomInt(1000, Math.pow(2, 42) - 1); // more bits means longer words, so we are not pushing it to 2^53
         return genWord(number);
     }
 

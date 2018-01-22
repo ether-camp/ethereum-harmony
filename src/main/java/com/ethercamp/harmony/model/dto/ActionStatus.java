@@ -1,4 +1,4 @@
-package com.ethercamp.harmony.dto;
+package com.ethercamp.harmony.model.dto;
 
 import lombok.Data;
 

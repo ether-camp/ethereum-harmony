@@ -16,46 +16,19 @@
  * along with Ethereum Harmony.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.ethercamp.harmony.dto;
+package com.ethercamp.harmony.model.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Value;
 
 /**
- * Created by Stan Reshetnyk on 18.10.16.
+ * Created by Stan Reshetnyk on 10.08.16.
  */
-public class ContractObjects {
+@Value
+@AllArgsConstructor
+public class MinerDTO {
 
-    @Value
-    @AllArgsConstructor
-    public static class ContractInfoDTO {
+    private final String address;
 
-        private final String address;
-
-        private final String name;
-
-        /**
-         * Block number when contract was introduced or -1.
-         */
-        private final long blockNumber;
-
-    }
-
-    @Value
-    @AllArgsConstructor
-    public static class IndexStatusDTO {
-
-        private final long indexSize;
-
-        private final String solcVersion;
-
-        /**
-         * Block number when indexing started or -1.
-         * Zero value is not possible
-         */
-        private final long syncedBlock;
-
-    }
+    private final Integer count;
 }
-
-

@@ -18,7 +18,7 @@
 
 package com.ethercamp.harmony.service;
 
-import com.ethercamp.harmony.dto.MethodCallDTO;
+import com.ethercamp.harmony.model.dto.MethodCallDTO;
 import com.ethercamp.harmony.jsonrpc.JsonRpc;
 import com.ethercamp.harmony.util.AppConst;
 import com.typesafe.config.Config;
