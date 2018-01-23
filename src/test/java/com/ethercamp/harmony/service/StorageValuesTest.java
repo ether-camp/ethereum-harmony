@@ -24,7 +24,6 @@ import org.ethereum.core.AccountState;
 import org.ethereum.db.ContractDetails;
 import org.ethereum.util.blockchain.SolidityContract;
 import org.ethereum.util.blockchain.StandaloneBlockchain;
-import org.ethereum.vm.DataWord;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 

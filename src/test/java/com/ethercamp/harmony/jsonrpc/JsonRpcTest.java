@@ -84,8 +84,7 @@ public class JsonRpcTest {
          */
         @Bean
         public SystemProperties systemProperties() {
-            SystemProperties.resetToDefault();
-            SystemProperties props = SystemProperties.getDefault();
+            SystemProperties props = new SystemProperties();
             props.overrideParams(ConfigFactory.parseString(config.replaceAll("'", "\"")));
             FrontierConfig config = new FrontierConfig(new FrontierConfig.FrontierConstants() {
                 @Override
@@ -93,6 +92,7 @@ public class JsonRpcTest {
                     return BigInteger.ONE;
                 }
             });
+            SystemProperties.getDefault().setBlockchainConfig(config);
             props.setBlockchainConfig(config);
             return props;
         }
@@ -121,8 +121,8 @@ public class JsonRpcTest {
 
         @Bean
         @Scope("prototype")
-        public DbSource<byte[]> keyValueDataSource() {
-            System.out.println("Sample DB created name");
+        public DbSource<byte[]> keyValueDataSource(String name) {
+            System.out.println("Sample DB created name:" + name);
             return new HashMapDB<byte[]>();
         }
     }

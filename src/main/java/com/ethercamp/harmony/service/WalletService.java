@@ -18,20 +18,24 @@
 
 package com.ethercamp.harmony.service;
 
-import com.ethercamp.harmony.dto.WalletAddressDTO;
-import com.ethercamp.harmony.dto.WalletConfirmTransactionDTO;
-import com.ethercamp.harmony.dto.WalletInfoDTO;
+import com.ethercamp.harmony.model.dto.WalletAddressDTO;
+import com.ethercamp.harmony.model.dto.WalletConfirmTransactionDTO;
+import com.ethercamp.harmony.model.dto.WalletInfoDTO;
 import com.ethercamp.harmony.keystore.Keystore;
+import com.ethercamp.harmony.model.Account;
 import com.ethercamp.harmony.service.wallet.FileSystemWalletStore;
 import com.ethercamp.harmony.service.wallet.WalletAddressItem;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.ethereum.config.SystemProperties;
-import org.ethereum.core.*;
+import org.ethereum.core.BlockSummary;
+import org.ethereum.core.Blockchain;
+import org.ethereum.core.Transaction;
 import org.ethereum.crypto.ECKey;
 import org.ethereum.db.ByteArrayWrapper;
 import org.ethereum.facade.Ethereum;
+import org.ethereum.facade.Repository;
 import org.ethereum.listener.EthereumListenerAdapter;
 import org.ethereum.sync.SyncManager;
 import org.ethereum.util.ByteUtil;
@@ -47,13 +51,13 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import java.math.BigInteger;
+import java.security.SecureRandom;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.Random;
 
 /**
  * Wallet logic:
@@ -362,7 +366,7 @@ public class WalletService {
 
         Integer totalWords = jdbcTemplate.queryForObject("select count (*) from word_dictionary", Integer.class);
 
-        final List<String> words = new Random().ints(0, totalWords - 1)
+        final List<String> words = new SecureRandom().ints(0, totalWords - 1)
                 .limit(wordsCount)
                 .mapToObj(i -> jdbcTemplate.queryForObject("select word from word_dictionary offset ? limit 1", String.class, i))
                 .collect(Collectors.toList());

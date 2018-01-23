@@ -18,7 +18,7 @@
 
 package com.ethercamp.harmony.service;
 
-import com.ethercamp.harmony.dto.PeerDTO;
+import com.ethercamp.harmony.model.dto.PeerDTO;
 import com.maxmind.geoip.Country;
 import com.maxmind.geoip.LookupService;
 import lombok.extern.slf4j.Slf4j;

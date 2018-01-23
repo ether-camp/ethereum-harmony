@@ -18,7 +18,7 @@
 
 package com.ethercamp.harmony.web.controller;
 
-import com.ethercamp.harmony.dto.*;
+import com.ethercamp.harmony.model.dto.*;
 import com.ethercamp.harmony.service.BlockchainInfoService;
 import com.ethercamp.harmony.util.AppConst;
 import org.springframework.beans.factory.annotation.Autowired;

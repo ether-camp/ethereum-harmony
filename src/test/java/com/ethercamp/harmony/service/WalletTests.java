@@ -18,8 +18,8 @@
 
 package com.ethercamp.harmony.service;
 
-import com.ethercamp.harmony.dto.WalletAddressDTO;
-import com.ethercamp.harmony.dto.WalletInfoDTO;
+import com.ethercamp.harmony.model.dto.WalletAddressDTO;
+import com.ethercamp.harmony.model.dto.WalletInfoDTO;
 import com.ethercamp.harmony.keystore.Keystore;
 import com.ethercamp.harmony.service.wallet.FileSystemWalletStore;
 import org.ethereum.core.*;

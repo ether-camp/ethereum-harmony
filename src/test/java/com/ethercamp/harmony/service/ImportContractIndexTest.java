@@ -23,7 +23,7 @@ import com.ethercamp.contrdata.storage.StorageEntry;
 import com.ethercamp.contrdata.storage.dictionary.Layout;
 import com.ethercamp.contrdata.storage.dictionary.StorageDictionary;
 import com.ethercamp.contrdata.storage.dictionary.StorageDictionaryDb;
-import com.ethercamp.harmony.dto.ContractObjects;
+import com.ethercamp.harmony.model.dto.ContractObjects;
 import com.mashape.unirest.http.JsonNode;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
@@ -38,13 +38,13 @@ import org.ethereum.core.Repository;
 import org.ethereum.datasource.inmem.HashMapDB;
 import org.ethereum.facade.Ethereum;
 import org.ethereum.util.blockchain.SolidityContract;
-import org.ethereum.util.blockchain.StandaloneBlockchain;
 import org.ethereum.vm.DataWord;
 import org.ethereum.vm.VM;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,6 +66,8 @@ import static org.mockito.Mockito.when;
 /**
  * Created by Stan Reshetnyk on 17.01.17.
  */
+// FIXME: We don't have remote storage to compare anymore
+@Ignore
 public class ImportContractIndexTest extends BaseContextAwareTest {
 
     ContractsService contractsService = new ContractsService();

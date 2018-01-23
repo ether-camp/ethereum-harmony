@@ -19,7 +19,6 @@
 package com.ethercamp.harmony.jsonrpc;
 
 import lombok.Value;
-import lombok.experimental.NonFinal;
 import org.ethereum.core.Block;
 import org.ethereum.core.Transaction;
 

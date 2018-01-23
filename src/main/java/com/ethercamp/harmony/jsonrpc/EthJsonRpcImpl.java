@@ -19,6 +19,7 @@
 package com.ethercamp.harmony.jsonrpc;
 
 import com.ethercamp.harmony.keystore.Keystore;
+import com.ethercamp.harmony.model.Account;
 import com.ethercamp.harmony.util.ErrorCodes;
 import com.ethercamp.harmony.util.exception.HarmonyException;
 import com.google.common.collect.ImmutableMap;
@@ -29,7 +30,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.map.LRUMap;
 import org.ethereum.config.CommonConfig;
 import org.ethereum.config.SystemProperties;
-import org.ethereum.core.*;
+import org.ethereum.core.Block;
+import org.ethereum.core.BlockHeader;
+import org.ethereum.core.BlockchainImpl;
+import org.ethereum.core.Bloom;
+import org.ethereum.core.CallTransaction;
+import org.ethereum.core.PendingStateImpl;
+import org.ethereum.core.Repository;
+import org.ethereum.core.Transaction;
+import org.ethereum.core.TransactionExecutor;
+import org.ethereum.core.TransactionReceipt;
 import org.ethereum.crypto.ECKey;
 import org.ethereum.crypto.HashUtil;
 import org.ethereum.db.BlockStore;
@@ -37,6 +47,7 @@ import org.ethereum.db.ByteArrayWrapper;
 import org.ethereum.core.TransactionInfo;
 import org.ethereum.db.TransactionStore;
 import org.ethereum.facade.Ethereum;
+import org.ethereum.listener.LogFilter;
 import org.ethereum.listener.CompositeEthereumListener;
 import org.ethereum.listener.EthereumListenerAdapter;
 import org.ethereum.manager.WorldManager;
@@ -64,7 +75,6 @@ import javax.annotation.PostConstruct;
 import java.lang.reflect.Modifier;
 import java.math.BigInteger;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
@@ -74,7 +84,10 @@ import java.util.stream.Collectors;
 import static com.ethercamp.harmony.jsonrpc.TypeConverter.*;
 import static java.math.BigInteger.valueOf;
 import static org.ethereum.crypto.HashUtil.sha3;
-import static org.ethereum.util.ByteUtil.*;
+import static org.ethereum.util.ByteUtil.EMPTY_BYTE_ARRAY;
+import static org.ethereum.util.ByteUtil.bigIntegerToBytes;
+import static org.ethereum.util.ByteUtil.hexStringToBytes;
+import static org.ethereum.util.ByteUtil.longToBytes;
 
 /**
  * @author Anton Nashatyrev
@@ -506,8 +519,8 @@ public class EthJsonRpcImpl implements JsonRpc {
                 :signature.v;
 
         return ByteUtil.merge(
-                ByteUtil.bigIntegerToBytes(signature.r),
-                ByteUtil.bigIntegerToBytes(signature.s),
+                bigIntegerToBytes(signature.r),
+                bigIntegerToBytes(signature.s),
                 new byte[]{fixedV});
     }
 
@@ -524,12 +537,12 @@ public class EthJsonRpcImpl implements JsonRpc {
         // convert zero to empty byte array
         // TEMP, until decide for better behavior
         final BigInteger valueBigInt = args.value != null ? StringHexToBigInteger(args.value) : BigInteger.ZERO;
-        final byte[] value = !valueBigInt.equals(BigInteger.ZERO) ? ByteUtil.bigIntegerToBytes(valueBigInt) : EMPTY_BYTE_ARRAY;
+        final byte[] value = !valueBigInt.equals(BigInteger.ZERO) ? bigIntegerToBytes(valueBigInt) : EMPTY_BYTE_ARRAY;
 
         final Transaction tx = new Transaction(
                 args.nonce != null ? StringHexToByteArray(args.nonce) : bigIntegerToBytes(pendingState.getRepository().getNonce(account.getAddress())),
                 args.gasPrice != null ? StringHexToByteArray(args.gasPrice) : ByteUtil.longToBytesNoLeadZeroes(eth.getGasPrice()),
-                args.gas != null ? StringHexToByteArray(args.gas) : ByteUtil.longToBytes(90_000),
+                args.gas != null ? StringHexToByteArray(args.gas) : longToBytes(90_000),
                 args.to != null ? StringHexToByteArray(args.to) : EMPTY_BYTE_ARRAY,
                 value,
                 args.data != null ? StringHexToByteArray(args.data) : EMPTY_BYTE_ARRAY);
