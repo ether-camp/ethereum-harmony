@@ -16,46 +16,37 @@
  * along with Ethereum Harmony.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.ethercamp.harmony.dto;
+package com.ethercamp.harmony.model.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Value;
 
-import java.util.Optional;
-
 /**
- * Created by Stan Reshetnyk on 13.07.16.
+ * Created by Stan Reshetnyk on 12.07.16.
  */
 @Value
 @AllArgsConstructor
-public class InitialInfoDTO {
+public class BlockchainInfoDTO {
 
-    private final String ethereumJVersion;
+    private final Long highestBlockNumber;
 
-    private final String ethereumJBuildInfo;
-
-    private final String appVersion;
-
-    private final String networkName;
+    private final Long lastBlockNumber;
 
     /**
-     * Link to Ether.Camp block explore site for contracts import
+     * UTC time in seconds
      */
-    private final String explorerUrl;
+    private final Long lastBlockTime;
 
-    private final String genesisHash;
+    private final Integer lastBlockTransactions;
 
-    private final Long serverStartTime;
+    private final Long difficulty;
 
-    private final String nodeId;
+    // Not used now
+    private final Long lastReforkTime;
 
-    private final Integer rpcPort;
+    private final Long networkHashRate;
 
-    private final boolean privateNetwork;
+    private final Long gasPrice;
 
-    private final String portCheckerUrl;
-
-    private final String publicIp;
-
-    private final boolean featureContracts;
+    private final NetworkInfoDTO.SyncStatusDTO syncStatus;
 }

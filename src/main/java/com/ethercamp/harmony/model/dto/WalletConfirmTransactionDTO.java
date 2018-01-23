@@ -16,36 +16,23 @@
  * along with Ethereum Harmony.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.ethercamp.harmony.dto;
+package com.ethercamp.harmony.model.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Value;
 
+import java.math.BigInteger;
+
 /**
- * Created by Stan Reshetnyk on 11.07.16.
+ * Created by Stan Reshetnyk on 25.08.16.
  */
 @Value
 @AllArgsConstructor
-public class MachineInfoDTO {
+public class WalletConfirmTransactionDTO {
 
-    /**
-     * Percentage 0..100
-     */
-    private final Integer cpuUsage;
+    private final String hash;
 
-    /**
-     * In bytes.
-     */
-    private final Long memoryFree;
+    private final BigInteger amount;
 
-    /**
-     * In bytes.
-     */
-    private final Long memoryTotal;
-
-    /**
-     * In bytes.
-     */
-    private final  Long freeSpace;
-
+    private final boolean sending;
 }

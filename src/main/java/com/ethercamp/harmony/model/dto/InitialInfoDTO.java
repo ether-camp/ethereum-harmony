@@ -16,27 +16,44 @@
  * along with Ethereum Harmony.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.ethercamp.harmony.dto;
+package com.ethercamp.harmony.model.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Value;
 
-import java.math.BigInteger;
-
 /**
- * Created by Stan Reshetnyk on 24.08.16.
+ * Created by Stan Reshetnyk on 13.07.16.
  */
 @Value
 @AllArgsConstructor
-public class WalletAddressDTO {
+public class InitialInfoDTO {
 
-    private final String name;
+    private final String ethereumJVersion;
 
-    private final String publicAddress;
+    private final String ethereumJBuildInfo;
 
-    private final BigInteger amount;
+    private final String appVersion;
 
-    private final BigInteger pendingAmount;
+    private final String networkName;
 
-    private final boolean hasKeystoreKey;
+    /**
+     * Link to Ether.Camp block explore site for contracts import
+     */
+    private final String explorerUrl;
+
+    private final String genesisHash;
+
+    private final Long serverStartTime;
+
+    private final String nodeId;
+
+    private final Integer rpcPort;
+
+    private final boolean privateNetwork;
+
+    private final String portCheckerUrl;
+
+    private final String publicIp;
+
+    private final boolean featureContracts;
 }

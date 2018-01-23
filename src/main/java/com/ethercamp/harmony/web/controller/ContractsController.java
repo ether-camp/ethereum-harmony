@@ -19,8 +19,8 @@
 package com.ethercamp.harmony.web.controller;
 
 import com.ethercamp.contrdata.storage.StorageEntry;
-import com.ethercamp.harmony.dto.ActionStatus;
-import com.ethercamp.harmony.dto.ContractObjects.*;
+import com.ethercamp.harmony.model.dto.ActionStatus;
+import com.ethercamp.harmony.model.dto.ContractObjects.*;
 import com.ethercamp.harmony.service.ContractsService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,8 +31,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
-import static com.ethercamp.harmony.dto.ActionStatus.createErrorStatus;
-import static com.ethercamp.harmony.dto.ActionStatus.createSuccessStatus;
+import static com.ethercamp.harmony.model.dto.ActionStatus.createErrorStatus;
+import static com.ethercamp.harmony.model.dto.ActionStatus.createSuccessStatus;
 import static org.apache.commons.lang3.StringUtils.lowerCase;
 
 /**

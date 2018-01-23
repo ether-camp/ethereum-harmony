@@ -16,23 +16,36 @@
  * along with Ethereum Harmony.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.ethercamp.harmony.dto;
+package com.ethercamp.harmony.model.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Value;
 
 /**
- * Created by Stan Reshetnyk on 09.08.16.
+ * Created by Stan Reshetnyk on 11.07.16.
  */
 @Value
 @AllArgsConstructor
-public class BlockInfo {
+public class MachineInfoDTO {
 
-    private final long blockNumber;
+    /**
+     * Percentage 0..100
+     */
+    private final Integer cpuUsage;
 
-    private final String blockHash;
+    /**
+     * In bytes.
+     */
+    private final Long memoryFree;
 
-    private final String parentHash;
+    /**
+     * In bytes.
+     */
+    private final Long memoryTotal;
 
-    private final long difficulty;
+    /**
+     * In bytes.
+     */
+    private final  Long freeSpace;
+
 }

@@ -23,8 +23,6 @@ import lombok.experimental.NonFinal;
 import org.ethereum.core.Block;
 import org.ethereum.core.TransactionInfo;
 import org.ethereum.core.TransactionReceipt;
-import org.ethereum.jsonrpc.*;
-import org.ethereum.util.ByteUtil;
 import org.ethereum.vm.LogInfo;
 
 import static com.ethercamp.harmony.jsonrpc.TypeConverter.toJsonHex;

@@ -18,7 +18,7 @@
 
 package com.ethercamp.harmony.service;
 
-import com.ethercamp.harmony.dto.ContractObjects.*;
+import com.ethercamp.harmony.model.dto.ContractObjects.*;
 import com.ethercamp.harmony.util.SolcUtils;
 import org.apache.commons.io.IOUtils;
 import org.ethereum.datasource.inmem.HashMapDB;

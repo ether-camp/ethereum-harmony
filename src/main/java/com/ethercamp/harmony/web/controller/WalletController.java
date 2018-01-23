@@ -18,16 +18,13 @@
 
 package com.ethercamp.harmony.web.controller;
 
-import com.ethercamp.harmony.dto.WalletInfoDTO;
+import com.ethercamp.harmony.model.dto.WalletInfoDTO;
 import com.ethercamp.harmony.service.WalletService;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.simp.annotation.SendToUser;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
 import java.util.List;
 
 /**

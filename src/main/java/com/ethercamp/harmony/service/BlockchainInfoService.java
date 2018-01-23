@@ -30,7 +30,7 @@ import org.ethereum.util.BuildInfo;
 import org.ethereum.vm.VM;
 import org.slf4j.LoggerFactory;
 import ch.qos.logback.classic.Logger;
-import com.ethercamp.harmony.dto.*;
+import com.ethercamp.harmony.model.dto.*;
 import com.sun.management.OperatingSystemMXBean;
 import lombok.extern.slf4j.Slf4j;
 import org.ethereum.config.SystemProperties;
