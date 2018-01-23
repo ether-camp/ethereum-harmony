@@ -16,3 +16,8 @@ src/main/resources/solcJ-all
 sampleDB*
 
 access.info
+
+.java-version
+
+# Local configuration
+**/user.conf

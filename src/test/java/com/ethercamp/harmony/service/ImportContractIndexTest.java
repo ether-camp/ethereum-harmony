@@ -44,6 +44,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,6 +66,8 @@ import static org.mockito.Mockito.when;
 /**
  * Created by Stan Reshetnyk on 17.01.17.
  */
+// FIXME: We don't have remote storage to compare anymore
+@Ignore
 public class ImportContractIndexTest extends BaseContextAwareTest {
 
     ContractsService contractsService = new ContractsService();
@@ -120,7 +123,7 @@ public class ImportContractIndexTest extends BaseContextAwareTest {
     }
 
     private void loadEntries(StorageDictionary.PathElement root, String path) throws UnirestException {
-        final String url = "https://test-state.ether.camp/api/v1/accounts/a9be82e93628abaac5ab557a9b3b02f711c0151c/smart-storage?page=0&size=600&path=" + path;
+        final String url = "https://temp.ether.camp/api/v1/accounts/a9be82e93628abaac5ab557a9b3b02f711c0151c/smart-storage?page=0&size=600&path=" + path;
         final JsonNode result = Unirest.get(url).asJson().getBody();
 
         final JSONArray entities = result.getObject().getJSONArray("content");

@@ -513,7 +513,7 @@ public class EthJsonRpcImpl implements JsonRpc {
         return TypeConverter.toJsonHex(signatureBytes);
     }
 
-    public byte[] toByteArray(ECKey.ECDSASignature signature) {
+    private byte[] toByteArray(ECKey.ECDSASignature signature) {
         final byte fixedV = signature.v >= 27
                 ? (byte) (signature.v - 27)
                 :signature.v;
@@ -612,7 +612,7 @@ public class EthJsonRpcImpl implements JsonRpc {
         try {
             TransactionExecutor executor = new TransactionExecutor(
                     tx, block.getCoinbase(), repository, blockStore,
-                            programInvokeFactory, block, new EthereumListenerAdapter(), 0)
+                    programInvokeFactory, block, new EthereumListenerAdapter(), 0)
                     .withCommonConfig(commonConfig)
                     .setLocalCall(true);
 
@@ -1373,7 +1373,7 @@ public class EthJsonRpcImpl implements JsonRpc {
     public boolean miner_start() {
         log.info("miner_start requested. MaxMemory: " + Runtime.getRuntime().maxMemory());
         final long requiredMemoryBytes = 2000L << 20;   // ~2G
-        if (Runtime.getRuntime().maxMemory() < requiredMemoryBytes) {
+        if (config.isMineFullDataset() && Runtime.getRuntime().maxMemory() < requiredMemoryBytes) {
             final String errorMessage = "Not enough JVM heap (" + (Runtime.getRuntime().maxMemory() >> 20) + "Mb) to generate DAG for mining (DAG requires min 1G). It is recommended to set -Xmx3G JVM option";
             log.error(errorMessage);
             throw new RuntimeException(errorMessage);

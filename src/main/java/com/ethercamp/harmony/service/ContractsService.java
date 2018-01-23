@@ -162,30 +162,29 @@ public class ContractsService {
         syncedBlock = Optional.ofNullable(settingsStorage.get(SYNCED_BLOCK_KEY))
                 .map(bytes -> byteArrayToLong(bytes));
 
-        // if first loaded block is null - let's save first imported block as starting point for contracts
-        if (!syncedBlock.isPresent()) {
-            ethereum.addListener(new EthereumListenerAdapter() {
-                @Override
-                public void onBlock(Block block, List<TransactionReceipt> receipts) {
-                    // track block from which we started sync
-                    if (!syncedBlock.isPresent()) {
-                        syncedBlock = Optional.of(block.getNumber());
-                        settingsStorage.put(SYNCED_BLOCK_KEY, longToBytesNoLeadZeroes(block.getNumber()));
-                        settingsStorage.flush();
-                        log.info("Synced block is set to #{}", block.getNumber());
-                    }
+        ethereum.addListener(new EthereumListenerAdapter() {
+            @Override
+            public void onBlock(Block block, List<TransactionReceipt> receipts) {
 
-                    // store block number of each new contract
-                    receipts.stream()
-                            .flatMap(r -> streamOf(r.getTransaction().getContractAddress()))
-                            .forEach(address -> {
-                                log.info("Marked contract creation block {} {}", Hex.toHexString(address), block.getNumber());
-                                contractCreation.put(address, longToBytesNoLeadZeroes(block.getNumber()));
-                                contractCreation.flush();
-                            });
+                // if first loaded block is null - let's save first imported block as starting point for contracts
+                // track block from which we started sync
+                if (!syncedBlock.isPresent()) {
+                    syncedBlock = Optional.of(block.getNumber());
+                    settingsStorage.put(SYNCED_BLOCK_KEY, longToBytesNoLeadZeroes(block.getNumber()));
+                    settingsStorage.flush();
+                    log.info("Synced block is set to #{}", block.getNumber());
                 }
-            });
-        }
+
+                // store block number of each new contract
+                receipts.stream()
+                        .flatMap(r -> streamOf(r.getTransaction().getContractAddress()))
+                        .forEach(address -> {
+                            log.info("Marked contract creation block {} {}", Hex.toHexString(address), block.getNumber());
+                            contractCreation.put(address, longToBytesNoLeadZeroes(block.getNumber()));
+                            contractCreation.flush();
+                        });
+            }
+        });
         log.info("Initialized contracts. Synced block is #{}", syncedBlock.map(Object::toString).orElseGet(() -> "Undefined"));
 
         TrustSSL.apply();
@@ -371,6 +370,11 @@ public class ContractsService {
      */
     private ContractInfoDTO compileAndSave(String hexAddress, List<String> files) {
         final byte[] address = Hex.decode(hexAddress);
+
+        final byte[] codeBytes = ethereum.getRepository().getCode(address);
+        if (codeBytes == null || codeBytes.length == 0) {
+            throw validationError("Account with address '%s' hasn't any code. Please ensure blockchain is fully synced.", hexAddress);
+        }
 
         // get list of contracts which match to deployed code
         final List<Validation<ContractException, ContractEntity>> validationResult = files.stream()

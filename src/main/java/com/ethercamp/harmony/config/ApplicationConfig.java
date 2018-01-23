@@ -29,6 +29,8 @@ import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
+import com.ethercamp.harmony.util.exception.Web3jSafeAnnotationsErrorResolver;
+
 /**
  * Created by Stan Reshetnyk on 18.07.16.
  */
@@ -36,15 +38,23 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter
 @ComponentScan("com.ethercamp")
 public class ApplicationConfig extends WebMvcConfigurerAdapter {
 
+    private static final String ERROR_RESOLVER_KEY = "jsonrpc.web3jCompliantError";
+
     /**
      * Export bean which will find our json-rpc bean with @JsonRpcService and publish it.
      * https://github.com/briandilley/jsonrpc4j/issues/69
      */
     @Bean
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings({"unchecked", "deprecation"})
     // full class path to avoid deprecation warning
     public com.googlecode.jsonrpc4j.spring.AutoJsonRpcServiceExporter exporter() {
-        return new com.googlecode.jsonrpc4j.spring.AutoJsonRpcServiceExporter();
+        com.googlecode.jsonrpc4j.spring.AutoJsonRpcServiceExporter serviceExporter = new com.googlecode.jsonrpc4j.spring.AutoJsonRpcServiceExporter();
+
+        if ("true".equalsIgnoreCase(System.getProperty(ERROR_RESOLVER_KEY, ""))) {
+          serviceExporter.setErrorResolver(Web3jSafeAnnotationsErrorResolver.INSTANCE);
+        }
+
+        return serviceExporter;
     }
 
     /**
