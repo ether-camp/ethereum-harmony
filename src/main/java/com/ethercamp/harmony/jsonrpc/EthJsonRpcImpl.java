@@ -1335,7 +1335,7 @@ public class EthJsonRpcImpl implements JsonRpc {
         return channelManager.getActivePeers().stream().map(c ->
                 ImmutableMap.of(
                         "id", toJsonHex(c.getNodeId()),
-                        "name", toJsonHex(c.getNodeStatistics().getClientId()),
+                        "name", c.getNodeStatistics().getClientId(),
                         "caps", c.getNodeStatistics().capabilities
                                 .stream()
                                 .filter(cap -> c != null)
