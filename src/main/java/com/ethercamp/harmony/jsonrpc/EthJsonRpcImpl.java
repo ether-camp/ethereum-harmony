@@ -32,6 +32,7 @@ import org.ethereum.config.CommonConfig;
 import org.ethereum.config.SystemProperties;
 import org.ethereum.core.Block;
 import org.ethereum.core.BlockHeader;
+import org.ethereum.core.Blockchain;
 import org.ethereum.core.BlockchainImpl;
 import org.ethereum.core.Bloom;
 import org.ethereum.core.CallTransaction;
@@ -40,6 +41,7 @@ import org.ethereum.core.Repository;
 import org.ethereum.core.Transaction;
 import org.ethereum.core.TransactionExecutor;
 import org.ethereum.core.TransactionReceipt;
+import org.ethereum.core.casper.CasperTransactionExecutor;
 import org.ethereum.crypto.ECKey;
 import org.ethereum.crypto.HashUtil;
 import org.ethereum.db.BlockStore;
@@ -152,7 +154,7 @@ public class EthJsonRpcImpl implements JsonRpc {
     public Repository repository;
 
     @Autowired
-    BlockchainImpl blockchain;
+    Blockchain blockchain;
 
     @Autowired
     Ethereum eth;
@@ -610,7 +612,7 @@ public class EthJsonRpcImpl implements JsonRpc {
         }
 
         try {
-            TransactionExecutor executor = new TransactionExecutor(
+            TransactionExecutor executor = new CasperTransactionExecutor(
                     tx, block.getCoinbase(), repository, blockStore,
                     programInvokeFactory, block, new EthereumListenerAdapter(), 0)
                     .withCommonConfig(commonConfig)
@@ -1390,13 +1392,13 @@ public class EthJsonRpcImpl implements JsonRpc {
 
     @Override
     public boolean miner_setEtherbase(String coinBase) throws Exception {
-        blockchain.setMinerCoinbase(TypeConverter.StringHexToByteArray(coinBase));
+        ((BlockchainImpl) blockchain).setMinerCoinbase(TypeConverter.StringHexToByteArray(coinBase));
         return true;
     }
 
     @Override
     public boolean miner_setExtra(String data) throws Exception {
-        blockchain.setMinerExtraData(TypeConverter.StringHexToByteArray(data));
+        ((BlockchainImpl) blockchain).setMinerExtraData(TypeConverter.StringHexToByteArray(data));
         return true;
     }
 

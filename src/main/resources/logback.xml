@@ -103,5 +103,6 @@
     <logger level="INFO" name="discover"/>
     <logger level="INFO" name="sync"/>
     <logger level="TRACE" name="notification"/>
+    <logger level="DEBUG" name="casper.validator"/>
 
 </configuration>

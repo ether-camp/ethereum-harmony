@@ -93,7 +93,7 @@ dependencies {
     compile "org.ethereum:solcJ-all:0.4.8"                   // Solidity Compiler win/mac/linux binaries
 
     // don't forget to adjust {ethereumJ.version} in application.properties
-    compile ("org.ethereum:ethereumj-core:1.7.0-SNAPSHOT") {
+    compile ("org.ethereum:ethereumj-core:1.7.0-casper-SNAPSHOT") {
         changing = true
 
         exclude group: "log4j"
@@ -266,6 +266,12 @@ task runClassic() {
     doLast {
         addJvmArgIfEmpty "sync.fast.enabled", "true"
         bootRunWithNetworkConfig('classic', true)
+    }
+}
+
+task runCasper() {
+    doLast {
+        bootRunWithNetworkConfig('casper', true)
     }
 }
 

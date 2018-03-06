@@ -19,7 +19,7 @@
 
 package com.ethercamp.harmony.config;
 
-import org.ethereum.config.CommonConfig;
+import org.ethereum.casper.config.CasperConfig;
 import org.ethereum.config.NoAutoscan;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -34,6 +34,6 @@ import org.springframework.context.annotation.Configuration;
 @ComponentScan(
         basePackages = "org.ethereum",
         excludeFilters = @ComponentScan.Filter(NoAutoscan.class))
-public class EthereumHarmonyConfig extends CommonConfig {
+public class EthereumHarmonyConfig extends CasperConfig {
 
 }
