@@ -1380,6 +1380,7 @@ public class EthJsonRpcImpl implements JsonRpc {
             log.error(errorMessage);
             throw new RuntimeException(errorMessage);
         }
+        syncManager.makeSyncDone();
         blockMiner.startMining();
         return true;
     }
