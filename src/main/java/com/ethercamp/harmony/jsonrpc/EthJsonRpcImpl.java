@@ -28,6 +28,7 @@ import com.google.common.util.concurrent.SettableFuture;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.map.LRUMap;
+import org.ethereum.casper.service.CasperValidatorService;
 import org.ethereum.config.CommonConfig;
 import org.ethereum.config.SystemProperties;
 import org.ethereum.core.Block;
@@ -41,7 +42,7 @@ import org.ethereum.core.Repository;
 import org.ethereum.core.Transaction;
 import org.ethereum.core.TransactionExecutor;
 import org.ethereum.core.TransactionReceipt;
-import org.ethereum.core.casper.CasperTransactionExecutor;
+import org.ethereum.casper.core.CasperTransactionExecutor;
 import org.ethereum.crypto.ECKey;
 import org.ethereum.crypto.HashUtil;
 import org.ethereum.db.BlockStore;
@@ -200,6 +201,9 @@ public class EthJsonRpcImpl implements JsonRpc {
 
     @Autowired
     CommonConfig commonConfig = CommonConfig.getDefault();
+
+    @Autowired
+    CasperValidatorService validatorService;
 
 
     /**
@@ -1428,6 +1432,29 @@ public class EthJsonRpcImpl implements JsonRpc {
 //    public String miner_hashrate() {
 //        return "0x01";
 //    }
+
+    @Override
+    public boolean validator_start() {
+        validatorService.start();
+        return true;
+    }
+
+    @Override
+    public boolean validator_stop() {
+        validatorService.voteThenLogout();
+        return true;
+    }
+
+    @Override
+    public boolean validator_restart() {
+        try {
+            validatorService.reLogin();
+            return true;
+        } catch (Exception ex) {
+            return false;
+        }
+    }
+
 
 //    @Override
 //    public String debug_printBlock() {

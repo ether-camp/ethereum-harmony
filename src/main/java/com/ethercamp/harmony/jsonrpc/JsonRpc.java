@@ -334,6 +334,10 @@ public interface JsonRpc {
 //    boolean miner_makeDAG();
 //    String miner_hashrate();
 
+    boolean validator_start();
+    boolean validator_stop();
+    boolean validator_restart();
+
 //    String debug_printBlock();
 //    String debug_getBlockRlp();
 //    String debug_setHead();
