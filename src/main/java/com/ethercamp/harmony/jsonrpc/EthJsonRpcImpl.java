@@ -831,7 +831,7 @@ public class EthJsonRpcImpl implements JsonRpc {
         }
         org.ethereum.solidity.compiler.CompilationResult result = org.ethereum.solidity.compiler.CompilationResult.parse(res.output);
         CompilationResult ret = new CompilationResult();
-        org.ethereum.solidity.compiler.CompilationResult.ContractMetadata contractMetadata = result.contracts.values().iterator().next();
+        org.ethereum.solidity.compiler.CompilationResult.ContractMetadata contractMetadata = result.getContracts().iterator().next();
         ret.code = toJsonHex(contractMetadata.bin);
         ret.info = new CompilationInfo();
         ret.info.source = contract;
