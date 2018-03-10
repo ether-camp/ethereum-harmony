@@ -31,7 +31,6 @@ import org.ethereum.datasource.inmem.HashMapDB;
 import org.ethereum.facade.Ethereum;
 import org.ethereum.facade.EthereumFactory;
 import org.ethereum.facade.EthereumImpl;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
