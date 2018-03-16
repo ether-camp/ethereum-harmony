@@ -42,7 +42,7 @@ https://www.youtube.com/watch?v=leaAMTgjvxg
 
 * `git clone https://github.com/ether-camp/ethereum-harmony`
 * `cd ethereum-harmony`
-* Run Service: `gradlew runMain`  ( live network by default or any [other environment](#options) )
+* Run Service: `./gradlew runMain`  ( live network by default or any [other environment](#options) )
 
 Navigate to `http://localhost:8080`
 JSON-RPC is available at either `http://localhost:8080/rpc` or `http://localhost:8080`
