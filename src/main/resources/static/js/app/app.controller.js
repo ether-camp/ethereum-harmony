@@ -46,6 +46,11 @@
                 controller  : 'SystemLogCtrl'
             })
 
+            .when('/casper', {
+                templateUrl : 'pages/casper.html',
+                controller  : 'CasperLogCtrl'
+            })
+
             .when('/rpcUsage', {
                 templateUrl : 'pages/rpcUsage.html',
                 controller  : 'RpcUsageCtrl'
@@ -237,6 +242,11 @@
             function() {
                 $stomp.send('/app/currentSystemLogs');
             });
+
+        var updateCasperLogSubscription       = updateSubscriptionFun('/topic/casperLog', jsonParseAndBroadcast('casperLogEvent'),
+            function() {
+                $stomp.send('/app/currentCasperLogs');
+            });
         var updatePeersSubscription     = updateSubscriptionFun('/topic/peers', jsonParseAndBroadcast('peersListEvent'));
         var updateRpcSubscription       = updateSubscriptionFun('/topic/rpcUsage', jsonParseAndBroadcast('rpcUsageListEvent'));
         var updateBlockSubscription     = updateSubscriptionFun('/topic/newBlockInfo', jsonParseAndBroadcast('newBlockInfoEvent'),
@@ -289,6 +299,7 @@
             updateNetworkSubscription(path == '/');
             updateBlockSubscription(path == '/');
             updateLogSubscription(path == '/systemLog');
+            updateCasperLogSubscription(path == '/casper');
             updatePeersSubscription(path == '/peers');
             updateRpcSubscription(path == '/rpcUsage');
             updateWalletSubscription(path == '/wallet');
@@ -316,6 +327,7 @@
                     $stomp.subscribe('/topic/blockchainInfo', onBlockchainInfoResult);
                     $stomp.subscribe('/topic/newBlockFrom', jsonParseAndBroadcast('newBlockFromEvent'));
                     $stomp.subscribe('/topic/currentSystemLogs', jsonParseAndBroadcast('currentSystemLogs'));
+                    $stomp.subscribe('/topic/currentCasperLogs', jsonParseAndBroadcast('currentCasperLogs'));
                     $stomp.subscribe('/topic/currentBlocks', jsonParseAndBroadcast('currentBlocksEvent'));
                     $stomp.subscribe('/topic/confirmTransaction', onConfirmedTransaction);
 

@@ -200,6 +200,10 @@
                     <a href="/systemLog">System Logs</a>
                 </li>
 
+                <li ng-class="{active: vm.data.currentPage == '/casper'}">
+                    <a href="/casper">Casper</a>
+                </li>
+
                 <li ng-class="{active: vm.data.currentPage == '/rpcUsage'}">
                     <a href="/rpcUsage">JSON-RPC Usage</a>
                 </li>
@@ -303,6 +307,7 @@
 <script src="js/app/home.controller.js"></script>
 <script src="js/app/wallet.controller.js"></script>
 <script src="js/app/systemLog.controller.js"></script>
+<script src="js/app/casperLog.controller.js"></script>
 <script src="js/app/peers.controller.js"></script>
 <script src="js/app/rpcUsage.controller.js"></script>
 <script src="js/app/terminal.controller.js"></script>

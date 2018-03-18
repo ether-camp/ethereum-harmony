@@ -4,8 +4,11 @@
 
 
 # Ethereum Harmony
+###### Casper FFG research edition
 
 Ethereum network private peer. Based on EthereumJ implementation. 
+This branch is a custom edition able to work only in Casper Testnet FFG network. 
+For more information about Casper Testnet [visit this link](https://hackmd.io/s/Hk6UiFU7z). 
 
 
 [![Ethereum Harmony Demo](http://i.imgur.com/zeJMQ94.png)](https://www.youtube.com/watch?v=3qASGOy3qrw )
@@ -17,7 +20,7 @@ https://www.youtube.com/watch?v=leaAMTgjvxg
  
 ### Features: 
 
- * Ethereum peer JSON-RPC 2.0 standard ;
+ * Ethereum peer JSON-RPC 2.0 standard ; Custom RPC and Terminal commands for Casper validator (check validator_ in Termial)
  
  * Keeping private keys in filesystem **keystore** compatible with go-ethereum;
  
@@ -29,7 +32,9 @@ https://www.youtube.com/watch?v=leaAMTgjvxg
  
  * Easy go Ethereum **wallet**;
   
- * Full trace of contract storage locally; 
+ * Full trace of contract storage locally;
+ 
+ * Casper contract activity tracking 
 
 .
 
@@ -41,26 +46,15 @@ https://www.youtube.com/watch?v=leaAMTgjvxg
 ## Run 
 
 * `git clone https://github.com/ether-camp/ethereum-harmony`
-* `cd ethereum-harmony`
-* Run Service: `gradlew runMain`  ( live network by default or any [other environment](#options) )
+* `cd ethereum-harmony && git checkout research/casper`
+* Run Service: `gradlew runCasper`
 
 Navigate to `http://localhost:8080`
 JSON-RPC is available at either `http://localhost:8080/rpc` or `http://localhost:8080`
 
-(*) Use `gradlew runMain -Dserver.port=9999` option to change web interface port number.
+(*) Use `gradlew runCasper -Dserver.port=9999` option to change web interface port number.
 
-.
-
-## Command line options <a id="options"></a>
-
-| Environment        | Run      | ... |
-| ------------- |:-------------|------------- |
-| Main      | `gradlew runMain` | Start server connecting to **Main** network |
-| Ropsten      | `gradlew runRopsten` | Start server connecting to **Ropsten** network |
-| Casper      | `gradlew runCasper`      | Start server connecting to **Casper FFG** test network |
-| Classic | `gradlew runClassic`      | Start server connecting to **Ethereum Classic** network |   
-| Private | `gradlew runPrivate`      | Start server, no network connection, single miner running|    
-| Custom | `gradlew runCustom`      | Start server connecting to custom network (check [custom network](#custom-network)) |
+Check Casper specific options in Ethereumj [casper.conf](https://github.com/ethereum/ethereumj/blob/research/casper/ethereumj-core/src/main/resources/casper.conf)
 
 .
 

@@ -20,6 +20,7 @@ package com.ethercamp.harmony.web.controller;
 
 import com.ethercamp.harmony.model.dto.*;
 import com.ethercamp.harmony.service.BlockchainInfoService;
+import com.ethercamp.harmony.service.CasperInfoService;
 import com.ethercamp.harmony.util.AppConst;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -43,6 +44,9 @@ public class WebSocketController {
 
     @Autowired
     BlockchainInfoService blockchainInfoService;
+
+    @Autowired
+    CasperInfoService casperInfoService;
 
     @Autowired
     private Environment env;
@@ -72,11 +76,16 @@ public class WebSocketController {
         return blockchainInfoService.getSystemLogs();
     }
 
+    @MessageMapping("/currentCasperLogs")
+    public Queue<String> getCasperLogs() {
+        return casperInfoService.getCasperLogs();
+    }
+
     /**
      * Defines request mapping for all site pages.
      * As we have angular routing - we return index.html here.
      */
-    @RequestMapping({"/", "/systemLog", "/peers", "/rpcUsage", "/terminal", "/wallet", "/contracts", "/contractNew"})
+    @RequestMapping({"/", "/systemLog", "/casperLog", "/peers", "/rpcUsage", "/terminal", "/wallet", "/contracts", "/contractNew"})
     public String index(HttpServletRequest request) {
         final boolean contractsEnabled = env.getProperty("feature.contract.enabled", "false").equalsIgnoreCase("true");
         if (!contractsEnabled && request.getRequestURI().equalsIgnoreCase("/contracts")) {

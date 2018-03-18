@@ -1,0 +1,47 @@
+<section class="content height-100p">
+
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="view-header">
+
+                <div class="m-l-sm pull-right text-right text-14">
+                    <form class="navbar-form navbar-right" role="search">
+                        <ul class="list-inline">
+                            <li>
+                                <div class="checkbox">
+                                    <label>
+                                        <input type="checkbox"
+                                               ng-model="isAutoScroll"
+                                               ng-change="onAutoScrollChange()">
+                                        Auto-scroll
+                                    </label>
+                                </div>
+                            </li>
+                        </ul>
+                    </form>
+                </div>
+
+                <div class="header-icon">
+                    <i class="pe page-header-icon pe-7s-news-paper"></i>
+                </div>
+
+                <div class="header-title">
+                    <h3 class="m-b-xs">Casper Logs</h3>
+                    <small>
+                        Displaying logs related to casper contract activity.
+                    </small>
+                </div>
+
+
+            </div>
+            <hr>
+        </div>
+    </div>
+
+    <div class="panel panel-filled">
+        <div id="log-scroll-container" class="bs-example">
+            <pre class="log"></pre>
+        </div>
+    </div>
+
+</section>
