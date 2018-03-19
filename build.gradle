@@ -78,6 +78,11 @@ repositories {
 }
 
 dependencies {
+    if (JavaVersion.current().ordinal() > 7) { // Java 9+ compatibility
+        compile 'javax.xml.bind:jaxb-api:2.2.11'
+        compile 'com.sun.xml.bind:jaxb-core:2.2.11'
+        compile 'com.sun.xml.bind:jaxb-impl:2.2.11'
+    }
     compile "org.springframework.boot:spring-boot-starter-web"
     compile "org.springframework.boot:spring-boot-starter-actuator"
     compile "org.springframework.boot:spring-boot-starter-websocket"
