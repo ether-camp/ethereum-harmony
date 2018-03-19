@@ -20,6 +20,7 @@ package com.ethercamp.harmony.jsonrpc;
 
 import com.ethercamp.harmony.keystore.Keystore;
 import com.ethercamp.harmony.model.Account;
+import com.ethercamp.harmony.service.WalletService;
 import com.ethercamp.harmony.util.ErrorCodes;
 import com.ethercamp.harmony.util.exception.HarmonyException;
 import com.google.common.collect.ImmutableMap;
@@ -199,6 +200,9 @@ public class EthJsonRpcImpl implements JsonRpc {
     @Autowired
     CommonConfig commonConfig = CommonConfig.getDefault();
 
+    @Autowired
+    WalletService walletService;
+
 
     /**
      * Lowercase hex address as a key.
@@ -349,11 +353,7 @@ public class EthJsonRpcImpl implements JsonRpc {
     }
 
     protected Account importAccount(ECKey key, String password) {
-        final Account account = new Account();
-        account.init(key);
-
-        keystore.storeKey(key, password);
-        return account;
+        return walletService.importPersonal(key, password);
     }
 
     public String web3_clientVersion() {
