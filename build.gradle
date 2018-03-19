@@ -82,6 +82,7 @@ dependencies {
         compile 'javax.xml.bind:jaxb-api:2.2.11'
         compile 'com.sun.xml.bind:jaxb-core:2.2.11'
         compile 'com.sun.xml.bind:jaxb-impl:2.2.11'
+        compile 'javax.xml.ws:jaxws-api:2.2.11'
     }
     compile "org.springframework.boot:spring-boot-starter-web"
     compile "org.springframework.boot:spring-boot-starter-actuator"
