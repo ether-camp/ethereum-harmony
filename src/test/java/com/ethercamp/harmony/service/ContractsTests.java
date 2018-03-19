@@ -214,7 +214,7 @@ public class ContractsTests {
         final SolidityCompiler.Result compiled = SolidityCompiler.compile(sourceCode.getBytes("UTF-8"), true, SolidityCompiler.Options.BIN);
         final CompilationResult result = CompilationResult.parse(compiled.output);
 
-        return result.contracts.get(contractName).bin;
+        return result.getContract(contractName).bin;
     }
 }
 
