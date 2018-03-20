@@ -240,6 +240,7 @@ task runMain() {
     doLast {
         addJvmArgIfEmpty "database.dir", getDatabaseDir("database")
         addJvmArgIfEmpty "sync.fast.enabled", "true"
+        addJvmArgIfEmpty "sync.fast.skipHistory", "true"
         addJvmArgIfEmpty "ethereumj.conf.res", "ethereumj.conf"
         addJvmArgIfEmpty "database.name", "database"
         addJvmArgIfEmpty "networkProfile", "main"
@@ -271,6 +272,7 @@ task runPrivate() {
 task runClassic() {
     doLast {
         addJvmArgIfEmpty "sync.fast.enabled", "true"
+        addJvmArgIfEmpty "sync.fast.skipHistory", "true"
         bootRunWithNetworkConfig('classic', true)
     }
 }
