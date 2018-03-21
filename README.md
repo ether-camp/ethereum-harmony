@@ -105,6 +105,10 @@ An example:
 
 .
 
+### Development
+
+Check [Development troubleshooting](https://github.com/ether-camp/ethereum-harmony/wiki/Development-troubleshooting)
+
 ### Special thanks
 
 Powered by [![multi-platform installer builder](https://www.ej-technologies.com/images/product_banners/install4j_medium.png)](https://www.ej-technologies.com/products/install4j/overview.html)

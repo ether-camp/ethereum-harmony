@@ -316,6 +316,39 @@ public class WalletService {
     }
 
     /**
+     * Stores provided key in keystore and addresses (with auto-generated name)
+     * @param key           Account key
+     * @param password      Protection password
+     * @return  Account
+     */
+    public Account importPersonal(ECKey key, String password) {
+        final Account account = new Account();
+        account.init(key);
+
+        final String address = cleanAddress(toHexString(account.getAddress()));
+        // Giving next vacant name to this unnamed account
+        int i = 1;
+        boolean vacant = false;
+        String name = null;
+        while(!vacant) {
+            name = String.format("Account #%s", i);
+            if (!addresses.values().contains(name)) {
+                vacant = true;
+            } else {
+                ++i;
+            }
+        }
+        log.info("newPersonal " + name);
+
+        keystore.storeKey(key, password);
+        addresses.put(address, name);
+
+        flushWalletToDisk();
+
+        return account;
+    }
+
+    /**
      * Import address without keeping key on server.
      */
     public String importAddress(String addressValue, String name) {

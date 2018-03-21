@@ -156,7 +156,17 @@
             }, 10);
         }
 
-
+        function onInitAddon(term) {
+            // Decodes the command after # in url and executes it on terminal init
+            try {
+                var uriPart = location.hash.substring(1);
+                if (uriPart.length === 0) return;
+                var cmd = decodeURIComponent(uriPart);
+                term.exec(cmd);
+            } catch (error) {
+              // do nothing
+            }
+        }
 
         function createTerminal(list) {
             var methods = extractMethods(list);
@@ -185,6 +195,7 @@
                         prompt: 'node> ',
                         onInit: function(term) {
                             term.focus();
+                            onInitAddon(term);
                         }
                     });
 

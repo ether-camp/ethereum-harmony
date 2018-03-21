@@ -128,7 +128,7 @@ public class KeystoreFormat {
 
             return ECKey.fromPrivate(privateKey);
         } catch (Exception e) {
-            throw new RuntimeException("Problem loading key. Message: " + e.getMessage(), e);
+            throw new RuntimeException("Cannot unlock account. Message: " + e.getMessage(), e);
         }
     }
 
