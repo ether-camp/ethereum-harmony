@@ -3190,4 +3190,11 @@ input[type="number"] {
 #toast-container > div {
     opacity: 1 !important;
 }
+/*
+    TODO: Refactor me
+    I'm big and not supported
+*/
 
+g#blockContainer {
+    cursor: pointer;
+}

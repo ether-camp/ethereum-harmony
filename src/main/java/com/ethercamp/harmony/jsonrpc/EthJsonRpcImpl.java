@@ -20,6 +20,7 @@ package com.ethercamp.harmony.jsonrpc;
 
 import com.ethercamp.harmony.keystore.Keystore;
 import com.ethercamp.harmony.model.Account;
+import com.ethercamp.harmony.service.WalletService;
 import com.ethercamp.harmony.util.ErrorCodes;
 import com.ethercamp.harmony.util.exception.HarmonyException;
 import com.google.common.collect.ImmutableMap;
@@ -205,6 +206,9 @@ public class EthJsonRpcImpl implements JsonRpc {
     @Autowired
     CasperValidatorService validatorService;
 
+    @Autowired
+    WalletService walletService;
+
 
     /**
      * Lowercase hex address as a key.
@@ -355,11 +359,7 @@ public class EthJsonRpcImpl implements JsonRpc {
     }
 
     protected Account importAccount(ECKey key, String password) {
-        final Account account = new Account();
-        account.init(key);
-
-        keystore.storeKey(key, password);
-        return account;
+        return walletService.importPersonal(key, password);
     }
 
     public String web3_clientVersion() {
@@ -837,7 +837,7 @@ public class EthJsonRpcImpl implements JsonRpc {
         }
         org.ethereum.solidity.compiler.CompilationResult result = org.ethereum.solidity.compiler.CompilationResult.parse(res.output);
         CompilationResult ret = new CompilationResult();
-        org.ethereum.solidity.compiler.CompilationResult.ContractMetadata contractMetadata = result.contracts.values().iterator().next();
+        org.ethereum.solidity.compiler.CompilationResult.ContractMetadata contractMetadata = result.getContracts().iterator().next();
         ret.code = toJsonHex(contractMetadata.bin);
         ret.info = new CompilationInfo();
         ret.info.source = contract;
@@ -865,6 +865,7 @@ public class EthJsonRpcImpl implements JsonRpc {
 
     static class Filter {
         static final int MAX_EVENT_COUNT = 1024; // prevent OOM when Filers are forgotten
+        private int pollStart = 0;
         static abstract class FilterEvent {
             public abstract Object getJsonEventObject();
         }
@@ -873,17 +874,30 @@ public class EthJsonRpcImpl implements JsonRpc {
         public synchronized boolean hasNew() { return !events.isEmpty();}
 
         public synchronized Object[] poll() {
+            Object[] ret = new Object[events.size() - pollStart];
+            for (int i = 0; i < ret.length; i++) {
+                ret[i] = events.get(i + pollStart).getJsonEventObject();
+            }
+            pollStart += ret.length;
+            return ret;
+        }
+
+        public synchronized Object[] getAll() {
             Object[] ret = new Object[events.size()];
             for (int i = 0; i < ret.length; i++) {
                 ret[i] = events.get(i).getJsonEventObject();
             }
-            this.events.clear();
             return ret;
         }
 
         protected synchronized void add(FilterEvent evt) {
             events.add(evt);
-            if (events.size() > MAX_EVENT_COUNT) events.remove(0);
+            if (events.size() > MAX_EVENT_COUNT) {
+                events.remove(0);
+                if (pollStart > 0) {
+                    --pollStart;
+                }
+            }
         }
 
         public void newBlockReceived(Block b) {}
@@ -1074,8 +1088,9 @@ public class EthJsonRpcImpl implements JsonRpc {
 
     @Override
     public Object[] eth_getFilterLogs(String id) {
-        log.debug("eth_getFilterLogs ...");
-        return eth_getFilterChanges(id);
+        Filter filter = installedFilters.get(StringHexToBigInteger(id).intValue());
+        if (filter == null) return null;
+        return filter.getAll();
     }
 
     @Override

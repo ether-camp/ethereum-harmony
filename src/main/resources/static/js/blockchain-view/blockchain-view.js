@@ -265,6 +265,7 @@ var BlockchainView = (function () {
                         block.y         = height - GAP * (block.index + 1) - BLOCK_HEIGHT * (block.index + 1);
                         block.width     = BLOCK_WIDTH;
                         block.height    = BLOCK_HEIGHT;
+                        block.uri       = '/terminal#' + encodeURIComponent('eth_getBlockByHash ' + block.blockHash + ' false');
                     }
                 });
             });
@@ -358,6 +359,9 @@ var BlockchainView = (function () {
             .attr('x', BLOCK_WIDTH / 2)
             .attr('y', 20)
             .text( function (d) { return d.text; })
+            .on('click', function(d, i) {
+                window.location.href = d.uri;
+            })
             .attr('font-family', 'sans-serif')
             .attr('text-anchor', 'middle')
             .attr('font-size', '16px')
