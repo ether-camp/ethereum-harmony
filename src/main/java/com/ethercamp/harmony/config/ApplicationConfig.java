@@ -18,10 +18,14 @@
 
 package com.ethercamp.harmony.config;
 
+import com.ethercamp.contrdata.config.ContractDataConfig;
 import com.ethercamp.harmony.web.filter.JsonRpcUsageFilter;
+import org.ethereum.datasource.DbSource;
+import org.ethereum.datasource.leveldb.LevelDbDataSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.web.filter.HiddenHttpMethodFilter;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -35,7 +39,8 @@ import com.ethercamp.harmony.util.exception.Web3jSafeAnnotationsErrorResolver;
  * Created by Stan Reshetnyk on 18.07.16.
  */
 @Configuration
-@ComponentScan("com.ethercamp")
+@ComponentScan(basePackages = "com.ethercamp",
+        excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = ContractDataConfig.class))
 public class ApplicationConfig extends WebMvcConfigurerAdapter {
 
     private static final String ERROR_RESOLVER_KEY = "jsonrpc.web3jCompliantError";
@@ -98,5 +103,13 @@ public class ApplicationConfig extends WebMvcConfigurerAdapter {
                 registry.addMapping("/**");
             }
         };
+    }
+
+    // FIXME: a hack to exclude ContractDataConfig.systemProperties() from scope, should be a better solution
+    @Bean
+    public DbSource<byte[]> storageDict() {
+        LevelDbDataSource dataSource = new LevelDbDataSource("storageDict");
+        dataSource.init();
+        return dataSource;
     }
 }
