@@ -20,9 +20,12 @@
 package com.ethercamp.harmony.config;
 
 import org.ethereum.casper.config.CasperConfig;
+import org.ethereum.config.CommonConfig;
+import org.ethereum.config.DefaultConfig;
 import org.ethereum.config.NoAutoscan;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.FilterType;
 
 /**
  * Override default EthereumJ config to apply custom configuration.
@@ -33,7 +36,8 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @ComponentScan(
         basePackages = "org.ethereum",
-        excludeFilters = @ComponentScan.Filter(NoAutoscan.class))
+        excludeFilters = {@ComponentScan.Filter(NoAutoscan.class),
+                @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = {CommonConfig.class, DefaultConfig.class})})
 public class EthereumHarmonyConfig extends CasperConfig {
 
 }
