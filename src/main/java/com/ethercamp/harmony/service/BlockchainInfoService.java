@@ -267,7 +267,7 @@ public class BlockchainInfoService implements ApplicationListener {
                 ((Double) (bean.getSystemCpuLoad() * 100)).intValue(),
                 bean.getFreePhysicalMemorySize(),
                 bean.getTotalPhysicalMemorySize(),
-                getFreeDiskSpace()
+                getFreeDiskSpace(new File(config.databaseDir()))
         ));
 
         clientMessageService.sendToTopic("/topic/machineInfo", machineInfo.get());
@@ -347,29 +347,12 @@ public class BlockchainInfoService implements ApplicationListener {
     }
 
     /**
-     * Get free space of disk where project located.
-     * Verified on multi disk Windows.
-     * Not tested against sym links
+     * Get free space of disk where currentDir is located.
+     * Verified on Mac/Linux including symlinks.
+     * @param currentDir   Directory on measured disk
      */
-    private long getFreeDiskSpace() {
-        final File currentDir = new File(".");
-        for (Path root : FileSystems.getDefault().getRootDirectories()) {
-//            log.debug(root.toAbsolutePath() + " vs current " + currentDir.getAbsolutePath());
-            try {
-                final FileStore store = Files.getFileStore(root);
-
-                final boolean isCurrentDirBelongsToRoot = Paths.get(currentDir.getAbsolutePath()).startsWith(root.toAbsolutePath());
-                if (isCurrentDirBelongsToRoot) {
-                    final long usableSpace = store.getUsableSpace();
-//                    log.debug("Disk available:" + readableFileSize(usableSpace)
-//                            + ", total:" + readableFileSize(store.getTotalSpace()));
-                    return usableSpace;
-                }
-            } catch (IOException e) {
-                log.error("Problem querying space: " + e.toString());
-            }
-        }
-        return 0;
+    private long getFreeDiskSpace(File currentDir) {
+        return currentDir.getUsableSpace();
     }
 
     /**
