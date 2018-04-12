@@ -19,6 +19,8 @@
 package com.ethercamp.harmony.jsonrpc;
 
 import com.ethercamp.harmony.keystore.FileSystemKeystore;
+import com.ethercamp.harmony.service.WalletService;
+import com.ethercamp.harmony.service.wallet.FileSystemWalletStore;
 import com.typesafe.config.ConfigFactory;
 import org.ethereum.config.SystemProperties;
 import org.ethereum.config.blockchain.FrontierConfig;
@@ -31,7 +33,6 @@ import org.ethereum.datasource.inmem.HashMapDB;
 import org.ethereum.facade.Ethereum;
 import org.ethereum.facade.EthereumFactory;
 import org.ethereum.facade.EthereumImpl;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -108,6 +109,16 @@ public class JsonRpcTest {
                     return keystorePath;
                 }
             };
+        }
+
+        @Bean
+        public WalletService walletService() {
+            return new WalletService();
+        }
+
+        @Bean
+        public FileSystemWalletStore fileSystemWalletStore() {
+            return new FileSystemWalletStore();
         }
 
         @Bean
@@ -286,11 +297,11 @@ public class JsonRpcTest {
             assertTrue(HexToLong(receipt3.blockNumber) > 2);
             assertTrue(HexToLong(receipt3.gasUsed) > 0);
 
-            Object[] logs = jsonRpc.eth_getFilterLogs(filterId);
+            Object[] logs = jsonRpc.eth_getFilterChanges(filterId);
             assertEquals(1, logs.length);
             assertEquals("0x0000000000000000000000000000000000000000000000000000000000001111",
                     ((JsonRpc.LogFilterElement)logs[0]).data);
-            assertEquals(0, jsonRpc.eth_getFilterLogs(filterId).length);
+            assertEquals(0, jsonRpc.eth_getFilterChanges(filterId).length);
 
             String ret1 = jsonRpc.eth_call(callArgs2, blockResult2.number);
             String ret2 = jsonRpc.eth_call(callArgs2, "latest");
