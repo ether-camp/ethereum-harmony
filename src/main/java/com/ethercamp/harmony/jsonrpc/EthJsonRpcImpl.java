@@ -78,6 +78,7 @@ import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -1393,7 +1394,14 @@ public class EthJsonRpcImpl implements JsonRpc {
             log.error(errorMessage);
             throw new RuntimeException(errorMessage);
         }
-        blockMiner.startMining();
+        eth.switchToShortSync().whenComplete((aVoid, throwable) -> {
+            if (throwable != null) {
+                log.error("Failed to switch to Short Sync and start mining", throwable);
+            } else {
+                log.info("Sync is switched to Short Sync or not enabled. Starting miner");
+                blockMiner.startMining();
+            }
+        });
         return true;
     }
 
