@@ -26,6 +26,7 @@ import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.UnsynchronizedAppenderBase;
 
 import com.ethercamp.harmony.keystore.FileSystemKeystore;
+import org.ethereum.core.BlockHeader;
 import org.ethereum.util.BuildInfo;
 import org.ethereum.vm.VM;
 import org.slf4j.LoggerFactory;
@@ -55,6 +56,9 @@ import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.math.RoundingMode;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -300,7 +304,7 @@ public class BlockchainInfoService implements ApplicationListener {
                         bestBlock.getTransactionsList().size(),
                         bestBlock.getDifficultyBI().longValue(),
                         0l, // not implemented
-                        calculateHashRate(),
+                        calculateHashRate(calculateAvgDifficulty(true)).longValue(),
                         ethereum.getGasPrice(),
                         NetworkInfoDTO.SyncStatusDTO.instanceOf(syncManager.getSyncStatus())
                 )
@@ -339,22 +343,63 @@ public class BlockchainInfoService implements ApplicationListener {
         clientMessageService.sendToTopic("/topic/networkInfo", info);
     }
 
-    private long calculateHashRate() {
+    /**
+     * Calculates average difficulty of blocks in lastBlocksForHashRate
+     * Ignores first block if there are more than 2 blocks
+     * @param includeUncles if set to true, difficulty of its uncles is added to each block difficulty
+     * @return average block difficulty
+     */
+    private BigInteger calculateAvgDifficulty(boolean includeUncles) {
         final List<Block> blocks = Arrays.asList(lastBlocksForHashRate.toArray(new Block[0]));
 
         if (blocks.isEmpty()) {
-            return 0;
+            return BigInteger.ZERO;
         }
 
-        final Block bestBlock = blocks.get(blocks.size() - 1);
-        final long difficulty = bestBlock.getDifficultyBI().longValue();
+        if (blocks.size() == 1) {
+            return blocks.get(0).getDifficultyBI();
+        }
 
-        final long sumTimestamps = blocks.stream().mapToLong(b -> b.getTimestamp()).sum();
-        if (sumTimestamps > 0) {
-            float avgTime = ((float) sumTimestamps / blocks.size() / 1000);
-            return (long) (difficulty / avgTime);
+        // Calculating sum of difficulties for blocks [1, last]
+        BigInteger sumDifficulties = BigInteger.ZERO;
+        for (int i = 1; i < blocks.size(); i++) {
+            Block block = blocks.get(i);
+            sumDifficulties = sumDifficulties.add(block.getDifficultyBI());
+            if (includeUncles) {
+                for (BlockHeader uncle : block.getUncleList()) {
+                    sumDifficulties = sumDifficulties.add(uncle.getDifficultyBI());
+                }
+            }
+        }
+
+        return new BigDecimal(sumDifficulties)
+                .divide(BigDecimal.valueOf(blocks.size() - 1), RoundingMode.FLOOR)
+                .toBigInteger();
+    }
+
+    /**
+     * Calculates block hash rate for blocks in lastBlocksForHashRate
+     * Uses only blocks from 2nd to last. 1st block is used only to calculate 2nd block mining time.
+     * @param blockDifficulty   Average difficulty for blocks [1, last] of lastBlocksForHashRate
+     * @return Average hash rate / second
+     */
+    private BigInteger calculateHashRate(BigInteger blockDifficulty) {
+        final List<Block> blocks = Arrays.asList(lastBlocksForHashRate.toArray(new Block[0]));
+
+        if (blocks.size() < 2) {
+            return BigInteger.ZERO;
+        }
+
+        final Block firstBlock = blocks.get(0);
+        final Block bestBlock = blocks.get(blocks.size() - 1);
+        // Average block time for blocks [1, last]
+        float avgTime = ((float) (bestBlock.getTimestamp() - firstBlock.getTimestamp()) / (blocks.size() - 1));
+
+        if (avgTime > 0) {
+            return new BigDecimal(blockDifficulty)
+                    .divide(new BigDecimal(avgTime), RoundingMode.FLOOR).toBigInteger(); // avg block difficulty / avg block seconds
         } else {
-            return 0;
+            return BigInteger.ZERO;
         }
     }
 

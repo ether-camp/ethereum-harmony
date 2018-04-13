@@ -94,14 +94,16 @@
     var topicStorage = {};
 
     var connectionLostOnce = false;
-    var simpleSuffixes = {
+    var decimalBase = {
         suffixes: {
             B: ' ',
             KB: 'K',
             MB: 'M',
             GB: 'G',
-            TB: 'T'
-        }
+            TB: 'T',
+            PB: 'P'
+        },
+       base: 10
     };
 
     /**
@@ -421,9 +423,9 @@
                 vm.data.lastBlockTimeMoment     = moment(info.lastBlockTime * 1000).fromNow();
                 vm.data.lastBlockTimeString     = moment(info.lastBlockTime * 1000).format('hh:mm:ss MMM DD YYYY');
                 vm.data.lastBlockTransactions   = info.lastBlockTransactions;
-                vm.data.difficulty              = filesize(info.difficulty, simpleSuffixes);
+                vm.data.difficulty              = filesize(info.difficulty, decimalBase) + 'H';
                 vm.data.lastReforkTime          = info.lastReforkTime;
-                vm.data.networkHashRate         = filesize(info.networkHashRate, simpleSuffixes) + 'H/s';
+                vm.data.networkHashRate         = filesize(info.networkHashRate, decimalBase) + 'H/s';
                 vm.data.gasPrice                = formatBigDigital(info.gasPrice) + 'Wei';
                 $scope.setSyncStatus(info.syncStatus);
             });
