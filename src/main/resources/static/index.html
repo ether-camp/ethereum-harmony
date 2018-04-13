@@ -229,7 +229,7 @@
 
                     <h5 class="m-t-md m-b-xs v-c">
                         <i class="pe pe-7s-shield text-warning"></i>
-                        Machine Info
+                        Harmony Info
                     </h5>
                     <!--pe pe-7s-global text-warning-->
 
@@ -249,7 +249,7 @@
                     <div class="m-t-xs">
                         Memory used: <span class="c-white" ng-cloak>{{vm.data.memoryOccupied}}</span>
                     </div>
-                    <div class="m-b-md">
+                    <div class="">
                         <div class="progress m-t-xs full progress-small">
                             <div id="memoryUsageProgress" aria-valuemax="100" aria-valuemin="0" aria-valuenow="35" role="progressbar" class="width-0p progress-bar progress-bar-warning">
                                 <span class="sr-only">{{vm.data.memoryOccupied}}</span>
@@ -258,8 +258,15 @@
                     </div>
 
                     <!-- Disk -->
-                    <div class="m-t-sm">
-                        Free space: <span class="c-white" ng-cloak>{{vm.data.freeSpace}}</span>
+                    <div class="m-t-xs">
+                        Disk used: <span class="c-white" ng-cloak>{{vm.data.diskOccupied}}</span>
+                    </div>
+                    <div class="">
+                        <div class="progress m-t-xs full progress-small">
+                            <div id="diskUsageProgress" aria-valuemax="100" aria-valuemin="0" aria-valuenow="35" role="progressbar" class="width-0p progress-bar progress-bar-warning">
+                                <span class="sr-only">{{vm.data.diskOccupied}}</span>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="m-t-xl" data-toggle="tooltip" title="{{vm.data.ethereumJBuildInfo}}">

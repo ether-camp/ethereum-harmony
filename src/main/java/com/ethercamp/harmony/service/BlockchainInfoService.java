@@ -110,7 +110,7 @@ public class BlockchainInfoService implements ApplicationListener {
 
     private final Queue<BlockInfo> lastBlocksForClient = new ConcurrentLinkedQueue();
 
-    private final AtomicReference<MachineInfoDTO> machineInfo = new AtomicReference<>(new MachineInfoDTO(0, 0l, 0l, 0l));
+    private final AtomicReference<MachineInfoDTO> machineInfo = new AtomicReference<>(new MachineInfoDTO(0, 0l, 0l, 0l, 0l));
 
     private final AtomicReference<BlockchainInfoDTO> blockchainInfo = new AtomicReference<>();
 
@@ -263,11 +263,23 @@ public class BlockchainInfoService implements ApplicationListener {
         final OperatingSystemMXBean bean = (OperatingSystemMXBean) ManagementFactory
                 .getOperatingSystemMXBean();
 
+        File dbDir = new File(config.databaseDir());
+        long dbSize = 0;
+        try {
+            dbSize = Files.walk(dbDir.toPath())
+                    .filter(p -> p.toFile().isFile())
+                    .mapToLong(p -> p.toFile().length())
+                    .sum();
+        } catch (IOException e) {
+            log.error("Unable to calculate db size", e);
+        }
+
         machineInfo.set(new MachineInfoDTO(
-                ((Double) (bean.getSystemCpuLoad() * 100)).intValue(),
-                bean.getFreePhysicalMemorySize(),
-                bean.getTotalPhysicalMemorySize(),
-                getFreeDiskSpace(new File(config.databaseDir()))
+                ((Double) (bean.getProcessCpuLoad() * 100)).intValue(),
+                Runtime.getRuntime().freeMemory(),
+                Runtime.getRuntime().maxMemory(),
+                dbSize,
+                getFreeDiskSpace(dbDir)
         ));
 
         clientMessageService.sendToTopic("/topic/machineInfo", machineInfo.get());

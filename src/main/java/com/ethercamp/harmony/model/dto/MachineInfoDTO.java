@@ -46,6 +46,11 @@ public class MachineInfoDTO {
     /**
      * In bytes.
      */
+    private final  Long dbSize;
+
+    /**
+     * In bytes.
+     */
     private final  Long freeSpace;
 
 }

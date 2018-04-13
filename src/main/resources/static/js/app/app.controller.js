@@ -192,7 +192,8 @@
             cpuUsage: 0,
             memoryOccupied: '',
             memoryFree: '',
-            freeSpace: '',
+            diskOccupied: '',
+            diskFree: '',
 
             highestBlockNumber: 0,
             lastBlockNumber: 0,
@@ -368,14 +369,20 @@
                 vm.data.cpuUsage        = info.cpuUsage;
                 vm.data.memoryOccupied  = filesize(info.memoryTotal - info.memoryFree);
                 vm.data.memoryFree      = filesize(info.memoryFree);
-                vm.data.freeSpace       = filesize(info.freeSpace);
+                vm.data.diskOccupied  = filesize(info.dbSize);
+                vm.data.diskFree      = filesize(info.freeSpace);
 
                 var memoryPercentage = 0;
                 if (info.memoryTotal != 0) {
                     memoryPercentage = Math.round(100 * (info.memoryTotal - info.memoryFree) / info.memoryTotal);
                 }
+                var diskPercentage = 0;
+                if ((info.dbSize + info.freeSpace) != 0) {
+                    diskPercentage = Math.round(100 * (info.dbSize) / (info.dbSize + info.freeSpace));
+                }
                 updateProgressBar('#memoryUsageProgress', memoryPercentage);
                 updateProgressBar('#cpuUsageProgress', info.cpuUsage);
+                updateProgressBar('#diskUsageProgress', diskPercentage);
             });
         }
 
