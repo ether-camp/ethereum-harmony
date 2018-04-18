@@ -27,6 +27,7 @@ import ch.qos.logback.core.UnsynchronizedAppenderBase;
 
 import com.ethercamp.harmony.keystore.FileSystemKeystore;
 import org.ethereum.core.BlockHeader;
+import org.ethereum.listener.RecommendedGasPriceTracker;
 import org.ethereum.util.BuildInfo;
 import org.ethereum.vm.VM;
 import org.slf4j.LoggerFactory;
@@ -132,6 +133,7 @@ public class BlockchainInfoService implements ApplicationListener {
 
     protected volatile SyncStatus syncStatus = SyncStatus.LONG_SYNC;
 
+    private RecommendedGasPriceTracker gasPriceTrackerNew = new RecommendedGasPriceTracker();
 
     @PostConstruct
     private void postConstruct() {
@@ -147,6 +149,7 @@ public class BlockchainInfoService implements ApplicationListener {
                 addBlock(block);
             }
         });
+        ethereum.addListener(gasPriceTrackerNew);
 
         if (!config.isSyncEnabled()) {
             syncStatus = BlockchainInfoService.SyncStatus.DISABLED;
@@ -305,7 +308,7 @@ public class BlockchainInfoService implements ApplicationListener {
                         bestBlock.getDifficultyBI().longValue(),
                         0l, // not implemented
                         calculateHashRate(calculateAvgDifficulty(true)).longValue(),
-                        ethereum.getGasPrice(),
+                        gasPriceTrackerNew.getRecommendedGasPrice(),
                         NetworkInfoDTO.SyncStatusDTO.instanceOf(syncManager.getSyncStatus())
                 )
         );

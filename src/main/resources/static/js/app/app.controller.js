@@ -116,13 +116,9 @@
     jQuery.fx.interval = 100;
 
 
-    function formatBigDigital(value, decimals) {
-        if(value == 0) return '0 ';
-        var k = 1000;
-        var dm = decimals + 1 || 3;
-        var sizes = ['', 'K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
-        var i = Math.floor(Math.log(value) / Math.log(k));
-        return parseFloat((value / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    function formatBigDigital(value, suffix) {
+        if (isNaN(value) || value == null) return 'N/A';
+        return filesize(value, decimalBase) + suffix;
     }
 
 
@@ -423,10 +419,10 @@
                 vm.data.lastBlockTimeMoment     = moment(info.lastBlockTime * 1000).fromNow();
                 vm.data.lastBlockTimeString     = moment(info.lastBlockTime * 1000).format('hh:mm:ss MMM DD YYYY');
                 vm.data.lastBlockTransactions   = info.lastBlockTransactions;
-                vm.data.difficulty              = filesize(info.difficulty, decimalBase) + 'H';
+                vm.data.difficulty              = formatBigDigital(info.difficulty, 'H');
                 vm.data.lastReforkTime          = info.lastReforkTime;
-                vm.data.networkHashRate         = filesize(info.networkHashRate, decimalBase) + 'H/s';
-                vm.data.gasPrice                = formatBigDigital(info.gasPrice) + 'Wei';
+                vm.data.networkHashRate         = formatBigDigital(info.networkHashRate, 'H/s');
+                vm.data.gasPrice                = formatBigDigital(info.gasPrice, 'Wei');
                 $scope.setSyncStatus(info.syncStatus);
             });
         }

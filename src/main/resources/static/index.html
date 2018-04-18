@@ -132,7 +132,7 @@
                                 #<span id="blockCounter" class="tp-title">0</span> ({{vm.data.lastBlockTimeMoment}})
                             </span>
                             <div class="top-bar-line"></div>
-                            <div class="small">Block Imported</div>
+                            <div class="small">Last Block Imported</div>
                         </div>
                     </div>
 
@@ -149,16 +149,6 @@
                     <div class="panel tp-panel" ng-show="!isLoadingState || isLoadingStateWithBlocks">
                         <div class="panel-body">
                             <span class="m-b-none tp-title">
-                                {{vm.data.gasPrice}}
-                            </span>
-                            <div class="top-bar-line"></div>
-                            <div class="small">Gas price</div>
-                        </div>
-                    </div>
-
-                    <div class="panel tp-panel" ng-show="!isLoadingState || isLoadingStateWithBlocks">
-                        <div class="panel-body">
-                            <span class="m-b-none tp-title">
                                 {{vm.data.difficulty}}
                             </span>
                             <div class="top-bar-line"></div>
@@ -169,10 +159,20 @@
                     <div class="panel tp-panel" ng-show="!isLoadingState || isLoadingStateWithBlocks">
                         <div class="panel-body">
                             <span class="m-b-none tp-title">
+                                {{vm.data.gasPrice}}
+                            </span>
+                            <div class="top-bar-line"></div>
+                            <div class="small">Recommended Gas Price</div>
+                        </div>
+                    </div>
+
+                    <div class="panel tp-panel" ng-show="!isLoadingState || isLoadingStateWithBlocks">
+                        <div class="panel-body">
+                            <span class="m-b-none tp-title">
                                 {{vm.data.networkHashRate}}
                             </span>
                             <div class="top-bar-line"></div>
-                            <div class="small">Hash Rate</div>
+                            <div class="small">Avg Hash Rate</div>
                         </div>
                     </div>
 
