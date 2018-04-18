@@ -226,10 +226,11 @@ sourceCompatibility=1.8
 [compileJava, compileTestJava]*.options*.compilerArgs = ['-parameters']
 
 
-//configurations.all {
-//    // check for updates every build
-//    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
-//}
+configurations.all {
+    // check for updates every build
+    // develop build only
+    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+}
 
 
 /**
