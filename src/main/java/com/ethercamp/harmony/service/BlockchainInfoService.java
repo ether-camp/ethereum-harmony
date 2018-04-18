@@ -27,6 +27,7 @@ import ch.qos.logback.core.UnsynchronizedAppenderBase;
 
 import com.ethercamp.harmony.keystore.FileSystemKeystore;
 import org.ethereum.core.BlockHeader;
+import org.ethereum.core.BlockSummary;
 import org.ethereum.listener.RecommendedGasPriceTracker;
 import org.ethereum.util.BuildInfo;
 import org.ethereum.vm.VM;
@@ -133,7 +134,13 @@ public class BlockchainInfoService implements ApplicationListener {
 
     protected volatile SyncStatus syncStatus = SyncStatus.LONG_SYNC;
 
-    private RecommendedGasPriceTracker gasPriceTrackerNew = new RecommendedGasPriceTracker();
+    class GasPriceTracker extends RecommendedGasPriceTracker {
+        public void replay(Block block) {
+            super.onBlock(block);
+        }
+    }
+
+    private GasPriceTracker gasPriceTracker = new GasPriceTracker();
 
     @PostConstruct
     private void postConstruct() {
@@ -149,7 +156,12 @@ public class BlockchainInfoService implements ApplicationListener {
                 addBlock(block);
             }
         });
-        ethereum.addListener(gasPriceTrackerNew);
+        final long lastBlock = blockchain.getBestBlock().getNumber();
+        for (int i = gasPriceTracker.getMinBlocks() - 1; i >= 0; --i) {
+            if ((lastBlock - i) < 1) continue;
+            gasPriceTracker.replay(blockchain.getBlockByNumber(lastBlock - i));
+        }
+        ethereum.addListener(gasPriceTracker);
 
         if (!config.isSyncEnabled()) {
             syncStatus = BlockchainInfoService.SyncStatus.DISABLED;
@@ -166,7 +178,6 @@ public class BlockchainInfoService implements ApplicationListener {
             });
         }
 
-        final long lastBlock = blockchain.getBestBlock().getNumber();
         final long startImportBlock = Math.max(0, lastBlock - Math.max(BLOCK_COUNT_FOR_HASH_RATE, KEEP_BLOCKS_FOR_CLIENT));
 
         LongStream.rangeClosed(startImportBlock, lastBlock)
@@ -308,7 +319,7 @@ public class BlockchainInfoService implements ApplicationListener {
                         bestBlock.getDifficultyBI().longValue(),
                         0l, // not implemented
                         calculateHashRate(calculateAvgDifficulty(true)).longValue(),
-                        gasPriceTrackerNew.getRecommendedGasPrice(),
+                        gasPriceTracker.getRecommendedGasPrice(),
                         NetworkInfoDTO.SyncStatusDTO.instanceOf(syncManager.getSyncStatus())
                 )
         );
