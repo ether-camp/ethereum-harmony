@@ -66,6 +66,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.LongStream;
+import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.*;
 
@@ -283,8 +284,8 @@ public class BlockchainInfoService implements ApplicationListener {
 
         File dbDir = new File(config.databaseDir());
         long dbSize = 0;
-        try {
-            dbSize = Files.walk(dbDir.toPath())
+        try (Stream<Path> paths = Files.walk(dbDir.toPath())) {
+            dbSize = paths
                     .filter(p -> p.toFile().isFile())
                     .mapToLong(p -> p.toFile().length())
                     .sum();
