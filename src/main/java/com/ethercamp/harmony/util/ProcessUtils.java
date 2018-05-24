@@ -33,13 +33,15 @@ import java.nio.file.Paths;
 @Slf4j(topic = "harmony")
 public class ProcessUtils {
 
+    private static final long INSTANCE_START_TIME = System.currentTimeMillis();
+
     public static void dumpOpenFiles() {
         try {
             String pid = ManagementFactory.getRuntimeMXBean().getName().split("@")[0];
             File dir = Paths.get(System.getProperty("user.dir"), "lsof").toFile();
             if (!dir.exists()) dir.mkdirs();
             try (FileOutputStream out = new FileOutputStream(Paths.get(dir.getAbsolutePath(),
-                    "lsof_pid" + pid + "_" + System.currentTimeMillis() / 1000 + ".out").toFile())) {
+                    "lsof_pid" + pid + "_" + String.valueOf((System.currentTimeMillis() - INSTANCE_START_TIME) / 1000) + ".out").toFile())) {
 
                 byte[] buffer = new byte[1 << 10];
                 Process proc = Runtime.getRuntime().exec(new String[]{"lsof", "-p", pid});
