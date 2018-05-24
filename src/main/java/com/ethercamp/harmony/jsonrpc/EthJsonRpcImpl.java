@@ -375,8 +375,11 @@ public class EthJsonRpcImpl implements JsonRpc {
         return TypeConverter.toJsonHex(result);
     }
 
+    /**
+     * Returns the current network id.
+     */
     public String net_version() {
-        return eth_protocolVersion();
+        return String.valueOf(config.networkId());
     }
 
     public String net_peerCount(){
