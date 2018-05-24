@@ -21,6 +21,7 @@
     "daoForkSupport": false,
     "eip150Block": 20,
     "eip158Block": 20,
-    "eip155Block": 20
+    "eip155Block": 20,
+    "chainId": 111
   }
 }
