@@ -18,6 +18,8 @@
 
 package com.ethercamp.harmony.util;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -28,6 +30,7 @@ import java.nio.file.Paths;
  * @author Mikhail Kalinin
  * @since 23.05.2018
  */
+@Slf4j(topic = "harmony")
 public class ProcessUtils {
 
     public static void dumpOpenFiles() {
@@ -45,8 +48,7 @@ public class ProcessUtils {
                     out.write(buffer);
             }
         } catch (Throwable t) {
-            System.err.println("Failed to dump open files");
-            t.printStackTrace();
+            log.error("Failed to dump open files", t);
         }
     }
 }
