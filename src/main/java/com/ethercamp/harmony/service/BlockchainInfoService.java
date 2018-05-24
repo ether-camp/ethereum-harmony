@@ -27,7 +27,6 @@ import ch.qos.logback.core.UnsynchronizedAppenderBase;
 
 import com.ethercamp.harmony.keystore.FileSystemKeystore;
 import org.ethereum.core.BlockHeader;
-import org.ethereum.core.BlockSummary;
 import org.ethereum.listener.RecommendedGasPriceTracker;
 import org.ethereum.util.BuildInfo;
 import org.ethereum.vm.VM;
@@ -80,6 +79,7 @@ public class BlockchainInfoService implements ApplicationListener {
     public static final int KEEP_LOG_ENTRIES = 1000;
     private static final int BLOCK_COUNT_FOR_HASH_RATE = 100;
     private static final int KEEP_BLOCKS_FOR_CLIENT = 50;
+    private static final long DB_SIZE_CACHE_EVICT_MS = 60 * 1000; // Cache DB size for ... ms
 
     @Autowired
     private Environment env;
@@ -128,6 +128,10 @@ public class BlockchainInfoService implements ApplicationListener {
     private final Queue<String> lastLogs = new ConcurrentLinkedQueue();
 
     private volatile int serverPort;
+
+    private long dbSizeMeasurementTime = 0;
+
+    private long dbSize = 0;
 
     public InitialInfoDTO getInitialInfo() {
         return initialInfo.get();
@@ -283,21 +287,11 @@ public class BlockchainInfoService implements ApplicationListener {
                 .getOperatingSystemMXBean();
 
         File dbDir = new File(config.databaseDir());
-        long dbSize = 0;
-        try (Stream<Path> paths = Files.walk(dbDir.toPath())) {
-            dbSize = paths
-                    .filter(p -> p.toFile().isFile())
-                    .mapToLong(p -> p.toFile().length())
-                    .sum();
-        } catch (IOException e) {
-            log.error("Unable to calculate db size", e);
-        }
-
         machineInfo.set(new MachineInfoDTO(
                 ((Double) (bean.getProcessCpuLoad() * 100)).intValue(),
                 Runtime.getRuntime().freeMemory(),
                 Runtime.getRuntime().maxMemory(),
-                dbSize,
+                getDbDirSize(dbDir),
                 getFreeDiskSpace(dbDir)
         ));
 
@@ -416,6 +410,29 @@ public class BlockchainInfoService implements ApplicationListener {
         } else {
             return BigInteger.ZERO;
         }
+    }
+
+    /**
+     * Measuring occupied space of database directory.
+     * Caching is enabled, result updates no more than
+     * once in {@link #DB_SIZE_CACHE_EVICT_MS} milliseconds.
+     * @param dbDir   Database directory
+     */
+    private long getDbDirSize(File dbDir) {
+        if ((System.currentTimeMillis() - dbSizeMeasurementTime) < DB_SIZE_CACHE_EVICT_MS) {
+            return dbSize;
+        }
+        this.dbSizeMeasurementTime = System.currentTimeMillis();
+        try (Stream<Path> paths = Files.walk(dbDir.toPath())) {
+            this.dbSize = paths
+                    .filter(p -> p.toFile().isFile())
+                    .mapToLong(p -> p.toFile().length())
+                    .sum();
+        } catch (IOException e) {
+            log.error("Unable to calculate db size", e);
+        }
+
+        return dbSize;
     }
 
     /**
