@@ -26,6 +26,7 @@ import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.UnsynchronizedAppenderBase;
 
 import com.ethercamp.harmony.keystore.FileSystemKeystore;
+import com.ethercamp.harmony.util.ProcessUtils;
 import org.ethereum.core.BlockHeader;
 import org.ethereum.core.BlockSummary;
 import org.ethereum.listener.RecommendedGasPriceTracker;
@@ -477,6 +478,11 @@ public class BlockchainInfoService implements ApplicationListener {
         root.addAppender(messagingAppender);
         filter.start();
         messagingAppender.start();
+    }
+
+    @Scheduled(fixedRate = 5000)
+    public void dumpOpenFiles() {
+        ProcessUtils.dumpOpenFiles();
     }
 
     public String getConfigDump() {
