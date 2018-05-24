@@ -41,13 +41,14 @@ public class ProcessUtils {
             File dir = Paths.get(System.getProperty("user.dir"), "lsof").toFile();
             if (!dir.exists()) dir.mkdirs();
             try (FileOutputStream out = new FileOutputStream(Paths.get(dir.getAbsolutePath(),
-                    "lsof_pid" + pid + "_" + String.valueOf((System.currentTimeMillis() - INSTANCE_START_TIME) / 1000) + ".out").toFile())) {
+                    "lsof_pid" + pid + "_" + String.format("%06d", (System.currentTimeMillis() - INSTANCE_START_TIME) / 1000) + ".out").toFile())) {
 
-                byte[] buffer = new byte[1 << 10];
+                byte[] buffer = new byte[1 << 20];
                 Process proc = Runtime.getRuntime().exec(new String[]{"lsof", "-p", pid});
                 InputStream in = proc.getInputStream();
-                while (in.read(buffer) > 0)
-                    out.write(buffer);
+                int len;
+                while ((len = in.read(buffer)) > 0)
+                    out.write(buffer, 0, len);
             }
         } catch (Throwable t) {
             log.error("Failed to dump open files", t);
