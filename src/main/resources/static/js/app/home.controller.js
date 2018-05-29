@@ -29,6 +29,7 @@
 
         $scope.activePeers = 0;
         $scope.syncStatus = 'n/a';
+        $scope.mineStatus = 'n/a';
         $scope.syncStatusMessageTop = '';
         $scope.syncStatusMessageBottom = '';
         $scope.ethPort = 'n/a';
@@ -45,6 +46,14 @@
             'Regular': 'Long sync',
             'Complete': 'Short sync',
             'Off': 'Disabled'
+        };
+
+        var mineStatuses = {
+            'LIGHT_DAG_GENERATE': 'Generating light dataset',
+            'FULL_DAG_GENERATE': 'Generating full dataset (10 min)',
+            'DAG_GENERATED': 'Dataset generated, mining',
+            'MINING': 'Mining',
+            'DISABLED': 'Disabled'
         };
 
         var syncStatusesMessageTop = {
@@ -114,6 +123,7 @@
             $timeout(function() {
                 $scope.activePeers = item.activePeers;
                 $scope.syncStatus = formatWithProps(syncStatuses[item.syncStatus.stage], item.syncStatus) || item.syncStatus.stage || 'n/a';
+                $scope.mineStatus = mineStatuses[item.mineStatus] || 'n/a';
                 $scope.syncStatusMessageTop = formatWithProps(syncStatusesMessageTop[item.syncStatus.stage], item.syncStatus);
                 if (item.syncStatus.stage == 'StateNodes' && item.syncStatus.curCnt > 0 && item.syncStatus.curCnt == item.syncStatus.knownCnt) {
                     $scope.syncStatusMessageBottom = formatWithProps(syncStatusesMessageBottom['StateNodesBlocks'], item.syncStatus);

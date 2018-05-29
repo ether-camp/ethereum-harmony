@@ -36,6 +36,8 @@ public class NetworkInfoDTO {
 
     private final SyncStatusDTO syncStatus;
 
+    private final String mineStatus;
+
     private final Integer ethPort;
 
     private final Boolean ethAccessible;
