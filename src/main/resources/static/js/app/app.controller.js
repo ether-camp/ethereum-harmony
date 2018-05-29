@@ -313,6 +313,7 @@
                     $stomp.subscribe('/topic/initialInfo', onInitialInfoResult);
                     $stomp.subscribe('/topic/machineInfo', onMachineInfoResult);
                     $stomp.subscribe('/topic/blockchainInfo', onBlockchainInfoResult);
+                    $stomp.subscribe('/topic/mineInfo', onMineInfoResult);
                     $stomp.subscribe('/topic/newBlockFrom', jsonParseAndBroadcast('newBlockFromEvent'));
                     $stomp.subscribe('/topic/currentSystemLogs', jsonParseAndBroadcast('currentSystemLogs'));
                     $stomp.subscribe('/topic/currentBlocks', jsonParseAndBroadcast('currentBlocksEvent'));
@@ -425,6 +426,22 @@
                 vm.data.gasPrice                = formatBigDigital(info.gasPrice, 'Wei');
                 $scope.setSyncStatus(info.syncStatus);
             });
+        }
+
+        var mineStatuses = {
+            'FULL_DAG_GENERATE': 'Full dataset generating for mining. It could take about 10 minutes',
+            'DAG_GENERATED': 'Dataset generated. Mining will start shortly',
+            'MINING': 'Mining initiated',
+            'DISABLED': 'Mining stopped'
+        };
+
+        function onMineInfoResult(data) {
+            var info = (data);
+
+            var msg = mineStatuses[info.status];
+            if (msg != null) {
+                showToastr(msg, '');
+            }
         }
 
         function onConfirmedTransaction(data) {
