@@ -19,10 +19,11 @@
 package com.ethercamp.harmony.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.ethereum.config.SystemProperties;
 import org.ethereum.core.Block;
 import org.ethereum.core.Repository;
 import org.ethereum.facade.Ethereum;
-import org.ethereum.mine.MinerListener;
+import org.ethereum.mine.EthashListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
@@ -44,39 +45,47 @@ public class PrivateMinerService {
     Ethereum ethereum;
 
     @Autowired
+    SystemProperties config;
+
+    @Autowired
     public Repository repository;
 
     @PostConstruct
     public void init() throws IOException, InterruptedException {
         final boolean isPrivateNetwork = env.getProperty("networkProfile", "").equalsIgnoreCase("private");
-        if (isPrivateNetwork) {
-            log.info("isPrivateNetwork " + isPrivateNetwork);
-            ethereum.getBlockMiner().addListener(new MinerListener() {
-                @Override
-                public void miningStarted() {
-                    log.info("miningStarted");
-                }
+        log.info("isPrivateNetwork: " + isPrivateNetwork);
+        ethereum.getBlockMiner().addListener(new EthashListener() {
+            @Override
+            public void miningStarted() {
+                log.info("miningStarted");
+            }
 
-                @Override
-                public void miningStopped() {
-                    log.info("miningStopped");
-                }
+            @Override
+            public void miningStopped() {
+                log.info("miningStopped");
+            }
 
-                @Override
-                public void blockMiningStarted(Block block) {
-                    log.info("new block mining started");
-                }
+            @Override
+            public void blockMiningStarted(Block block) {
+                log.info("new block mining started");
+            }
 
-                @Override
-                public void blockMined(Block block) {
-                    log.info("blockMined");
-                }
+            @Override
+            public void blockMined(Block block) {
+                log.info("blockMined");
+            }
 
-                @Override
-                public void blockMiningCanceled(Block block) {
-                    log.info("blockMiningCanceled");
-                }
-            });
+            @Override
+            public void blockMiningCanceled(Block block) {
+                log.info("blockMiningCanceled");
+            }
+
+            @Override
+            public void onDatasetUpdate(DatasetStatus datasetStatus) {
+                log.info("Dataset status updated: {}", datasetStatus);
+            }
+        });
+        if (config.minerStart()) {
             ethereum.getBlockMiner().startMining();
         }
     }
