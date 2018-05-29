@@ -55,6 +55,7 @@ import org.ethereum.manager.WorldManager;
 import org.ethereum.mine.BlockMiner;
 import org.ethereum.mine.EthashAlgo;
 import org.ethereum.mine.MinerIfc;
+import org.ethereum.mine.MinerListener;
 import org.ethereum.net.client.ConfigCapabilities;
 import org.ethereum.net.rlpx.Node;
 import org.ethereum.net.rlpx.discover.NodeManager;
@@ -237,6 +238,9 @@ public class EthJsonRpcImpl implements JsonRpc {
         public boolean validate(BlockHeader blockHeader) {
             return false;
         }
+
+        @Override
+        public void setListeners(Collection<MinerListener> listeners) {}
     };
 
     boolean minerInitialized = false;
