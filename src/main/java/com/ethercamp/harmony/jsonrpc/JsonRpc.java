@@ -45,9 +45,9 @@ public interface JsonRpc {
     @AllArgsConstructor
     @ToString
     class SyncingResult {
-        private final String startingBlock;
-        private final String currentBlock;
-        private final String highestBlock;
+        private final String startingBlock = null;
+        private final String currentBlock = null;
+        private final String highestBlock = null;
     }
 
     @NoArgsConstructor
