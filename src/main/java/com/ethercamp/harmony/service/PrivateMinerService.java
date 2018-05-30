@@ -18,6 +18,7 @@
 
 package com.ethercamp.harmony.service;
 
+import com.ethercamp.harmony.model.dto.MinerStatusDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.ethereum.config.SystemProperties;
 import org.ethereum.core.Block;
@@ -38,6 +39,8 @@ import java.io.IOException;
 @Service
 public class PrivateMinerService {
 
+    public final static String MINER_TOPIC = "/topic/mineInfo";
+
     @Autowired
     Environment env;
 
@@ -50,6 +53,11 @@ public class PrivateMinerService {
     @Autowired
     public Repository repository;
 
+    @Autowired
+    private ClientMessageService clientMessageService;
+
+    private MineStatus status = MineStatus.DISABLED;
+
     @PostConstruct
     public void init() throws IOException, InterruptedException {
         final boolean isPrivateNetwork = env.getProperty("networkProfile", "").equalsIgnoreCase("private");
@@ -57,11 +65,15 @@ public class PrivateMinerService {
         ethereum.getBlockMiner().addListener(new EthashListener() {
             @Override
             public void miningStarted() {
+                status = MineStatus.MINING;
+                pushStatus(status);
                 log.info("miningStarted");
             }
 
             @Override
             public void miningStopped() {
+                status = MineStatus.DISABLED;
+                pushStatus(status);
                 log.info("miningStopped");
             }
 
@@ -72,6 +84,9 @@ public class PrivateMinerService {
 
             @Override
             public void blockMined(Block block) {
+                if (status != MineStatus.MINING) {
+                    status = MineStatus.MINING;
+                }
                 log.info("blockMined");
             }
 
@@ -82,11 +97,47 @@ public class PrivateMinerService {
 
             @Override
             public void onDatasetUpdate(DatasetStatus datasetStatus) {
+                switch (datasetStatus) {
+                    case LIGHT_DATASET_GENERATE_START:
+                        status = MineStatus.LIGHT_DAG_GENERATE;
+                        break;
+                    case FULL_DATASET_GENERATE_START:
+                        status = MineStatus.FULL_DAG_GENERATE;
+                        pushStatus(status);
+                        break;
+                    case DATASET_GENERATED:
+                        status = MineStatus.DAG_GENERATED;
+                        pushStatus(status);
+                        break;
+                }
                 log.info("Dataset status updated: {}", datasetStatus);
             }
         });
-        if (config.minerStart()) {
+        // WOW, how is stinks!
+        // Overriding mine.start which was reset in {@link com.ethercamp.harmony.Application}
+        SystemProperties.resetToDefault();
+        config.overrideParams("mine.start", new Boolean(SystemProperties.getDefault().minerStart()).toString());
+        if (config.minerStart() && !config.isSyncEnabled()) {
             ethereum.getBlockMiner().startMining();
         }
+    }
+
+    /**
+     * Pushes status change immediately to client application
+     */
+    private void pushStatus(MineStatus status) {
+        clientMessageService.sendToTopic(MINER_TOPIC, new MinerStatusDTO(status.toString()));
+    }
+
+    public MineStatus getStatus() {
+        return status;
+    }
+
+    public enum MineStatus {
+        DISABLED,
+        LIGHT_DAG_GENERATE,
+        FULL_DAG_GENERATE,
+        DAG_GENERATED,
+        MINING
     }
 }

@@ -108,6 +108,9 @@ public class BlockchainInfoService implements ApplicationListener {
     @Autowired
     FileSystemKeystore keystore;
 
+    @Autowired
+    PrivateMinerService privateMinerService;
+
     /**
      * Concurrent queue of last blocks.
      * Ethereum adds items when available.
@@ -327,6 +330,7 @@ public class BlockchainInfoService implements ApplicationListener {
         final NetworkInfoDTO info = new NetworkInfoDTO(
                 channelManager.getActivePeers().size(),
                 NetworkInfoDTO.SyncStatusDTO.instanceOf(syncManager.getSyncStatus()),
+                privateMinerService.getStatus().toString(),
                 config.listenPort(),
                 true
         );
