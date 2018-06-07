@@ -56,8 +56,20 @@ public class TypeConverter {
         return x;
     }
 
+    /**
+     * Stringify byte[] x
+     * "0x" for null
+     */
     public static String toJsonHex(byte[] x) {
-        return "0x"+Hex.toHexString(x);
+        return x == null ? "0x" : "0x" + Hex.toHexString(x);
+    }
+
+    /**
+     * Stringify byte[] x
+     * null for null
+     */
+    public static String toJsonHexNullable(byte[] x) {
+        return x == null ? null : "0x" + Hex.toHexString(x);
     }
 
     public static String toJsonHex(String x) {
