@@ -50,7 +50,7 @@ public class TransactionReceiptDTO {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public String root;  // 32 bytes of post-transaction stateroot (pre Byzantium)
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public String status;  //  either 1 (success) or 0 (failure) (pos Byzantium)
+    public String status;  //  either 1 (success) or 0 (failure) (post Byzantium)
 
     public TransactionReceiptDTO(Block block, TransactionInfo txInfo){
         TransactionReceipt receipt = txInfo.getReceipt();
