@@ -105,9 +105,12 @@ public class PrivateMinerService {
                         status = MineStatus.FULL_DAG_GENERATE;
                         pushStatus(status);
                         break;
-                    case DATASET_READY:
+                    case FULL_DATASET_GENERATED:
                         status = MineStatus.DAG_GENERATED;
                         pushStatus(status);
+                        break;
+                    case DATASET_READY:
+                        status = MineStatus.DAG_GENERATED;
                         break;
                 }
                 log.info("Dataset status updated: {}", datasetStatus);
