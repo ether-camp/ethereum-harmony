@@ -255,12 +255,6 @@ task runRopsten() {
     }
 }
 
-task runTest() {
-    doLast {
-        bootRunWithNetworkConfig('test', true)
-    }
-}
-
 task runPrivate() {
     doLast {
         // change default max heap value for this task as it involves mining

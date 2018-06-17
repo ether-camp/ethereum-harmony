@@ -84,7 +84,7 @@ public interface JsonRpc {
         public String logsBloom; // DATA, 256 Bytes - the bloom filter for the logs of the block. null when its pending block.
         public String transactionsRoot; // DATA, 32 Bytes - the root of the transaction trie of the block.
         public String stateRoot; // DATA, 32 Bytes - the root of the final state trie of the block.
-        public String receiptRoot; // DATA, 32 Bytes - the root of the receipts trie of the block.
+        public String receiptsRoot; // DATA, 32 Bytes - the root of the receipts trie of the block.
         public String miner; // DATA, 20 Bytes - the address of the beneficiary to whom the mining rewards were given.
         public String difficulty; // QUANTITY - integer of the difficulty for this block.
         public String totalDifficulty; // QUANTITY - integer of the total difficulty of the chain until this block.
@@ -107,7 +107,7 @@ public interface JsonRpc {
                     ", logsBloom='" + logsBloom + '\'' +
                     ", transactionsRoot='" + transactionsRoot + '\'' +
                     ", stateRoot='" + stateRoot + '\'' +
-                    ", receiptRoot='" + receiptRoot + '\'' +
+                    ", receiptsRoot='" + receiptsRoot + '\'' +
                     ", miner='" + miner + '\'' +
                     ", difficulty='" + difficulty + '\'' +
                     ", totalDifficulty='" + totalDifficulty + '\'' +
@@ -163,6 +163,7 @@ public interface JsonRpc {
         public String toBlock;
         public Object address;
         public Object[] topics;
+        public String blockHash;  // EIP-234: makes fromBlock = toBlock = blockHash
 
         @Override
         public String toString() {
@@ -171,21 +172,22 @@ public interface JsonRpc {
                     ", toBlock='" + toBlock + '\'' +
                     ", address=" + address +
                     ", topics=" + Arrays.toString(topics) +
+                    ", blockHash='" + blockHash + '\'' +
                     '}';
         }
     }
 
     class LogFilterElement {
         public String logIndex;
-        public String blockNumber;
-        public String blockHash;
-        public String transactionHash;
         public String transactionIndex;
+        public String transactionHash;
+        public String blockHash;
+        public String blockNumber;
         public String address;
         public String data;
         public String[] topics;
 
-        public LogFilterElement(LogInfo logInfo, Block b, int txIndex, Transaction tx, int logIdx) {
+        public LogFilterElement(LogInfo logInfo, Block b, Integer txIndex, Transaction tx, int logIdx) {
             logIndex = toJsonHex(logIdx);
             blockNumber = b == null ? null : toJsonHex(b.getNumber());
             blockHash = b == null ? null : toJsonHex(b.getHash());
@@ -241,9 +243,6 @@ public interface JsonRpc {
     String eth_getCode(String addr, String bnOrId)throws Exception;
     String eth_sign(String addr, String data) throws Exception;
     String eth_sendTransaction(CallArguments transactionArgs) throws Exception;
-    // TODO: Remove, obsolete with this params
-    String eth_sendTransactionArgs(String from, String to, String gas,
-                               String gasPrice, String value, String data, String nonce) throws Exception;
     String eth_sendRawTransaction(String rawData) throws Exception;
     String eth_call(CallArguments args, String bnOrId) throws Exception;
     String eth_estimateGas(CallArguments args) throws Exception;
@@ -261,10 +260,10 @@ public interface JsonRpc {
     BlockResult eth_getUncleByBlockNumberAndIndex(String blockId, String uncleIdx) throws Exception;
 
     String[] eth_getCompilers();
-//    CompilationResult eth_compileLLL(String contract);
     CompilationResult eth_compileSolidity(String contract) throws Exception;
+    CompilationResult eth_compileLLL(String contract);
+    CompilationResult eth_compileSerpent(String contract);
 
-//    CompilationResult eth_compileSerpent(String contract);
 //    String eth_resend();
 //    String eth_pendingTransactions();
 
@@ -284,12 +283,8 @@ public interface JsonRpc {
     List<Object> eth_getWork();
     boolean eth_submitWork(String nonce, String header, String digest) throws Exception;
     boolean eth_submitHashrate(String hashrate, String id);
-//    String db_putString();
-//    String db_getString();
-//    String db_putHex();
-//    String db_getHex();
+    String shh_version();
 //    String shh_post();
-//    String shh_version();
 //    String shh_newIdentity();
 //    String shh_hasIdentity();
 //    String shh_newGroup();
