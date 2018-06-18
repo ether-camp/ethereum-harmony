@@ -94,14 +94,16 @@
     var topicStorage = {};
 
     var connectionLostOnce = false;
-    var simpleSuffixes = {
+    var decimalBase = {
         suffixes: {
             B: ' ',
             KB: 'K',
             MB: 'M',
             GB: 'G',
-            TB: 'T'
-        }
+            TB: 'T',
+            PB: 'P'
+        },
+       base: 10
     };
 
     /**
@@ -114,13 +116,9 @@
     jQuery.fx.interval = 100;
 
 
-    function formatBigDigital(value, decimals) {
-        if(value == 0) return '0 ';
-        var k = 1000;
-        var dm = decimals + 1 || 3;
-        var sizes = ['', 'K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
-        var i = Math.floor(Math.log(value) / Math.log(k));
-        return parseFloat((value / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    function formatBigDigital(value, suffix) {
+        if (isNaN(value) || value == null) return 'N/A';
+        return filesize(value, decimalBase) + suffix;
     }
 
 
@@ -192,7 +190,8 @@
             cpuUsage: 0,
             memoryOccupied: '',
             memoryFree: '',
-            freeSpace: '',
+            diskOccupied: '',
+            diskFree: '',
 
             highestBlockNumber: 0,
             lastBlockNumber: 0,
@@ -314,6 +313,7 @@
                     $stomp.subscribe('/topic/initialInfo', onInitialInfoResult);
                     $stomp.subscribe('/topic/machineInfo', onMachineInfoResult);
                     $stomp.subscribe('/topic/blockchainInfo', onBlockchainInfoResult);
+                    $stomp.subscribe('/topic/mineInfo', onMineInfoResult);
                     $stomp.subscribe('/topic/newBlockFrom', jsonParseAndBroadcast('newBlockFromEvent'));
                     $stomp.subscribe('/topic/currentSystemLogs', jsonParseAndBroadcast('currentSystemLogs'));
                     $stomp.subscribe('/topic/currentBlocks', jsonParseAndBroadcast('currentBlocksEvent'));
@@ -368,14 +368,20 @@
                 vm.data.cpuUsage        = info.cpuUsage;
                 vm.data.memoryOccupied  = filesize(info.memoryTotal - info.memoryFree);
                 vm.data.memoryFree      = filesize(info.memoryFree);
-                vm.data.freeSpace       = filesize(info.freeSpace);
+                vm.data.diskOccupied  = filesize(info.dbSize);
+                vm.data.diskFree      = filesize(info.freeSpace);
 
                 var memoryPercentage = 0;
                 if (info.memoryTotal != 0) {
                     memoryPercentage = Math.round(100 * (info.memoryTotal - info.memoryFree) / info.memoryTotal);
                 }
+                var diskPercentage = 0;
+                if ((info.dbSize + info.freeSpace) != 0) {
+                    diskPercentage = Math.round(100 * (info.dbSize) / (info.dbSize + info.freeSpace));
+                }
                 updateProgressBar('#memoryUsageProgress', memoryPercentage);
                 updateProgressBar('#cpuUsageProgress', info.cpuUsage);
+                updateProgressBar('#diskUsageProgress', diskPercentage);
             });
         }
 
@@ -414,12 +420,28 @@
                 vm.data.lastBlockTimeMoment     = moment(info.lastBlockTime * 1000).fromNow();
                 vm.data.lastBlockTimeString     = moment(info.lastBlockTime * 1000).format('hh:mm:ss MMM DD YYYY');
                 vm.data.lastBlockTransactions   = info.lastBlockTransactions;
-                vm.data.difficulty              = filesize(info.difficulty, simpleSuffixes);
+                vm.data.difficulty              = formatBigDigital(info.difficulty, 'H');
                 vm.data.lastReforkTime          = info.lastReforkTime;
-                vm.data.networkHashRate         = filesize(info.networkHashRate, simpleSuffixes) + 'H/s';
-                vm.data.gasPrice                = formatBigDigital(info.gasPrice) + 'Wei';
+                vm.data.networkHashRate         = formatBigDigital(info.networkHashRate, 'H/s');
+                vm.data.gasPrice                = formatBigDigital(info.gasPrice, 'Wei');
                 $scope.setSyncStatus(info.syncStatus);
             });
+        }
+
+        var mineStatuses = {
+            'FULL_DAG_GENERATE': 'Full dataset generating for mining. It could take about 10 minutes',
+            'DAG_GENERATED': 'Dataset generated. Mining will start shortly',
+            'MINING': 'Mining initiated',
+            'DISABLED': 'Mining stopped'
+        };
+
+        function onMineInfoResult(data) {
+            var info = (data);
+
+            var msg = mineStatuses[info.status];
+            if (msg != null) {
+                showToastr(msg, '');
+            }
         }
 
         function onConfirmedTransaction(data) {

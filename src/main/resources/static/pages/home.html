@@ -43,25 +43,25 @@
                                 Genesis:
                             </div>
                             <div class="col-sm-6">
-                                {{vm.data.genesisHash}}
+                                <a href="/terminal#eth_getBlockByNumber%200%20true">{{vm.data.genesisHash}}</a>
                             </div>
                         </div>
 
                         <div class="home-info-row">
                             <div class="col-sm-4">
-                                Started:
-                            </div>
-                            <div class="col-sm-6">
-                                {{vm.data.serverStartTime}}
-                            </div>
-                        </div>
-
-                        <div class="home-info-row">
-                            <div class="col-sm-4">
-                                Status:
+                                Sync status:
                             </div>
                             <div class="col-sm-8">
                                 {{syncStatus}}
+                            </div>
+                        </div>
+
+                        <div class="home-info-row">
+                            <div class="col-sm-4">
+                                Mine status:
+                            </div>
+                            <div class="col-sm-6">
+                                {{mineStatus}}
                             </div>
                         </div>
 

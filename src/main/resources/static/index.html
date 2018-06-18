@@ -28,7 +28,7 @@
     </script>
 
     <script src="js/vendor/stomp.js"></script>
-    <script src="webjars/jquery/2.2.4/jquery.js"></script>
+    <script src="webjars/jquery/2.2.4/dist/jquery.js"></script>
     <script src="webjars/jquery-mousewheel/3.1.13/jquery.mousewheel.min.js"></script>
     <script src="webjars/malihu-custom-scrollbar-plugin/3.1.5/jquery.mCustomScrollbar.js"></script>
 
@@ -132,7 +132,7 @@
                                 #<span id="blockCounter" class="tp-title">0</span> ({{vm.data.lastBlockTimeMoment}})
                             </span>
                             <div class="top-bar-line"></div>
-                            <div class="small">Block Imported</div>
+                            <div class="small">Last Block Imported</div>
                         </div>
                     </div>
 
@@ -149,16 +149,6 @@
                     <div class="panel tp-panel" ng-show="!isLoadingState || isLoadingStateWithBlocks">
                         <div class="panel-body">
                             <span class="m-b-none tp-title">
-                                {{vm.data.gasPrice}}
-                            </span>
-                            <div class="top-bar-line"></div>
-                            <div class="small">Gas price</div>
-                        </div>
-                    </div>
-
-                    <div class="panel tp-panel" ng-show="!isLoadingState || isLoadingStateWithBlocks">
-                        <div class="panel-body">
-                            <span class="m-b-none tp-title">
                                 {{vm.data.difficulty}}
                             </span>
                             <div class="top-bar-line"></div>
@@ -169,10 +159,20 @@
                     <div class="panel tp-panel" ng-show="!isLoadingState || isLoadingStateWithBlocks">
                         <div class="panel-body">
                             <span class="m-b-none tp-title">
+                                {{vm.data.gasPrice}}
+                            </span>
+                            <div class="top-bar-line"></div>
+                            <div class="small">Recommended Gas Price</div>
+                        </div>
+                    </div>
+
+                    <div class="panel tp-panel" ng-show="!isLoadingState || isLoadingStateWithBlocks">
+                        <div class="panel-body">
+                            <span class="m-b-none tp-title">
                                 {{vm.data.networkHashRate}}
                             </span>
                             <div class="top-bar-line"></div>
-                            <div class="small">Hash Rate</div>
+                            <div class="small">Avg Hash Rate</div>
                         </div>
                     </div>
 
@@ -229,7 +229,7 @@
 
                     <h5 class="m-t-md m-b-xs v-c">
                         <i class="pe pe-7s-shield text-warning"></i>
-                        Machine Info
+                        Harmony Health
                     </h5>
                     <!--pe pe-7s-global text-warning-->
 
@@ -247,9 +247,9 @@
 
                     <!-- Memory -->
                     <div class="m-t-xs">
-                        Memory used: <span class="c-white" ng-cloak>{{vm.data.memoryOccupied}}</span>
+                        Memory usage: <span class="c-white" ng-cloak>{{vm.data.memoryOccupied}}</span>
                     </div>
-                    <div class="m-b-md">
+                    <div class="">
                         <div class="progress m-t-xs full progress-small">
                             <div id="memoryUsageProgress" aria-valuemax="100" aria-valuemin="0" aria-valuenow="35" role="progressbar" class="width-0p progress-bar progress-bar-warning">
                                 <span class="sr-only">{{vm.data.memoryOccupied}}</span>
@@ -258,8 +258,15 @@
                     </div>
 
                     <!-- Disk -->
-                    <div class="m-t-sm">
-                        Free space: <span class="c-white" ng-cloak>{{vm.data.freeSpace}}</span>
+                    <div class="m-t-xs">
+                        DB size: <span class="c-white" ng-cloak>{{vm.data.diskOccupied}}</span>
+                    </div>
+                    <div class="">
+                        <div class="progress m-t-xs full progress-small">
+                            <div id="diskUsageProgress" aria-valuemax="100" aria-valuemin="0" aria-valuenow="35" role="progressbar" class="width-0p progress-bar progress-bar-warning">
+                                <span class="sr-only">{{vm.data.diskOccupied}}</span>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="m-t-xl" data-toggle="tooltip" title="{{vm.data.ethereumJBuildInfo}}">

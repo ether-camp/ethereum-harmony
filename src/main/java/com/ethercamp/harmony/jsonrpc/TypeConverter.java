@@ -28,7 +28,7 @@ import java.math.BigInteger;
  */
 public class TypeConverter {
 
-    public static BigInteger StringHexToBigInteger(String input) {
+    public static BigInteger hexToBigInteger(String input) {
         if (input.startsWith("0x")) {
             return new BigInteger(input.substring(2), 16);
         } else {
@@ -36,15 +36,15 @@ public class TypeConverter {
         }
     }
 
-    public static byte[] StringHexToByteArray(String x) {
-        return ByteUtil.hexStringToBytes(fromHex(x));
+    public static byte[] hexToByteArray(String x) {
+        return ByteUtil.hexStringToBytes(x);
     }
 
-    public static long HexToLong(String x) {
+    public static long hexToLong(String x) {
         return ByteUtil.byteArrayToLong(Hex.decode(fromHex(x)));
     }
 
-    public static long HexToInt(String x) {
+    public static long hexToInt(String x) {
         return ByteUtil.byteArrayToInt(Hex.decode(fromHex(x)));
     }
 
@@ -56,16 +56,32 @@ public class TypeConverter {
         return x;
     }
 
+    /**
+     * Stringify byte[] x
+     * "0x" for null
+     */
     public static String toJsonHex(byte[] x) {
-        return "0x"+Hex.toHexString(x);
+        return x == null ? null : "0x" + Hex.toHexString(x);
+    }
+
+    /**
+     * Stringify byte[] x
+     * null for null
+     */
+    public static String toJsonHexNullable(byte[] x) {
+        return x == null ? null : "0x" + Hex.toHexString(x);
     }
 
     public static String toJsonHex(String x) {
         return "0x"+x;
     }
 
-    public static String toJsonHex(long n) {
-        return "0x"+ Long.toHexString(n);
+    public static String toJsonHex(int x) {
+        return toJsonHex((long) x);
+    }
+
+    public static String toJsonHex(Long x) {
+        return x == null ? null : "0x"+ Long.toHexString(x);
     }
 
     public static String toJsonHex(BigInteger n) {

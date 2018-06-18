@@ -86,7 +86,7 @@ public class ContractsTests {
 
     @Test
     public void contracts_readSolcVersion() {
-        assertThat(SolcUtils.getSolcVersion(), is("0.4.8"));
+        assertThat(SolcUtils.getSolcVersion(), is("0.4.19"));
     }
 
     @Test

@@ -19,13 +19,17 @@
 package com.ethercamp.harmony.jsonrpc;
 
 import com.ethercamp.harmony.keystore.FileSystemKeystore;
+import com.ethercamp.harmony.service.BlockchainInfoService;
+import com.ethercamp.harmony.service.PrivateMinerService;
+import com.ethercamp.harmony.service.WalletService;
+import com.ethercamp.harmony.service.wallet.FileSystemWalletStore;
 import com.typesafe.config.ConfigFactory;
 import org.ethereum.config.SystemProperties;
 import org.ethereum.config.blockchain.FrontierConfig;
 import org.ethereum.core.CallTransaction;
 import org.ethereum.core.Transaction;
 import org.ethereum.crypto.ECKey;
-import org.ethereum.crypto.HashUtil;
+import org.ethereum.datasource.DbSettings;
 import org.ethereum.datasource.DbSource;
 import org.ethereum.datasource.inmem.HashMapDB;
 import org.ethereum.facade.Ethereum;
@@ -33,6 +37,7 @@ import org.ethereum.facade.EthereumFactory;
 import org.ethereum.facade.EthereumImpl;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
+import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Scope;
@@ -50,13 +55,42 @@ import static java.util.Arrays.stream;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.ethereum.crypto.HashUtil.sha3;
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.mock;
 
 /**
  * Created by Anton Nashatyrev on 19.04.2016.
  */
 public class JsonRpcTest {
 
+    /**
+     * OMG Setup!
+     */
     private static class TestConfig {
+
+        /**
+         * Mock {@link Bean} tool
+         * @param <T>   class to mock
+         */
+        public class MockitoFactoryBean<T> implements FactoryBean<T> {
+            private final Class<T> clazz;
+
+            public MockitoFactoryBean(Class<T> clazz) {
+                this.clazz = clazz;
+            }
+
+            @Override public T getObject() throws Exception {
+                return mock(clazz);
+            }
+
+            @Override public Class<T> getObjectType() {
+                return clazz;
+            }
+
+            @Override public boolean isSingleton() {
+                return true;
+            }
+        }
+
 
         private final String config =
                 // no need for discovery in that small network
@@ -110,6 +144,26 @@ public class JsonRpcTest {
         }
 
         @Bean
+        public WalletService walletService() {
+            return new WalletService();
+        }
+
+        @Bean
+        public FactoryBean<PrivateMinerService> privateMinerService() {
+            return new MockitoFactoryBean<>(PrivateMinerService.class);
+        }
+
+        @Bean
+        public FactoryBean<BlockchainInfoService> blockchainInfoService() {
+            return new MockitoFactoryBean<>(BlockchainInfoService.class);
+        }
+
+        @Bean
+        public FileSystemWalletStore fileSystemWalletStore() {
+            return new FileSystemWalletStore();
+        }
+
+        @Bean
         public JsonRpc jsonRpc() {
             return new EthJsonRpcImpl();
         }
@@ -121,7 +175,7 @@ public class JsonRpcTest {
 
         @Bean
         @Scope("prototype")
-        public DbSource<byte[]> keyValueDataSource(String name) {
+        public DbSource<byte[]> keyValueDataSource(String name, DbSettings settings) {
             System.out.println("Sample DB created name:" + name);
             return new HashMapDB<byte[]>();
         }
@@ -136,55 +190,52 @@ public class JsonRpcTest {
         @Autowired
         Ethereum ethereum;
 
-//        @PostConstruct
+        /**
+         * Tests, finally
+         * @throws Exception
+         */
         public void runTests() throws Exception {
             String passphrase = "123";
-            ECKey newKey = ECKey.fromPrivate(sha3("cow".getBytes()));
-            String keydata = Hex.toHexString(newKey.getPrivKeyBytes());
-            String cowAcct = jsonRpc.personal_importRawKey(keydata, passphrase);
-            jsonRpc.personal_unlockAccount(cowAcct, passphrase, "");
+            ECKey cowKey = ECKey.fromPrivate(sha3("cow".getBytes()));
+            String keydata = Hex.toHexString(cowKey.getPrivKeyBytes());
+            String cowAddress = jsonRpc.personal_importRawKey(keydata, passphrase);
+            assertEquals("0x" + Hex.toHexString(cowKey.getAddress()), cowAddress);
+            jsonRpc.personal_unlockAccount(cowAddress, passphrase, "");
 
+            eth_newPendingTransactionFilterTest(cowKey);
 
-            /*
-             * Testing ECDSA signature in JSON-RPC
-             * https://etherchain.org/verify/signature
-             */
-            String message = "Test message";
-            byte[] dataHash = HashUtil.sha3(message.getBytes());
-            System.out.println("data: " + Hex.toHexString(dataHash));
-            String hexSignature = jsonRpc.eth_sign(cowAcct, "0x" + Hex.toHexString(dataHash));
-//            hexSignature = "0x78161f22e473546259ce6be468666b810b32a68cdde7c6ce14c60744b9452db31e2b65a4a176d053c009f53cb8c6b06a1df161f75962bd3e2677734790a2e30500";
-            byte[] bytesSignature = StringHexToByteArray(hexSignature);
+            final String contractAddress = eth_compileFilterTest(cowKey);
 
-            ECKey.ECDSASignature signature = ECKey.ECDSASignature.fromComponents(
-                    Arrays.copyOfRange(bytesSignature, 0, 32),
-                    Arrays.copyOfRange(bytesSignature, 32, 64),
-                    (byte) (bytesSignature[64] + 27));
+            eventFilter(cowKey, contractAddress);
 
-            boolean signatureRecovered = Arrays.equals(newKey.getPubKey(), ECKey.signatureToKeyBytes(dataHash, signature));
-            assertTrue(signatureRecovered);
+            eth_signTest();
+        }
 
-            String bal0 = jsonRpc.eth_getBalance(cowAcct, "latest");
+        public void eth_newPendingTransactionFilterTest(ECKey key) throws Exception {
+            System.out.println("Testing eth_newPendingTransactionFilter...");
+
+            String keyAddress = "0x" + Hex.toHexString(key.getAddress());
+            String bal0 = jsonRpc.eth_getBalance(keyAddress, "latest");
             System.out.println("Balance: " + bal0);
-            assertTrue(TypeConverter.StringHexToBigInteger(bal0).compareTo(BigInteger.ZERO) > 0);
+            assertTrue(TypeConverter.hexToBigInteger(bal0).compareTo(BigInteger.ZERO) > 0);
 
             String pendingTxFilterId = jsonRpc.eth_newPendingTransactionFilter();
             Object[] changes = jsonRpc.eth_getFilterChanges(pendingTxFilterId);
             assertEquals(0, changes.length);
 
             JsonRpc.CallArguments ca = new JsonRpc.CallArguments();
-            ca.from = cowAcct;
+            ca.from = keyAddress;
             ca.to = "0x0000000000000000000000000000000000001234";
             ca.gas = "0x300000";
             ca.gasPrice = "0x10000000000";
             ca.value = "0x7777";
             ca.data = "0x";
-            long sGas = TypeConverter.StringHexToBigInteger(jsonRpc.eth_estimateGas(ca)).longValue();
+            long sGas = TypeConverter.hexToBigInteger(jsonRpc.eth_estimateGas(ca)).longValue();
 
-            String txHash1 = jsonRpc.eth_sendTransactionArgs(cowAcct, "0x0000000000000000000000000000000000001234", "0x300000",
-                    "0x10000000000", "0x7777", "0x", "0x00");
+            String txHash1 = jsonRpc.eth_sendTransaction(new JsonRpc.CallArguments(keyAddress, "0x0000000000000000000000000000000000001234", "0x300000",
+                    "0x10000000000", "0x7777", "0x", "0x00"));
             System.out.println("Tx hash: " + txHash1);
-            assertTrue(TypeConverter.StringHexToBigInteger(txHash1).compareTo(BigInteger.ZERO) > 0);
+            assertTrue(TypeConverter.hexToBigInteger(txHash1).compareTo(BigInteger.ZERO) > 0);
 
             for (int i = 0; i < 50 && changes.length == 0; i++) {
                 changes = jsonRpc.eth_getFilterChanges(pendingTxFilterId);
@@ -204,29 +255,34 @@ public class JsonRpcTest {
             assertEquals(hash1, blockResult1.hash);
             assertEquals(txHash1, ((com.ethercamp.harmony.jsonrpc.TransactionResultDTO) blockResult1.transactions[0]).hash);
             TransactionReceiptDTO receipt1 = jsonRpc.eth_getTransactionReceipt(txHash1);
-            assertEquals(1, HexToLong(receipt1.blockNumber));
-            assertTrue(HexToLong(receipt1.gasUsed) > 0);
-            assertEquals(sGas, HexToLong(receipt1.gasUsed));
+            assertEquals(1, hexToLong(receipt1.blockNumber));
+            assertTrue(hexToLong(receipt1.gasUsed) > 0);
+            assertEquals(sGas, hexToLong(receipt1.gasUsed));
 
-            String bal1 = jsonRpc.eth_getBalance(cowAcct, "latest");
+            String bal1 = jsonRpc.eth_getBalance(keyAddress, "latest");
             System.out.println("Balance: " + bal0);
-            assertTrue(TypeConverter.StringHexToBigInteger(bal0).compareTo(TypeConverter.StringHexToBigInteger(bal1)) > 0);
+            assertTrue(TypeConverter.hexToBigInteger(bal0).compareTo(TypeConverter.hexToBigInteger(bal1)) > 0);
+            System.out.println("eth_newPendingTransactionFilter passed");
+        }
 
+        public String eth_compileFilterTest(ECKey key) throws Exception {
+            System.out.println("Testing eth_compile and call contract...");
+            String keyAddress = "0x" + Hex.toHexString(key.getAddress());
             final JsonRpc.CompilationResult compRes = jsonRpc.eth_compileSolidity(
                     "contract A { " +
-                    "   event message(string msg);" +
-                    "   uint public num; " +
-                    "   function set(uint a) {" +
-                    "       num = a; " +
-                    "       log1(0x1111, 0x2222);" +
-                    "   }" +
-                    "   function getPublic() public constant returns (address) {" +
-                    "        return msg.sender;" +
-                    "   }" +
-                    "   function fire() {" +
-                    "       message(\"fire\");" +
-                    "   }" +
-                    "}");
+                            "   event message(string msg);" +
+                            "   uint public num; " +
+                            "   function set(uint a) {" +
+                            "       num = a; " +
+                            "       log1(0x1111, 0x2222);" +
+                            "   }" +
+                            "   function getPublic() public constant returns (address) {" +
+                            "        return msg.sender;" +
+                            "   }" +
+                            "   function fire() {" +
+                            "       message(\"fire\");" +
+                            "   }" +
+                            "}");
 
             boolean compiledAllMethods = stream(compRes.info.abiDefinition)
                     .map(abi -> abi.name)
@@ -237,12 +293,12 @@ public class JsonRpcTest {
             assertTrue(compRes.code.length() > 10);
 
             JsonRpc.CallArguments callArgs = new JsonRpc.CallArguments();
-            callArgs.from = cowAcct;
+            callArgs.from = keyAddress;
             callArgs.data = compRes.code;
             callArgs.gasPrice = "0x10000000000";
             callArgs.gas = "0x1000000";
             String txHash2 = jsonRpc.eth_sendTransaction(callArgs);
-            sGas = TypeConverter.StringHexToBigInteger(jsonRpc.eth_estimateGas(callArgs)).longValue();
+            long sGas = TypeConverter.hexToBigInteger(jsonRpc.eth_estimateGas(callArgs)).longValue();
 
             String hash2 = mineBlock();
 
@@ -250,10 +306,10 @@ public class JsonRpcTest {
             assertEquals(hash2, blockResult2.hash);
             assertEquals(txHash2, ((com.ethercamp.harmony.jsonrpc.TransactionResultDTO) blockResult2.transactions[0]).hash);
             TransactionReceiptDTO receipt2 = jsonRpc.eth_getTransactionReceipt(txHash2);
-            assertTrue(HexToLong(receipt2.blockNumber) > 1);
-            assertTrue(HexToLong(receipt2.gasUsed) > 0);
-            assertEquals(sGas, HexToLong(receipt2.gasUsed));
-            assertTrue(StringHexToByteArray(receipt2.contractAddress).length == 20);
+            assertTrue(hexToLong(receipt2.blockNumber) > 1);
+            assertTrue(hexToLong(receipt2.gasUsed) > 0);
+            assertEquals(sGas, hexToLong(receipt2.gasUsed));
+            assertTrue(hexToByteArray(receipt2.contractAddress).length == 20);
 
             JsonRpc.FilterRequest filterReq = new JsonRpc.FilterRequest();
             filterReq.topics = new Object[]{"0x2222"};
@@ -265,9 +321,9 @@ public class JsonRpcTest {
             Transaction rawTx = ethereum.createTransaction(valueOf(2),
                     valueOf(50_000_000_000L),
                     valueOf(3_000_000),
-                    StringHexToByteArray(receipt2.contractAddress),
+                    hexToByteArray(receipt2.contractAddress),
                     valueOf(0), function.encode(0x777));
-            rawTx.sign(ECKey.fromPrivate(sha3("cow".getBytes())));
+            rawTx.sign(key);
 
             String txHash3 = jsonRpc.eth_sendRawTransaction(TypeConverter.toJsonHex(rawTx.getEncoded()));
 
@@ -282,14 +338,14 @@ public class JsonRpcTest {
             assertEquals(hash3, blockResult3.hash);
             assertEquals(txHash3, ((TransactionResultDTO) blockResult3.transactions[0]).hash);
             TransactionReceiptDTO receipt3 = jsonRpc.eth_getTransactionReceipt(txHash3);
-            assertTrue(HexToLong(receipt3.blockNumber) > 2);
-            assertTrue(HexToLong(receipt3.gasUsed) > 0);
+            assertTrue(hexToLong(receipt3.blockNumber) > 2);
+            assertTrue(hexToLong(receipt3.gasUsed) > 0);
 
-            Object[] logs = jsonRpc.eth_getFilterLogs(filterId);
+            Object[] logs = jsonRpc.eth_getFilterChanges(filterId);
             assertEquals(1, logs.length);
             assertEquals("0x0000000000000000000000000000000000000000000000000000000000001111",
                     ((JsonRpc.LogFilterElement)logs[0]).data);
-            assertEquals(0, jsonRpc.eth_getFilterLogs(filterId).length);
+            assertEquals(0, jsonRpc.eth_getFilterChanges(filterId).length);
 
             String ret1 = jsonRpc.eth_call(callArgs2, blockResult2.number);
             String ret2 = jsonRpc.eth_call(callArgs2, "latest");
@@ -304,57 +360,77 @@ public class JsonRpcTest {
                 String ret5 = jsonRpc.eth_call(args, blockResult2.number);
 
                 // fall back account
-                ECKey key = ECKey.fromPrivate(new byte[32]);
-                String fallBackAddress = Hex.toHexString(key.getAddress());
+                String fallBackAddress = Hex.toHexString(ECKey.DUMMY.getAddress());
                 assertEquals("0x000000000000000000000000" + fallBackAddress, ret5);
 
-                args.from = cowAcct;
+                args.from = keyAddress;
 
                 String result = jsonRpc.eth_call(args, blockResult2.number);
                 assertEquals("0x000000000000000000000000cd2a3d9f938e13cd947ec05abc7fe734df8dd826", result);
             }
 
             {
-                ECKey key = ECKey.fromPrivate(sha3("new address".getBytes()));
-                String newAddress = Hex.toHexString(key.getAddress());
+                ECKey key2 = ECKey.fromPrivate(sha3("new address".getBytes()));
+                String newAddress = Hex.toHexString(key2.getAddress());
                 JsonRpc.CallArguments args = createCall(receipt2.contractAddress, "getPublic");
                 args.from = "0x" + newAddress;
                 String result = jsonRpc.eth_call(args, blockResult2.number);
                 assertEquals("0x000000000000000000000000" + newAddress, result);
             }
+            System.out.println("eth_compile and call contract passed");
 
-            {
-                // Ensure event fired in contract is catched via JSON-RPC filter
+            return receipt2.contractAddress;
+        }
 
-                final String contractAddress = receipt2.contractAddress;
-                final JsonRpc.FilterRequest fr = new JsonRpc.FilterRequest();
-                fr.address = contractAddress;
-                final String hexFilterId = jsonRpc.eth_newFilter(fr);
+        public void eventFilter(ECKey key, String contractAddress) throws Exception {
+            System.out.println("Testing event filter...");
+            // Ensure event fired in contract is catched via JSON-RPC filter
+            final JsonRpc.FilterRequest fr = new JsonRpc.FilterRequest();
+            fr.address = contractAddress;
+            final String hexFilterId = jsonRpc.eth_newFilter(fr);
 
-                assertEquals(0, jsonRpc.eth_getFilterChanges(hexFilterId).length);
+            assertEquals(0, jsonRpc.eth_getFilterChanges(hexFilterId).length);
 
-                CallTransaction.Function fun = CallTransaction.Function.fromSignature("fire");
-                Transaction tx = ethereum.createTransaction(valueOf(3),
-                        valueOf(50_000_000_000L),
-                        valueOf(3_000_000),
-                        StringHexToByteArray(contractAddress),
-                        valueOf(0), fun.encode());
-                tx.sign(ECKey.fromPrivate(sha3("cow".getBytes())));
+            CallTransaction.Function fun = CallTransaction.Function.fromSignature("fire");
+            Transaction tx = ethereum.createTransaction(valueOf(3),
+                    valueOf(50_000_000_000L),
+                    valueOf(3_000_000),
+                    hexToByteArray(contractAddress),
+                    valueOf(0), fun.encode());
+            tx.sign(key);
 
-                String txHash = jsonRpc.eth_sendRawTransaction(TypeConverter.toJsonHex(tx.getEncoded()));
+            String txHash = jsonRpc.eth_sendRawTransaction(TypeConverter.toJsonHex(tx.getEncoded()));
 
-                final String blockHash = mineBlock();
-                final TransactionReceiptDTOExt receipt = jsonRpc.ethj_getTransactionReceipt(txHash);
-                assertTrue(isBlank(receipt.error));
+            final String blockHash = mineBlock();
+            final TransactionReceiptDTOExt receipt = jsonRpc.ethj_getTransactionReceipt(txHash);
+            assertTrue(isBlank(receipt.error));
 
-                final JsonRpc.BlockResult block = jsonRpc.eth_getBlockByHash(blockHash, true);
-                assertEquals(1, block.transactions.length);
-                assertEquals(txHash, ((com.ethercamp.harmony.jsonrpc.TransactionResultDTO) block.transactions[0]).hash);
+            final JsonRpc.BlockResult block = jsonRpc.eth_getBlockByHash(blockHash, true);
+            assertEquals(1, block.transactions.length);
+            assertEquals(txHash, ((com.ethercamp.harmony.jsonrpc.TransactionResultDTO) block.transactions[0]).hash);
 
-                final Object[] fLogs = jsonRpc.eth_getFilterLogs(hexFilterId);
+            final Object[] fLogs = jsonRpc.eth_getFilterLogs(hexFilterId);
 
-                assertEquals(1, fLogs.length);
-            }
+            assertEquals(1, fLogs.length);
+            System.out.println("Event filter passed...");
+        }
+
+        public void eth_signTest() throws Exception {
+            System.out.println("Testing eth_sign...");
+            final String privateKey = "4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318";
+            final String pass = "123";
+            final String msg = "Some data";
+            final String expectedSignedData = "0xb91467e570a6466aa9e9876cbcd013baba02900b8979d43fe208a4a4f339f5fd6007e74cd82e037b800186422fc2da167c747ef045e5d18a5f5d4300f8e1a0291c";
+
+            // Create and unlock account at first
+            jsonRpc.personal_importRawKey(privateKey, pass);
+            final String publicAddr = "0x" + Hex.toHexString(ECKey.fromPrivate(Hex.decode(privateKey)).getAddress());
+            jsonRpc.personal_unlockAccount(publicAddr, pass, "100500");
+
+            // Sign msg
+            String res = jsonRpc.eth_sign(publicAddr, Hex.toHexString(msg.getBytes()));
+            assertEquals(expectedSignedData, res);
+            System.out.println("eth_sign passed");
         }
 
         JsonRpc.CallArguments createCall(String contractAddress, String functionName) {

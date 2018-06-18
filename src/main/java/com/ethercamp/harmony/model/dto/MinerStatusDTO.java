@@ -22,35 +22,11 @@ import lombok.AllArgsConstructor;
 import lombok.Value;
 
 /**
- * Created by Stan Reshetnyk on 11.07.16.
+ * Status of Miner
  */
 @Value
 @AllArgsConstructor
-public class MachineInfoDTO {
+public class MinerStatusDTO {
 
-    /**
-     * Percentage 0..100
-     */
-    private final Integer cpuUsage;
-
-    /**
-     * In bytes.
-     */
-    private final Long memoryFree;
-
-    /**
-     * In bytes.
-     */
-    private final Long memoryTotal;
-
-    /**
-     * In bytes.
-     */
-    private final  Long dbSize;
-
-    /**
-     * In bytes.
-     */
-    private final  Long freeSpace;
-
+    private final String status;
 }

@@ -96,10 +96,10 @@ dependencies {
 //    compile "com.google.guava:guava:19.0"
 
     // Be sure also change value inside `ContractsTests.java`
-    compile "org.ethereum:solcJ-all:0.4.8"                   // Solidity Compiler win/mac/linux binaries
+    compile "org.ethereum:solcJ-all:0.4.19"                   // Solidity Compiler win/mac/linux binaries
 
     // don't forget to adjust {ethereumJ.version} in application.properties
-    compile ("org.ethereum:ethereumj-core:1.7.3-RELEASE") {
+    compile ("org.ethereum:ethereumj-core:1.8.0-RELEASE") {
         changing = true
 
         exclude group: "log4j"
@@ -123,7 +123,7 @@ dependencies {
 
     /* WEB DEPENDENCIES */
     compile("org.webjars.bower:bootstrap:3.3.6")
-    compile("org.webjars:jquery:2.2.4")
+    compile("org.webjars.bower:jquery:2.2.4")
 
 //    compile("org.webjars.bower:angular:1.5.8")
     compile("org.webjars.bower:angular-route:1.5.8")
@@ -251,12 +251,6 @@ task runMain() {
 task runRopsten() {
     doLast {
         bootRunWithNetworkConfig('ropsten', true)
-    }
-}
-
-task runTest() {
-    doLast {
-        bootRunWithNetworkConfig('test', true)
     }
 }
 

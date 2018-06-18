@@ -272,14 +272,15 @@ public class ContractsService {
     private String getValidatedAbi(String address, String contractName, CompilationResult result) {
         log.debug("getValidatedAbi address:{}, contractName: {}", address, contractName);
         final ContractMetadata metadata = result.getContracts().get(contractName);
+        String realContractName = cleanContractName(contractName);
         if (metadata == null) {
-            throw validationError("Contract with name '%s' not found in uploaded sources.", contractName);
+            throw validationError("Contract with name '%s' not found in uploaded sources.", realContractName);
         }
 
         final String abi = metadata.getAbi();
         final CallTransaction.Contract contract = new CallTransaction.Contract(abi);
         if (ArrayUtils.isEmpty(contract.functions)) {
-            throw validationError("Contract with name '%s' not found in uploaded sources.", contractName);
+            throw validationError("Contract with name '%s' not found in uploaded sources.", realContractName);
         }
 
         final List<CallTransaction.FunctionType> funcTypes = asList(CallTransaction.FunctionType.function, CallTransaction.FunctionType.constructor);
@@ -305,7 +306,7 @@ public class ContractsService {
                 throw validationError("Incorrect code version: function with hash '%s' not found.", funcHash);
             }
         });
-        log.debug("Contract is valid " + contractName);
+        log.debug("Contract is valid " + realContractName);
         return abi;
     }
 
@@ -428,15 +429,31 @@ public class ContractsService {
                                                                              String name) {
         try {
             final String abi = getValidatedAbi(address, name, result);
-            final String dataMembers = compileAst(src.getBytes()).getContractAllDataMembers(name).toJson();
+            final String realContractName = cleanContractName(name);
+            final String dataMembers = compileAst(src.getBytes()).getContractAllDataMembers(realContractName).toJson();
 
-            final ContractEntity contract = new ContractEntity(name, src, dataMembers, abi);
+            final ContractEntity contract = new ContractEntity(realContractName, src, dataMembers, abi);
 
             return Validation.success(contract);
         } catch (ContractException e) {
             log.debug("Problem with contract. " + e.getMessage());
             return Validation.fail(e);
         }
+    }
+
+    /**
+     * Since Solidity 0.4.9, contract name in output starts with '<stdin>:'
+     * if contract text is provided via stdin.
+     * This method safely removes this part of contract name
+     * @param name  Contract name
+     * @return  Real contract name
+     */
+    private String cleanContractName(final String name) {
+        if (name.startsWith("<stdin>:")) {
+            return name.substring(8);
+        }
+
+        return name;
     }
 
     private ContractEntity loadContract(byte[] address) {

@@ -91,7 +91,7 @@ public class WalletService {
     @Autowired
     FileSystemWalletStore fileSystemWalletStore;
 
-    @Autowired
+    @Autowired(required = false)
     ClientMessageService clientMessageService;
 
     @Autowired
@@ -103,7 +103,7 @@ public class WalletService {
     @Autowired
     SyncManager syncManager;
 
-    @Autowired
+    @Autowired(required = false)
     protected JdbcTemplate jdbcTemplate;
 
     EmbeddedDatabase wordsDatabase;

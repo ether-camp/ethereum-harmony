@@ -26,6 +26,8 @@ import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.UnsynchronizedAppenderBase;
 
 import com.ethercamp.harmony.keystore.FileSystemKeystore;
+import com.ethercamp.harmony.util.BlockUtils;
+import org.ethereum.listener.RecommendedGasPriceTracker;
 import org.ethereum.util.BuildInfo;
 import org.ethereum.vm.VM;
 import org.slf4j.LoggerFactory;
@@ -60,6 +62,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.LongStream;
+import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.*;
 
@@ -73,6 +76,7 @@ public class BlockchainInfoService implements ApplicationListener {
     public static final int KEEP_LOG_ENTRIES = 1000;
     private static final int BLOCK_COUNT_FOR_HASH_RATE = 100;
     private static final int KEEP_BLOCKS_FOR_CLIENT = 50;
+    private static final long DB_SIZE_CACHE_EVICT_MS = 60 * 1000; // Cache DB size for ... ms
 
     @Autowired
     private Environment env;
@@ -101,6 +105,9 @@ public class BlockchainInfoService implements ApplicationListener {
     @Autowired
     FileSystemKeystore keystore;
 
+    @Autowired
+    PrivateMinerService privateMinerService;
+
     /**
      * Concurrent queue of last blocks.
      * Ethereum adds items when available.
@@ -110,7 +117,7 @@ public class BlockchainInfoService implements ApplicationListener {
 
     private final Queue<BlockInfo> lastBlocksForClient = new ConcurrentLinkedQueue();
 
-    private final AtomicReference<MachineInfoDTO> machineInfo = new AtomicReference<>(new MachineInfoDTO(0, 0l, 0l, 0l));
+    private final AtomicReference<MachineInfoDTO> machineInfo = new AtomicReference<>(new MachineInfoDTO(0, 0l, 0l, 0l, 0l));
 
     private final AtomicReference<BlockchainInfoDTO> blockchainInfo = new AtomicReference<>();
 
@@ -122,12 +129,23 @@ public class BlockchainInfoService implements ApplicationListener {
 
     private volatile int serverPort;
 
+    private long dbSizeMeasurementTime = 0;
+
+    private long dbSize = 0;
+
     public InitialInfoDTO getInitialInfo() {
         return initialInfo.get();
     }
 
     protected volatile SyncStatus syncStatus = SyncStatus.LONG_SYNC;
 
+    class GasPriceTracker extends RecommendedGasPriceTracker {
+        public void replay(Block block) {
+            super.onBlock(block);
+        }
+    }
+
+    private GasPriceTracker gasPriceTracker = new GasPriceTracker();
 
     @PostConstruct
     private void postConstruct() {
@@ -143,6 +161,12 @@ public class BlockchainInfoService implements ApplicationListener {
                 addBlock(block);
             }
         });
+        final long lastBlock = blockchain.getBestBlock().getNumber();
+        for (int i = gasPriceTracker.getMinBlocks() - 1; i >= 0; --i) {
+            if ((lastBlock - i) < 1) continue;
+            gasPriceTracker.replay(blockchain.getBlockByNumber(lastBlock - i));
+        }
+        ethereum.addListener(gasPriceTracker);
 
         if (!config.isSyncEnabled()) {
             syncStatus = BlockchainInfoService.SyncStatus.DISABLED;
@@ -159,7 +183,6 @@ public class BlockchainInfoService implements ApplicationListener {
             });
         }
 
-        final long lastBlock = blockchain.getBestBlock().getNumber();
         final long startImportBlock = Math.max(0, lastBlock - Math.max(BLOCK_COUNT_FOR_HASH_RATE, KEEP_BLOCKS_FOR_CLIENT));
 
         LongStream.rangeClosed(startImportBlock, lastBlock)
@@ -263,11 +286,13 @@ public class BlockchainInfoService implements ApplicationListener {
         final OperatingSystemMXBean bean = (OperatingSystemMXBean) ManagementFactory
                 .getOperatingSystemMXBean();
 
+        File dbDir = new File(config.databaseDir());
         machineInfo.set(new MachineInfoDTO(
-                ((Double) (bean.getSystemCpuLoad() * 100)).intValue(),
-                bean.getFreePhysicalMemorySize(),
-                bean.getTotalPhysicalMemorySize(),
-                getFreeDiskSpace()
+                ((Double) (bean.getProcessCpuLoad() * 100)).intValue(),
+                Runtime.getRuntime().freeMemory(),
+                Runtime.getRuntime().maxMemory(),
+                getDbDirSize(dbDir),
+                getFreeDiskSpace(dbDir)
         ));
 
         clientMessageService.sendToTopic("/topic/machineInfo", machineInfo.get());
@@ -279,6 +304,7 @@ public class BlockchainInfoService implements ApplicationListener {
         syncStatus = syncManager.isSyncDone() ? SyncStatus.SHORT_SYNC : SyncStatus.LONG_SYNC;
 
         final Block bestBlock = ethereum.getBlockchain().getBestBlock();
+        final List<Block> latestBlocks = Arrays.asList(lastBlocksForHashRate.toArray(new Block[0]));
 
         blockchainInfo.set(
                 new BlockchainInfoDTO(
@@ -288,8 +314,8 @@ public class BlockchainInfoService implements ApplicationListener {
                         bestBlock.getTransactionsList().size(),
                         bestBlock.getDifficultyBI().longValue(),
                         0l, // not implemented
-                        calculateHashRate(),
-                        ethereum.getGasPrice(),
+                        BlockUtils.calculateHashRate(latestBlocks).longValue(),
+                        getRecommendedGasPrice(),
                         NetworkInfoDTO.SyncStatusDTO.instanceOf(syncManager.getSyncStatus())
                 )
         );
@@ -302,6 +328,7 @@ public class BlockchainInfoService implements ApplicationListener {
         final NetworkInfoDTO info = new NetworkInfoDTO(
                 channelManager.getActivePeers().size(),
                 NetworkInfoDTO.SyncStatusDTO.instanceOf(syncManager.getSyncStatus()),
+                privateMinerService.getStatus().toString(),
                 config.listenPort(),
                 true
         );
@@ -327,49 +354,36 @@ public class BlockchainInfoService implements ApplicationListener {
         clientMessageService.sendToTopic("/topic/networkInfo", info);
     }
 
-    private long calculateHashRate() {
-        final List<Block> blocks = Arrays.asList(lastBlocksForHashRate.toArray(new Block[0]));
-
-        if (blocks.isEmpty()) {
-            return 0;
+    /**
+     * Measuring occupied space of database directory.
+     * Caching is enabled, result updates no more than
+     * once in {@link #DB_SIZE_CACHE_EVICT_MS} milliseconds.
+     * @param dbDir   Database directory
+     */
+    private long getDbDirSize(File dbDir) {
+        if ((System.currentTimeMillis() - dbSizeMeasurementTime) < DB_SIZE_CACHE_EVICT_MS) {
+            return dbSize;
+        }
+        this.dbSizeMeasurementTime = System.currentTimeMillis();
+        try (Stream<Path> paths = Files.walk(dbDir.toPath())) {
+            this.dbSize = paths
+                    .filter(p -> p.toFile().isFile())
+                    .mapToLong(p -> p.toFile().length())
+                    .sum();
+        } catch (IOException e) {
+            log.error("Unable to calculate db size", e);
         }
 
-        final Block bestBlock = blocks.get(blocks.size() - 1);
-        final long difficulty = bestBlock.getDifficultyBI().longValue();
-
-        final long sumTimestamps = blocks.stream().mapToLong(b -> b.getTimestamp()).sum();
-        if (sumTimestamps > 0) {
-            float avgTime = ((float) sumTimestamps / blocks.size() / 1000);
-            return (long) (difficulty / avgTime);
-        } else {
-            return 0;
-        }
+        return dbSize;
     }
 
     /**
-     * Get free space of disk where project located.
-     * Verified on multi disk Windows.
-     * Not tested against sym links
+     * Get free space of disk where currentDir is located.
+     * Verified on Mac/Linux including symlinks.
+     * @param currentDir   Directory on measured disk
      */
-    private long getFreeDiskSpace() {
-        final File currentDir = new File(".");
-        for (Path root : FileSystems.getDefault().getRootDirectories()) {
-//            log.debug(root.toAbsolutePath() + " vs current " + currentDir.getAbsolutePath());
-            try {
-                final FileStore store = Files.getFileStore(root);
-
-                final boolean isCurrentDirBelongsToRoot = Paths.get(currentDir.getAbsolutePath()).startsWith(root.toAbsolutePath());
-                if (isCurrentDirBelongsToRoot) {
-                    final long usableSpace = store.getUsableSpace();
-//                    log.debug("Disk available:" + readableFileSize(usableSpace)
-//                            + ", total:" + readableFileSize(store.getTotalSpace()));
-                    return usableSpace;
-                }
-            } catch (IOException e) {
-                log.error("Problem querying space: " + e.toString());
-            }
-        }
-        return 0;
+    private long getFreeDiskSpace(File currentDir) {
+        return currentDir.getUsableSpace();
     }
 
     /**
@@ -422,6 +436,14 @@ public class BlockchainInfoService implements ApplicationListener {
         root.addAppender(messagingAppender);
         filter.start();
         messagingAppender.start();
+    }
+
+    public Long getRecommendedGasPrice() {
+        Long res = gasPriceTracker.getRecommendedGasPrice();
+        if (res == null && privateMinerService.getStatus() == PrivateMinerService.MineStatus.MINING) {
+            res = config.getMineMinGasPrice().longValue();
+        }
+        return res;
     }
 
     public String getConfigDump() {

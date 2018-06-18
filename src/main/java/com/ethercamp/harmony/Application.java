@@ -44,6 +44,9 @@ public class Application {
      * - perform action and exit on completion.
      */
     public static void main(String[] args) throws Exception {
+        // Overriding mine.start to get control of its startup
+        // in {@link com.ethercamp.harmony.service.PrivateMinerService}
+        SystemProperties.getDefault().overrideParams("mine.start", "false");
         final List<String> actions = asList("importBlocks");
 
         final Optional<String> foundAction = asList(args).stream()
