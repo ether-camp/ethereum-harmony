@@ -130,8 +130,12 @@ public class PrivateMinerService {
         // Overriding mine.start which was reset in {@link com.ethercamp.harmony.Application}
         SystemProperties.resetToDefault();
         config.overrideParams("mine.start", new Boolean(SystemProperties.getDefault().minerStart()).toString());
-        if (config.minerStart() && !config.isSyncEnabled()) {
-            ethereum.getBlockMiner().startMining();
+        if (config.minerStart()) {
+            if (!config.isSyncEnabled()) {
+                ethereum.getBlockMiner().startMining();
+            } else {
+                this.status = MineStatus.AWAITING;
+            }
         }
     }
 
@@ -158,6 +162,7 @@ public class PrivateMinerService {
         LIGHT_DAG_GENERATE,
         FULL_DAG_GENERATE,
         DAG_GENERATED,
-        MINING
+        MINING,
+        AWAITING // Mining is on, but we are on long sync, waiting for short sync
     }
 }
