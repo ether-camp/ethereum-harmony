@@ -440,7 +440,7 @@ public class BlockchainInfoService implements ApplicationListener {
 
     public Long getRecommendedGasPrice() {
         Long res = gasPriceTracker.getRecommendedGasPrice();
-        if (res == null && privateMinerService.getStatus() == PrivateMinerService.MineStatus.MINING) {
+        if (res == null && config.minerStart()) {
             res = config.getMineMinGasPrice().longValue();
         }
         return res;

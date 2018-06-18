@@ -53,7 +53,8 @@
             'FULL_DAG_GENERATE': 'Generating full dataset (10 min)',
             'DAG_GENERATED': 'Dataset generated, mining',
             'MINING': 'Mining',
-            'DISABLED': 'Disabled'
+            'DISABLED': 'Disabled',
+            'AWAITING': 'Awaiting short sync'
         };
 
         var syncStatusesMessageTop = {
