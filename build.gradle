@@ -36,7 +36,7 @@
  * which sets 3.5 GB.
  */
 
-ext.maxHeapSize = '-Xmx1500m' // default is 1G, but could be changed via command line or launched task type
+ext.maxHeapSize = '-Xmx1500m' // default is 1.5G, but could be changed via command line or launched task type
 
 buildscript {
     repositories {
