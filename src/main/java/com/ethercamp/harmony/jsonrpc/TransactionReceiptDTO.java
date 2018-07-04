@@ -27,7 +27,6 @@ import org.ethereum.core.TransactionReceipt;
 import org.ethereum.vm.LogInfo;
 
 import static com.ethercamp.harmony.jsonrpc.TypeConverter.toJsonHex;
-import static com.ethercamp.harmony.jsonrpc.TypeConverter.toJsonHexNullable;
 
 /**
  * Created by Ruben on 5/1/2016.
@@ -59,9 +58,9 @@ public class TransactionReceiptDTO {
         transactionIndex = toJsonHex(new Integer(txInfo.getIndex()).longValue());
         cumulativeGasUsed = toJsonHex(receipt.getCumulativeGas());
         gasUsed = toJsonHex(receipt.getGasUsed());
-        contractAddress = toJsonHexNullable(receipt.getTransaction().getContractAddress());
-        from = toJsonHexNullable(receipt.getTransaction().getSender());
-        to = toJsonHexNullable(receipt.getTransaction().getReceiveAddress());
+        contractAddress = toJsonHex(receipt.getTransaction().getContractAddress());
+        from = toJsonHex(receipt.getTransaction().getSender());
+        to = toJsonHex(receipt.getTransaction().getReceiveAddress());
         logs = new JsonRpc.LogFilterElement[receipt.getLogInfoList().size()];
         if (block != null) {
             blockNumber = toJsonHex(block.getNumber());
