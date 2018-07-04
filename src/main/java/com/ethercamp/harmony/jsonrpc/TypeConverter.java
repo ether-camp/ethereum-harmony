@@ -61,7 +61,7 @@ public class TypeConverter {
      * "0x" for null
      */
     public static String toJsonHex(byte[] x) {
-        return x == null ? null : "0x" + Hex.toHexString(x);
+        return x == null ? null : toJsonHex(Hex.toHexString(x));
     }
 
     /**
@@ -69,11 +69,11 @@ public class TypeConverter {
      * null for null
      */
     public static String toJsonHexNullable(byte[] x) {
-        return x == null ? null : "0x" + Hex.toHexString(x);
+        return x == null ? null : toJsonHex(Hex.toHexString(x));
     }
 
     public static String toJsonHex(String x) {
-        return "0x"+x;
+        return x.isEmpty() ? "0x0" : "0x"+x;
     }
 
     public static String toJsonHex(int x) {
