@@ -23,6 +23,7 @@ import org.ethereum.core.Block;
 import org.ethereum.core.Transaction;
 
 import static com.ethercamp.harmony.jsonrpc.TypeConverter.toJsonHex;
+import static com.ethercamp.harmony.jsonrpc.TypeConverter.toJsonHexNumber;
 
 /**
  * Created by Ruben on 8/1/2016.
@@ -50,10 +51,10 @@ public class TransactionResultDTO {
         blockNumber = toJsonHex(b.getNumber());
         transactionIndex = toJsonHex(index);
         from= toJsonHex(tx.getSender());
-        to = tx.getReceiveAddress() == null ? null : toJsonHex(tx.getReceiveAddress());
+        to = tx.getReceiveAddress() == null || tx.getReceiveAddress().length == 0 ? null : toJsonHex(tx.getReceiveAddress());
         gas = toJsonHex(tx.getGasLimit());
         gasPrice = toJsonHex(tx.getGasPrice());
-        value = toJsonHex(tx.getValue());
+        value = toJsonHexNumber(tx.getValue());
         input  = tx.getData() != null ? toJsonHex(tx.getData()) : null;
     }
 
