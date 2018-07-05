@@ -51,7 +51,7 @@ public class TransactionResultDTO {
         blockNumber = toJsonHex(b.getNumber());
         transactionIndex = toJsonHex(index);
         from= toJsonHex(tx.getSender());
-        to = tx.getReceiveAddress() == null || tx.getReceiveAddress().length == 0 ? null : toJsonHex(tx.getReceiveAddress());
+        to = tx.getReceiveAddress() == null ? null : toJsonHex(tx.getReceiveAddress());
         gas = toJsonHex(tx.getGasLimit());
         gasPrice = toJsonHex(tx.getGasPrice());
         value = toJsonHexNumber(tx.getValue());
