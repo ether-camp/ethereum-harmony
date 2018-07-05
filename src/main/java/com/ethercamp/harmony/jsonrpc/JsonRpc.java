@@ -193,7 +193,7 @@ public interface JsonRpc {
             blockHash = b == null ? null : toJsonHex(b.getHash());
             transactionIndex = b == null ? null : toJsonHex(txIndex);
             transactionHash = toJsonHex(tx.getHash());
-            address = tx.getReceiveAddress() == null ? null : toJsonHex(tx.getReceiveAddress());
+            address = toJsonHex(tx.getReceiveAddress());
             data = toJsonHex(logInfo.getData());
             topics = new String[logInfo.getTopics().size()];
             for (int i = 0; i < topics.length; i++) {
