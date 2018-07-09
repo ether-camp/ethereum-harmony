@@ -914,12 +914,12 @@ public class EthJsonRpcImpl implements JsonRpc {
 
     static class NewBlockFilter extends Filter {
         class NewBlockFilterEvent extends FilterEvent {
-            public final Block b;
-            NewBlockFilterEvent(Block b) {this.b = b;}
+            private final String blockHash;
+            NewBlockFilterEvent(Block b) {this.blockHash = toJsonHex(b.getHash());}
 
             @Override
             public String getJsonEventObject() {
-                return toJsonHex(b.getHash());
+                return blockHash;
             }
         }
 
@@ -930,13 +930,13 @@ public class EthJsonRpcImpl implements JsonRpc {
 
     static class PendingTransactionFilter extends Filter {
         class PendingTransactionFilterEvent extends FilterEvent {
-            private final Transaction tx;
+            private final String txHash;
 
-            PendingTransactionFilterEvent(Transaction tx) {this.tx = tx;}
+            PendingTransactionFilterEvent(Transaction tx) {this.txHash = toJsonHex(tx.getHash());}
 
             @Override
             public String getJsonEventObject() {
-                return toJsonHex(tx.getHash());
+                return txHash;
             }
         }
 
