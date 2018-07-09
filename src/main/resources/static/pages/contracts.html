@@ -121,7 +121,7 @@
             </div>
 
 
-            <div class="panel panel-filled" ng-if="!isAddingContract && !isViewingStorage">
+            <div class="panel panel-filled" ng-if="!isAddingContract && !isViewingStorage && !isDisabled">
 
                 <div class="panel-heading">
 
@@ -173,6 +173,10 @@
                         </table>
                     </div>
                 </div>
+            </div>
+
+            <div class="panel panel-filled" ng-if="isDisabled">
+                Contract storage is disabled
             </div>
 
         </div>

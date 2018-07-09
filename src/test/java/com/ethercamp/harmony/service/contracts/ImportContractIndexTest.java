@@ -16,7 +16,7 @@
  * along with Ethereum Harmony.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.ethercamp.harmony.service;
+package com.ethercamp.harmony.service.contracts;
 
 import com.ethercamp.contrdata.ContractDataService;
 import com.ethercamp.contrdata.storage.StorageEntry;
@@ -24,6 +24,7 @@ import com.ethercamp.contrdata.storage.dictionary.Layout;
 import com.ethercamp.contrdata.storage.dictionary.StorageDictionary;
 import com.ethercamp.contrdata.storage.dictionary.StorageDictionaryDb;
 import com.ethercamp.harmony.model.dto.ContractObjects;
+import com.ethercamp.harmony.service.BaseContextAwareTest;
 import com.mashape.unirest.http.JsonNode;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
@@ -70,7 +71,7 @@ import static org.mockito.Mockito.when;
 @Ignore
 public class ImportContractIndexTest extends BaseContextAwareTest {
 
-    ContractsService contractsService = new ContractsService();
+    ContractsServiceImpl contractsService = new ContractsServiceImpl();
 
 //    @Autowired
     Ethereum ethereum = mock(Ethereum.class);

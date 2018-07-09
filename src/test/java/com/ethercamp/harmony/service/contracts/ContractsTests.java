@@ -16,7 +16,7 @@
  * along with Ethereum Harmony.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.ethercamp.harmony.service;
+package com.ethercamp.harmony.service.contracts;
 
 import com.ethercamp.harmony.model.dto.ContractObjects.*;
 import com.ethercamp.harmony.util.SolcUtils;
@@ -48,7 +48,7 @@ import static org.mockito.Mockito.when;
  */
 public class ContractsTests {
 
-    ContractsService contractsService;
+    ContractsServiceImpl contractsService;
     Repository repository;
 
     private static final String ADDRESS = "0C37520af9B346D413d90805E86064B47642478E".toLowerCase();
@@ -72,7 +72,7 @@ public class ContractsTests {
 
     @Before
     public void before() {
-        contractsService = new ContractsService();
+        contractsService = new ContractsServiceImpl();
         contractsService.ethereum = mock(Ethereum.class);
 
         contractsService.contractsStorage = new HashMapDB<>();
@@ -148,7 +148,7 @@ public class ContractsTests {
     @Test
     public void contracts_shouldExtractHash_1() throws Exception {
         final String testData = IOUtils.toString(getClass().getClassLoader().getResourceAsStream("contracts/test-extract-hashes.asm.txt"));
-        final Set<String> set = ContractsService.extractFuncHashes(testData);
+        final Set<String> set = ContractsServiceImpl.extractFuncHashes(testData);
 
         assertThat(set, hasSize(3));
         assertTrue(set.contains("99372321"));

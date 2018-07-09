@@ -19,8 +19,15 @@
 
 package com.ethercamp.harmony.config;
 
+import com.ethercamp.harmony.service.contracts.ContractsService;
+import com.ethercamp.harmony.service.contracts.ContractsServiceImpl;
+import com.ethercamp.harmony.service.contracts.DisabledContractService;
 import org.ethereum.config.CommonConfig;
 import org.ethereum.config.NoAutoscan;
+import org.ethereum.config.SystemProperties;
+import org.ethereum.datasource.DbSource;
+import org.ethereum.datasource.leveldb.LevelDbDataSource;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
@@ -36,4 +43,25 @@ import org.springframework.context.annotation.Configuration;
         excludeFilters = @ComponentScan.Filter(NoAutoscan.class))
 public class EthereumHarmonyConfig extends CommonConfig {
 
+    @Bean
+    ContractsService contractsService() {
+        if (harmonyProperties(systemProperties()).isContractStorageEnabled()) {
+            return new ContractsServiceImpl();
+        } else {
+            return new DisabledContractService(contractSettingsStorage());
+        }
+    }
+
+    @Bean("contractSettingsStorage")
+    DbSource<byte[]> contractSettingsStorage() {
+        DbSource<byte[]> settingsStorage = new LevelDbDataSource("settings");
+        settingsStorage.init();
+
+        return settingsStorage;
+    }
+
+    @Bean
+    HarmonyProperties harmonyProperties(SystemProperties properties) {
+        return new HarmonyProperties(properties);
+    }
 }

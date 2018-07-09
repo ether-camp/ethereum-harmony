@@ -18,25 +18,9 @@
 
 package com.ethercamp.harmony.service;
 
-import org.springframework.core.env.Environment;
-import org.springframework.data.util.Pair;
+public class DisabledException extends Exception {
 
-import java.util.Optional;
-
-/**
- * Created by Stan Reshetnyk on 20.01.17.
- */
-public class BlockchainConsts {
-
-    /**
-     * Return pair of name and explorer url.
-     */
-    public static Pair<String, Optional<String>> getNetworkInfo(Environment env, String genesisHash) {
-        final String networkNameKey = String.format("network.%s.networkName", genesisHash);
-        final String explorerUrlKey = String.format("network.%s.explorerUrl", genesisHash);
-
-        return Optional.ofNullable(env.getProperty(networkNameKey))
-                .map(name -> Pair.of(name, Optional.ofNullable(env.getProperty(explorerUrlKey))))
-                .orElse(Pair.of("Unknown network", Optional.empty()));
+    public DisabledException(String message) {
+        super(message);
     }
 }
