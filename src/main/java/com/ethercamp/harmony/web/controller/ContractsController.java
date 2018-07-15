@@ -19,12 +19,14 @@
 package com.ethercamp.harmony.web.controller;
 
 import com.ethercamp.contrdata.storage.StorageEntry;
+import com.ethercamp.harmony.config.WebEnabledCondition;
 import com.ethercamp.harmony.model.dto.ActionStatus;
 import com.ethercamp.harmony.model.dto.ContractObjects.*;
 import com.ethercamp.harmony.service.contracts.ContractsService;
 import com.ethercamp.harmony.service.DisabledException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
@@ -43,6 +45,7 @@ import static org.apache.commons.lang3.StringUtils.lowerCase;
 @Slf4j
 @RestController
 @RequestMapping("/contracts")
+@Conditional(WebEnabledCondition.class)
 public class ContractsController {
 
     @Autowired
@@ -138,7 +141,6 @@ public class ContractsController {
     @ResponseStatus(value=HttpStatus.GONE, reason="Service is disabled")  // 410
     @ExceptionHandler(DisabledException.class)
     public void disabled() {
-        log.info("");
         // Nothing to do
     }
 

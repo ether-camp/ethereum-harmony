@@ -26,6 +26,8 @@ import org.ethereum.config.SystemProperties;
  */
 public class HarmonyProperties {
 
+    public static HarmonyProperties DEFAULT = new HarmonyProperties(SystemProperties.getDefault());
+
     private SystemProperties config;
 
     public HarmonyProperties(SystemProperties config) {

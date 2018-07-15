@@ -16,27 +16,18 @@
  * along with Ethereum Harmony.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.ethercamp.harmony.service;
+package com.ethercamp.harmony.config;
 
-import com.ethercamp.harmony.config.WebEnabledCondition;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Conditional;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.stereotype.Service;
+import org.springframework.context.annotation.Condition;
+import org.springframework.context.annotation.ConditionContext;
+import org.springframework.core.type.AnnotatedTypeMetadata;
 
-/**
- * Created by Stan Reshetnyk on 11.07.16.
- *
- * Encapsulates specific code for sending messages to client side.
- */
-@Service
-@Conditional(WebEnabledCondition.class)
-public class ClientMessageService {
+public class WebEnabledCondition implements Condition {
 
-    @Autowired
-    private SimpMessagingTemplate messagingTemplate;
+    @Override
+    public boolean matches(ConditionContext context,
+                           AnnotatedTypeMetadata metadata) {
 
-    public void sendToTopic(String topic, Object dto) {
-        messagingTemplate.convertAndSend(topic, dto);
+        return HarmonyProperties.DEFAULT.isWebEnabled();
     }
 }

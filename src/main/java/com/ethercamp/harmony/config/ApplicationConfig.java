@@ -21,6 +21,7 @@ package com.ethercamp.harmony.config;
 import com.ethercamp.harmony.web.filter.JsonRpcUsageFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.web.filter.HiddenHttpMethodFilter;
@@ -45,6 +46,7 @@ public class ApplicationConfig extends WebMvcConfigurerAdapter {
      * https://github.com/briandilley/jsonrpc4j/issues/69
      */
     @Bean
+    @Conditional(RpcEnabledCondition.class)
     @SuppressWarnings({"unchecked", "deprecation"})
     // full class path to avoid deprecation warning
     public com.googlecode.jsonrpc4j.spring.AutoJsonRpcServiceExporter exporter() {
@@ -62,6 +64,7 @@ public class ApplicationConfig extends WebMvcConfigurerAdapter {
      * Found at https://github.com/spring-projects/spring-boot/issues/4782
      */
     @Bean
+    @Conditional(RpcEnabledCondition.class)
     @SuppressWarnings("deprecation")
     // full class path to avoid deprecation warning
     public org.springframework.boot.context.embedded.FilterRegistrationBean registration(HiddenHttpMethodFilter filter) {
@@ -74,10 +77,23 @@ public class ApplicationConfig extends WebMvcConfigurerAdapter {
      * Configuration of filter which gathers JSON-RPC invocation stats.
      */
     @Bean
+    @Conditional(RpcEnabledCondition.class)
     public JsonRpcUsageFilter rpcUsageFilter() {
         return new JsonRpcUsageFilter();
     }
 
+    /**
+     * Configuration of filter which rejects requests to a service called on the wrong port
+     */
+    @Bean
+    public ModulePortFilter modulePortFilter() {
+        return new ModulePortFilter(
+                HarmonyProperties.DEFAULT.isRpcEnabled() ? HarmonyProperties.DEFAULT.rpcPort() : null,
+                HarmonyProperties.DEFAULT.isWebEnabled() ? HarmonyProperties.DEFAULT.webPort() : null
+        );
+    }
+
+    // TODO: Remove resource handlers for any resources if web is not enabled
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         if (!registry.hasMappingForPattern("/webjars/**")) {

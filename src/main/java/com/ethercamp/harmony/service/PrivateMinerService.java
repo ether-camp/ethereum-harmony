@@ -58,7 +58,7 @@ public class PrivateMinerService {
     @Autowired
     public Repository repository;
 
-    @Autowired
+    @Autowired(required = false)
     private ClientMessageService clientMessageService;
 
     private final static int AVG_METRICS_BASE = 100;
@@ -150,7 +150,9 @@ public class PrivateMinerService {
      * Pushes status change immediately to client application
      */
     private void pushStatus(MineStatus status) {
-        clientMessageService.sendToTopic(MINER_TOPIC, new MinerStatusDTO(status.toString()));
+        if (clientMessageService != null) {
+            clientMessageService.sendToTopic(MINER_TOPIC, new MinerStatusDTO(status.toString()));
+        }
     }
 
     public MineStatus getStatus() {

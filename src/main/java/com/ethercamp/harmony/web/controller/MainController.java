@@ -16,27 +16,24 @@
  * along with Ethereum Harmony.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.ethercamp.harmony.service;
+package com.ethercamp.harmony.web.controller;
 
-import com.ethercamp.harmony.config.WebEnabledCondition;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.ethercamp.harmony.config.RpcEnabledCondition;
+import com.ethercamp.harmony.util.AppConst;
 import org.springframework.context.annotation.Conditional;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 
-/**
- * Created by Stan Reshetnyk on 11.07.16.
- *
- * Encapsulates specific code for sending messages to client side.
- */
-@Service
-@Conditional(WebEnabledCondition.class)
-public class ClientMessageService {
+@Controller
+public class MainController {
 
-    @Autowired
-    private SimpMessagingTemplate messagingTemplate;
-
-    public void sendToTopic(String topic, Object dto) {
-        messagingTemplate.convertAndSend(topic, dto);
+    /**
+     * Handles JSON-RPC requests at site root
+     */
+    @Conditional(RpcEnabledCondition.class)
+    @RequestMapping(value = {AppConst.JSON_RPC_ALIAS_PATH}, method = RequestMethod.POST)
+    public String jsonrpcAlias() {
+        return "forward:" + AppConst.JSON_RPC_PATH;
     }
 }

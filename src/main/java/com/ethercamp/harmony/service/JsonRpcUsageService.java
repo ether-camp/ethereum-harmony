@@ -18,6 +18,7 @@
 
 package com.ethercamp.harmony.service;
 
+import com.ethercamp.harmony.config.RpcEnabledCondition;
 import com.ethercamp.harmony.model.dto.MethodCallDTO;
 import com.ethercamp.harmony.jsonrpc.JsonRpc;
 import com.ethercamp.harmony.util.AppConst;
@@ -28,6 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.embedded.EmbeddedServletContainerInitializedEvent;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -49,13 +51,14 @@ import java.util.stream.Stream;
  *  - reading curl examples from conf file.
  */
 @Service
+@Conditional(RpcEnabledCondition.class)
 @Slf4j(topic = "jsonrpc")
 public class JsonRpcUsageService implements ApplicationListener {
 
     @Autowired
     JsonRpc jsonRpc;
 
-    @Autowired
+    @Autowired(required = false)
     ClientMessageService clientMessageService;
 
     private final Map<String, CallStats> stats = new ConcurrentHashMap();
@@ -130,7 +133,9 @@ public class JsonRpcUsageService implements ApplicationListener {
                 .sorted((s1, s2) -> s1.getMethodName().compareTo(s2.getMethodName()))
                 .collect(Collectors.toList());
 
-        clientMessageService.sendToTopic("/topic/rpcUsage", items);
+        if (clientMessageService != null) {
+            clientMessageService.sendToTopic("/topic/rpcUsage", items);
+        }
     }
 
     /**

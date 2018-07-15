@@ -82,7 +82,7 @@ public class BlockchainInfoService implements ApplicationListener {
     @Autowired
     private Environment env;
 
-    @Autowired
+    @Autowired(required = false)
     private ClientMessageService clientMessageService;
 
     @Autowired
@@ -210,7 +210,9 @@ public class BlockchainInfoService implements ApplicationListener {
                 block.getDifficultyBI().longValue()
         );
         lastBlocksForClient.add(blockInfo);
-        clientMessageService.sendToTopic("/topic/newBlockInfo", blockInfo);
+        if (clientMessageService != null) {
+            clientMessageService.sendToTopic("/topic/newBlockInfo", blockInfo);
+        }
     }
 
     @Override
@@ -292,7 +294,9 @@ public class BlockchainInfoService implements ApplicationListener {
                 getFreeDiskSpace(dbDir)
         ));
 
-        clientMessageService.sendToTopic("/topic/machineInfo", machineInfo.get());
+        if (clientMessageService != null) {
+            clientMessageService.sendToTopic("/topic/machineInfo", machineInfo.get());
+        }
     }
 
     @Scheduled(fixedRate = 2000)
@@ -317,7 +321,9 @@ public class BlockchainInfoService implements ApplicationListener {
                 )
         );
 
-        clientMessageService.sendToTopic("/topic/blockchainInfo", blockchainInfo.get());
+        if (clientMessageService != null) {
+            clientMessageService.sendToTopic("/topic/blockchainInfo", blockchainInfo.get());
+        }
     }
 
     @Scheduled(fixedRate = 2000)
@@ -348,7 +354,9 @@ public class BlockchainInfoService implements ApplicationListener {
 
         networkInfo.set(info);
 
-        clientMessageService.sendToTopic("/topic/networkInfo", info);
+        if (clientMessageService != null) {
+            clientMessageService.sendToTopic("/topic/networkInfo", info);
+        }
     }
 
     /**
@@ -406,7 +414,9 @@ public class BlockchainInfoService implements ApplicationListener {
                 if (lastLogs.size() > KEEP_LOG_ENTRIES) {
                     lastLogs.poll();
                 }
-                clientMessageService.sendToTopic("/topic/systemLog", message);
+                if (clientMessageService != null) {
+                    clientMessageService.sendToTopic("/topic/systemLog", message);
+                }
             }
         };
 
