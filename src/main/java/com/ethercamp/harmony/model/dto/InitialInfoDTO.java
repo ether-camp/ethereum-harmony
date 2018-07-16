@@ -56,4 +56,6 @@ public class InitialInfoDTO {
     private final String publicIp;
 
     private final boolean featureContracts;
+
+    private final boolean featureRpc;
 }

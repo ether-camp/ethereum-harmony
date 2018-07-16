@@ -249,11 +249,12 @@ public class BlockchainInfoService implements ApplicationListener {
                     blockHash.orElse(null),
                     System.currentTimeMillis(),
                     Hex.toHexString(config.nodeId()),
-                    serverPort,
+                    properties.rpcPort(),
                     isPrivateNetwork,
                     env.getProperty("portCheckerUrl"),
                     config.bindIp(),
-                    properties.isContractStorageEnabled()
+                    properties.isContractStorageEnabled(),
+                    properties.isRpcEnabled()
             ));
 
             final String ANSI_RESET = "\u001B[0m";

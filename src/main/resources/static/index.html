@@ -204,7 +204,7 @@
                     <a href="/rpcUsage">JSON-RPC Usage</a>
                 </li>
 
-                <li ng-class="{active: vm.data.currentPage == '/terminal'}">
+                <li ng-class="{active: vm.data.currentPage == '/terminal'}" ng-show="vm.data.featureRpc" ng-cloak>
                     <a href="/terminal">Terminal</a>
                 </li>
 

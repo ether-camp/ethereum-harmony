@@ -87,23 +87,17 @@ public class EthereumHarmonyConfig extends CommonConfig {
         HarmonyProperties props = harmonyProperties(systemProperties());
         LinkedHashSet<Integer> ports = new LinkedHashSet<>();
 
-        if (props.isWebEnabled() && props.webPort() != null) {
+        if (props.webPort() != null) {
             ports.add(props.webPort());
         }
 
-        if (props.isRpcEnabled() && props.rpcPort() != null) {
+        if (props.rpcPort() != null) {
             ports.add(props.rpcPort());
         }
 
-
         // fallback
         if (ports.isEmpty()) {
-            String serverPort = System.getProperty("server.port");
-            if (serverPort != null) {
-                ports.add(Integer.valueOf(serverPort));
-            } else {
-                ports.add(8080);
-            }
+            ports.add(8080);
         }
 
         return new ArrayList<>(ports);

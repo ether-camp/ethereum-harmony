@@ -34,36 +34,41 @@ public class HarmonyProperties {
         this.config = config;
     }
 
-    // TODO: defaults/validation
-    // TODO: backward compatibility for rpc/web ports
-
-    // TODO
     public boolean isWebEnabled() {
         return config.getConfig().getBoolean("modules.web.enabled");
     }
 
-    // TODO
     public boolean isRpcEnabled() {
         return config.getConfig().getBoolean("modules.rpc.enabled");
     }
 
-    // TODO
     public Integer rpcPort() {
-        if (config.getConfig().hasPath("modules.rpc.listen.port")) {
+        if (config.getConfig().hasPath("modules.rpc.listen.port") && isRpcEnabled()) {
             return config.getConfig().getInt("modules.rpc.listen.port");
+        } else if (isRpcEnabled()) {
+            return getServerPort();
         }
 
         return null;
     }
 
-    // TODO
-    // FIXME: rpc port = web port and both are enabled
     public Integer webPort() {
-        if (config.getConfig().hasPath("modules.web.listen.port")) {
+        if (config.getConfig().hasPath("modules.web.listen.port") && isWebEnabled()) {
             return config.getConfig().getInt("modules.web.listen.port");
+        } else if (isWebEnabled()) {
+            return getServerPort();
         }
 
         return null;
+    }
+
+    private Integer getServerPort() {
+        String serverPort = System.getProperty("server.port");
+        if (serverPort != null) {
+            return Integer.valueOf(serverPort);
+        } else {
+            return 8080;
+        }
     }
 
     public boolean isContractStorageEnabled() {
