@@ -27,8 +27,8 @@
         scrollButtons: { enable: false }
     });
 
-    var JSON_RPC_URL = '/rpc';
-    var jsonrpcConfigProvidr;  // Not a best way to pass provider to the righ place
+    var JSON_RPC_URI = '/rpc';
+    var jsonrpcConfigProviderHolder;
 
 
     /**
@@ -78,7 +78,7 @@
             });
 
         $locationProvider.html5Mode(true);
-        jsonrpcConfigProvidr = jsonrpcConfigProvider;
+        jsonrpcConfigProviderHolder = jsonrpcConfigProvider;
     });
 
     /**
@@ -404,8 +404,8 @@
             });
 
             if (vm.data.featureRpc) {
-                jsonrpcConfigProvidr.set({
-                    url: window.location.protocol + "//" + window.location.hostname + ":" + vm.data.rpcPort + JSON_RPC_URL,
+                jsonrpcConfigProviderHolder.set({
+                    url: window.location.protocol + "//" + window.location.hostname + ":" + vm.data.rpcPort + JSON_RPC_URI,
                     returnHttpPromise: false
                 });
             }
