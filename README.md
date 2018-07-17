@@ -44,8 +44,12 @@ https://www.youtube.com/watch?v=leaAMTgjvxg
 * `cd ethereum-harmony`
 * Run Service: `gradlew runMain`  ( live network by default or any [other environment](#options) )
 
-Navigate to `http://localhost:8080`
-JSON-RPC is available at either `http://localhost:8080/rpc` or `http://localhost:8080`
+Navigate to web view `http://localhost:8080`
+JSON-RPC is available at either `http://localhost:8545/rpc` or `http://localhost:8545`
+
+In order to provide ability to disable unneeded features, any of app modules could be disabled: web, contracts, rpc. Check [configuration](https://github.com/ether-camp/ethereum-harmony/blob/develop/src/main/resources/user.conf) for more info.
+
+Run RPC only: `gradlew runMain -PrpcOnly`
 
 (*) Use `gradlew runMain -Dserver.port=9999` option to change web interface port number.
 
