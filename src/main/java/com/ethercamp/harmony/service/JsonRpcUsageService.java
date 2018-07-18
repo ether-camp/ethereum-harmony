@@ -58,7 +58,7 @@ public class JsonRpcUsageService implements ApplicationListener {
     @Autowired
     JsonRpc jsonRpc;
 
-    @Autowired(required = false)
+    @Autowired
     ClientMessageService clientMessageService;
 
     private final Map<String, CallStats> stats = new ConcurrentHashMap();
@@ -133,9 +133,7 @@ public class JsonRpcUsageService implements ApplicationListener {
                 .sorted((s1, s2) -> s1.getMethodName().compareTo(s2.getMethodName()))
                 .collect(Collectors.toList());
 
-        if (clientMessageService != null) {
-            clientMessageService.sendToTopic("/topic/rpcUsage", items);
-        }
+        clientMessageService.sendToTopic("/topic/rpcUsage", items);
     }
 
     /**

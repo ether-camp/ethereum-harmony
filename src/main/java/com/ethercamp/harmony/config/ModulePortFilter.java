@@ -37,7 +37,8 @@ import static com.ethercamp.harmony.util.AppConst.JSON_RPC_ALIAS_PATH;
 import static com.ethercamp.harmony.util.AppConst.JSON_RPC_PATH;
 
 /**
- * TODO: Add some info
+ * Filters web and rpc requests to ensure that
+ * they are performed to the right port
  */
 @Slf4j
 @WebFilter()

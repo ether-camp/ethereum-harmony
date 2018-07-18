@@ -28,6 +28,10 @@ public class RpcEnabledCondition implements Condition {
     public boolean matches(ConditionContext context,
                            AnnotatedTypeMetadata metadata) {
 
+        return RpcEnabledCondition.matches();
+    }
+
+    public static boolean matches() {
         return HarmonyProperties.DEFAULT.isRpcEnabled();
     }
 }

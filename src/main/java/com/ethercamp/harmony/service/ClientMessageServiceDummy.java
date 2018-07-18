@@ -16,22 +16,15 @@
  * along with Ethereum Harmony.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.ethercamp.harmony.config;
+package com.ethercamp.harmony.service;
 
-import org.springframework.context.annotation.Condition;
-import org.springframework.context.annotation.ConditionContext;
-import org.springframework.core.type.AnnotatedTypeMetadata;
-
-public class WebEnabledCondition implements Condition {
+/**
+ * Dummy for usage when ClientMessageService is not available
+ */
+public class ClientMessageServiceDummy implements ClientMessageService {
 
     @Override
-    public boolean matches(ConditionContext context,
-                           AnnotatedTypeMetadata metadata) {
-
-        return WebEnabledCondition.matches();
-    }
-
-    public static boolean matches() {
-        return HarmonyProperties.DEFAULT.isWebEnabled();
+    public void sendToTopic(String topic, Object dto) {
+        // nothing to do
     }
 }

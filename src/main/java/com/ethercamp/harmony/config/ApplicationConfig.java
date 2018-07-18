@@ -18,6 +18,9 @@
 
 package com.ethercamp.harmony.config;
 
+import com.ethercamp.harmony.service.ClientMessageService;
+import com.ethercamp.harmony.service.ClientMessageServiceDummy;
+import com.ethercamp.harmony.service.ClientMessageServiceImpl;
 import com.ethercamp.harmony.web.filter.JsonRpcUsageFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -93,7 +96,15 @@ public class ApplicationConfig extends WebMvcConfigurerAdapter {
         );
     }
 
-    // TODO: Remove resource handlers for any resources if web is not enabled
+    @Bean
+    public ClientMessageService clientMessageService() {
+        if (WebEnabledCondition.matches()) {
+            return new ClientMessageServiceImpl();
+        } else {
+            return new ClientMessageServiceDummy();
+        }
+    }
+
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         if (!registry.hasMappingForPattern("/webjars/**")) {

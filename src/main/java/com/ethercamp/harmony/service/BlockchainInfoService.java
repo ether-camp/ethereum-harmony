@@ -30,7 +30,6 @@ import com.ethercamp.harmony.keystore.FileSystemKeystore;
 import com.ethercamp.harmony.util.BlockUtils;
 import org.ethereum.listener.RecommendedGasPriceTracker;
 import org.ethereum.util.BuildInfo;
-import org.ethereum.vm.VM;
 import org.slf4j.LoggerFactory;
 import ch.qos.logback.classic.Logger;
 import com.ethercamp.harmony.model.dto.*;
@@ -82,7 +81,7 @@ public class BlockchainInfoService implements ApplicationListener {
     @Autowired
     private Environment env;
 
-    @Autowired(required = false)
+    @Autowired
     private ClientMessageService clientMessageService;
 
     @Autowired
@@ -210,9 +209,7 @@ public class BlockchainInfoService implements ApplicationListener {
                 block.getDifficultyBI().longValue()
         );
         lastBlocksForClient.add(blockInfo);
-        if (clientMessageService != null) {
-            clientMessageService.sendToTopic("/topic/newBlockInfo", blockInfo);
-        }
+        clientMessageService.sendToTopic("/topic/newBlockInfo", blockInfo);
     }
 
     @Override
@@ -295,9 +292,7 @@ public class BlockchainInfoService implements ApplicationListener {
                 getFreeDiskSpace(dbDir)
         ));
 
-        if (clientMessageService != null) {
-            clientMessageService.sendToTopic("/topic/machineInfo", machineInfo.get());
-        }
+        clientMessageService.sendToTopic("/topic/machineInfo", machineInfo.get());
     }
 
     @Scheduled(fixedRate = 2000)
@@ -322,9 +317,7 @@ public class BlockchainInfoService implements ApplicationListener {
                 )
         );
 
-        if (clientMessageService != null) {
-            clientMessageService.sendToTopic("/topic/blockchainInfo", blockchainInfo.get());
-        }
+        clientMessageService.sendToTopic("/topic/blockchainInfo", blockchainInfo.get());
     }
 
     @Scheduled(fixedRate = 2000)
@@ -355,9 +348,7 @@ public class BlockchainInfoService implements ApplicationListener {
 
         networkInfo.set(info);
 
-        if (clientMessageService != null) {
-            clientMessageService.sendToTopic("/topic/networkInfo", info);
-        }
+        clientMessageService.sendToTopic("/topic/networkInfo", info);
     }
 
     /**
@@ -415,9 +406,7 @@ public class BlockchainInfoService implements ApplicationListener {
                 if (lastLogs.size() > KEEP_LOG_ENTRIES) {
                     lastLogs.poll();
                 }
-                if (clientMessageService != null) {
-                    clientMessageService.sendToTopic("/topic/systemLog", message);
-                }
+                clientMessageService.sendToTopic("/topic/systemLog", message);
             }
         };
 

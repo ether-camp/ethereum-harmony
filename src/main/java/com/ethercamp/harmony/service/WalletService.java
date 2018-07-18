@@ -91,7 +91,7 @@ public class WalletService {
     @Autowired
     FileSystemWalletStore fileSystemWalletStore;
 
-    @Autowired(required = false)
+    @Autowired
     ClientMessageService clientMessageService;
 
     @Autowired
@@ -173,7 +173,7 @@ public class WalletService {
                         .collect(Collectors.toList()),
                 (info) -> {
                     pendingSendTransactions.remove(info.getHash());
-                    if (!syncManager.isSyncDone() && clientMessageService != null) {
+                    if (!syncManager.isSyncDone()) {
                         clientMessageService.sendToTopic("/topic/confirmTransaction", new WalletConfirmTransactionDTO(
                                 info.getHash(),
                                 info.getAmount(),
@@ -230,7 +230,7 @@ public class WalletService {
         final Boolean matchCoinbase = coinbase.map(c -> subscribed.stream().anyMatch(a -> c.equals(a))).orElse(false);
 
         final boolean needToSendUpdate = matchCoinbase || !confirmedTransactions.isEmpty();
-        if (needToSendUpdate && clientMessageService != null) {
+        if (needToSendUpdate) {
             // update wallet if transactions are related to wallet addresses
             clientMessageService.sendToTopic("/topic/getWalletInfo", getWalletInfo());
         }
@@ -238,9 +238,7 @@ public class WalletService {
 
     @Scheduled(fixedRate = 60000)
     private void doSendWalletInfo() {
-        if (clientMessageService != null) {
-            clientMessageService.sendToTopic("/topic/getWalletInfo", getWalletInfo());
-        }
+        clientMessageService.sendToTopic("/topic/getWalletInfo", getWalletInfo());
     }
 
     private String cleanAddress(String input) {
@@ -312,9 +310,7 @@ public class WalletService {
 
         flushWalletToDisk();
 
-        if (clientMessageService != null) {
-            clientMessageService.sendToTopic("/topic/getWalletInfo", getWalletInfo());
-        }
+        clientMessageService.sendToTopic("/topic/getWalletInfo", getWalletInfo());
 
         return address;
     }
@@ -366,9 +362,7 @@ public class WalletService {
 
         flushWalletToDisk();
 
-        if (clientMessageService != null) {
-            clientMessageService.sendToTopic("/topic/getWalletInfo", getWalletInfo());
-        }
+        clientMessageService.sendToTopic("/topic/getWalletInfo", getWalletInfo());
 
         return address;
     }
@@ -390,9 +384,7 @@ public class WalletService {
 
         flushWalletToDisk();
 
-        if (clientMessageService != null) {
-            clientMessageService.sendToTopic("/topic/getWalletInfo", getWalletInfo());
-        }
+        clientMessageService.sendToTopic("/topic/getWalletInfo", getWalletInfo());
     }
 
     public List<String> generateWords(int wordsCount) {
