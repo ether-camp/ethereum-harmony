@@ -55,12 +55,12 @@ public class ContractsController {
     public Page<StorageEntry> getContractStorage(@PathVariable String address,
                                                  @RequestParam(required = false) String path,
                                                  @RequestParam(required = false, defaultValue = "0") int page,
-                                                 @RequestParam(required = false, defaultValue = "5") int size) throws DisabledException {
+                                                 @RequestParam(required = false, defaultValue = "5") int size) {
         return contractsService.getContractStorage(address, path, new PageRequest(page, size));
     }
 
     @RequestMapping(value = "/add", method = RequestMethod.POST)
-    public ActionStatus<ContractInfoDTO> addContractSources(@RequestBody WatchContractDTO watchContract) throws DisabledException {
+    public ActionStatus<ContractInfoDTO> addContractSources(@RequestBody WatchContractDTO watchContract) {
         try {
             ContractInfoDTO contract = contractsService.addContract(watchContract.address, watchContract.sourceCode);
             return createSuccessStatus(contract);
@@ -73,12 +73,12 @@ public class ContractsController {
     }
 
     @RequestMapping("/list")
-    public List<ContractInfoDTO> getContracts() throws DisabledException {
+    public List<ContractInfoDTO> getContracts() {
         return contractsService.getContracts();
     }
 
     @RequestMapping(value = "/{address}/delete", method = RequestMethod.POST)
-    public boolean stopWatchingContract(@PathVariable String address) throws DisabledException {
+    public boolean stopWatchingContract(@PathVariable String address) {
         return contractsService.deleteContract(address);
     }
 
@@ -86,7 +86,7 @@ public class ContractsController {
     public ActionStatus<ContractInfoDTO> uploadContractFiles(
             @PathVariable String address,
             @RequestParam MultipartFile[] contracts,
-            @RequestParam(required = false) String verifyRlp) throws DisabledException {
+            @RequestParam(required = false) String verifyRlp) {
 
         try {
             ContractInfoDTO contract = contractsService.uploadContract(lowerCase(address), contracts);
@@ -101,7 +101,7 @@ public class ContractsController {
     }
 
     @RequestMapping(value = "/{address}/importFromExplorer", method = RequestMethod.POST)
-    public ActionStatus<Boolean> importContractDataFromExplorer(@PathVariable String address) throws DisabledException {
+    public ActionStatus<Boolean> importContractDataFromExplorer(@PathVariable String address) {
         try {
             final boolean result = contractsService.importContractFromExplorer(address);
             return createSuccessStatus(result);
@@ -113,7 +113,7 @@ public class ContractsController {
     }
 
     @RequestMapping(value = "/{address}/clearContractStorage", method = RequestMethod.POST)
-    public ActionStatus<Boolean> clearStorage(@PathVariable String address) throws DisabledException {
+    public ActionStatus<Boolean> clearStorage(@PathVariable String address) {
         try {
             contractsService.clearContractStorage(address);
             return createSuccessStatus();
@@ -125,7 +125,7 @@ public class ContractsController {
     }
 
     @RequestMapping("/indexStatus")
-    public ActionStatus<IndexStatusDTO> getIndexStatus() throws DisabledException {
+    public ActionStatus<IndexStatusDTO> getIndexStatus() {
         try {
             IndexStatusDTO result = contractsService.getIndexStatus();
             return createSuccessStatus(result);

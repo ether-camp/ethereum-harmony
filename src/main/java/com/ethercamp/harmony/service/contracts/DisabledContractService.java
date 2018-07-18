@@ -47,7 +47,7 @@ public class DisabledContractService implements ContractsService {
     }
 
     @Override
-    public boolean deleteContract(String address) throws DisabledException {
+    public boolean deleteContract(String address) {
         throw new DisabledException(DISABLED_MSG);
     }
 
@@ -57,7 +57,7 @@ public class DisabledContractService implements ContractsService {
     }
 
     @Override
-    public List<ContractObjects.ContractInfoDTO> getContracts() throws DisabledException {
+    public List<ContractObjects.ContractInfoDTO> getContracts() {
         throw new DisabledException(DISABLED_MSG);
     }
 
@@ -72,7 +72,7 @@ public class DisabledContractService implements ContractsService {
     }
 
     @Override
-    public Page<StorageEntry> getContractStorage(String hexAddress, String path, Pageable pageable) throws DisabledException {
+    public Page<StorageEntry> getContractStorage(String hexAddress, String path, Pageable pageable) {
         throw new DisabledException(DISABLED_MSG);
     }
 

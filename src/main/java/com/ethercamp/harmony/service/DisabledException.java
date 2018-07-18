@@ -18,7 +18,7 @@
 
 package com.ethercamp.harmony.service;
 
-public class DisabledException extends Exception {
+public class DisabledException extends RuntimeException {
 
     public DisabledException(String message) {
         super(message);

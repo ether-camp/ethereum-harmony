@@ -31,7 +31,6 @@ import com.ethercamp.contrdata.storage.dictionary.StorageDictionaryDb;
 import com.ethercamp.contrdata.storage.dictionary.StorageDictionaryVmHook;
 import com.ethercamp.harmony.config.HarmonyProperties;
 import com.ethercamp.harmony.service.BlockchainConsts;
-import com.ethercamp.harmony.service.DisabledException;
 import com.ethercamp.harmony.util.SolcUtils;
 import com.ethercamp.harmony.util.TrustSSL;
 import com.ethercamp.harmony.util.exception.ContractException;
@@ -197,7 +196,7 @@ public class ContractsServiceImpl implements ContractsService {
     }
 
     @Override
-    public boolean deleteContract(String address) throws DisabledException {
+    public boolean deleteContract(String address) {
         contractsStorage.delete(Hex.decode(address));
         return true;
     }
@@ -208,7 +207,7 @@ public class ContractsServiceImpl implements ContractsService {
     }
 
     @Override
-    public List<ContractInfoDTO> getContracts() throws DisabledException {
+    public List<ContractInfoDTO> getContracts() {
         return contractsStorage.keys().stream()
                 .map(a -> {
                     final ContractEntity contract = loadContract(a);
@@ -248,7 +247,7 @@ public class ContractsServiceImpl implements ContractsService {
      * @param pageable - for paging
      */
     @Override
-    public Page<StorageEntry> getContractStorage(String hexAddress, String path, Pageable pageable) throws DisabledException {
+    public Page<StorageEntry> getContractStorage(String hexAddress, String path, Pageable pageable) {
         final byte[] address = Hex.decode(hexAddress);
         final ContractEntity contract = Optional.ofNullable(contractsStorage.get(address))
                 .map(bytes -> contractFormat.decode(bytes))

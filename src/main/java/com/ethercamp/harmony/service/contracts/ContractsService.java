@@ -20,7 +20,6 @@ package com.ethercamp.harmony.service.contracts;
 
 import com.ethercamp.contrdata.storage.StorageEntry;
 import com.ethercamp.harmony.model.dto.ContractObjects;
-import com.ethercamp.harmony.service.DisabledException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
@@ -29,11 +28,11 @@ import java.util.List;
 
 public interface ContractsService {
 
-    boolean deleteContract(String address) throws DisabledException;
+    boolean deleteContract(String address);
 
     ContractObjects.ContractInfoDTO addContract(String address, String src) throws Exception;
 
-    List<ContractObjects.ContractInfoDTO> getContracts() throws DisabledException;
+    List<ContractObjects.ContractInfoDTO> getContracts();
 
     ContractObjects.ContractInfoDTO uploadContract(String address, MultipartFile[] files) throws Exception;
 
@@ -46,7 +45,7 @@ public interface ContractsService {
      * @param path - nested level of fields
      * @param pageable - for paging
      */
-    Page<StorageEntry> getContractStorage(String hexAddress, String path, Pageable pageable) throws DisabledException;
+    Page<StorageEntry> getContractStorage(String hexAddress, String path, Pageable pageable);
 
     boolean importContractFromExplorer(String hexAddress) throws Exception;
 
