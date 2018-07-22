@@ -20,6 +20,8 @@ package com.ethercamp.harmony.config;
 
 import org.ethereum.config.SystemProperties;
 
+import java.util.Objects;
+
 /**
  * Harmony properties are here
  * For EthereumJ properties check {@link org.ethereum.config.SystemProperties}
@@ -69,6 +71,13 @@ public class HarmonyProperties {
         } else {
             return 8080;
         }
+    }
+
+    /**
+     * Whether web and rpc runs on one port
+     */
+    public boolean isWebRpcOnePort() {
+        return Objects.equals(webPort(), rpcPort());
     }
 
     public boolean isContractStorageEnabled() {

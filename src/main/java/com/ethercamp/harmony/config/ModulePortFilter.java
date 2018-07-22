@@ -42,18 +42,13 @@ import static com.ethercamp.harmony.util.AppConst.JSON_RPC_PATH;
  */
 @Slf4j
 @WebFilter()
-@Conditional(RpcEnabledCondition.class)
 public class ModulePortFilter implements Filter {
     private Integer rpcPort;
     private Integer webPort;
-    private boolean samePort = false;
 
     public ModulePortFilter(Integer rpcPort, Integer webPort) {
         this.rpcPort = rpcPort;
         this.webPort = webPort;
-        if (Objects.equals(rpcPort, webPort)) {
-            samePort = true;
-        }
     }
 
     @Override
@@ -63,23 +58,32 @@ public class ModulePortFilter implements Filter {
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
-        if(request instanceof HttpServletRequest && !samePort) {
-            if ((((HttpServletRequest) request).getRequestURI().equals(JSON_RPC_PATH)) ||
-                    ("POST".equals(((HttpServletRequest) request).getMethod()) &&
-                            ((HttpServletRequest) request).getRequestURI().equals(JSON_RPC_ALIAS_PATH))) { // RPC request
-                if (webPort != null && request.getLocalPort() == webPort) {
+        if(request instanceof HttpServletRequest) {
+            if (isRpcRequest((HttpServletRequest) request)) { // RPC request
+                if (isRequestToWebPort(request)) {
                     ((HttpServletResponse) response).sendError(HttpServletResponse.SC_NOT_FOUND);
                     return;
                 }
-            } else { // Other requests
-                if (rpcPort != null && request.getLocalPort() == rpcPort) {
-                    ((HttpServletResponse) response).sendError(HttpServletResponse.SC_NOT_FOUND);
-                    return;
-                }
+            } else if (isRequestToRpcPort(request)) { // Not rpc request
+                ((HttpServletResponse) response).sendError(HttpServletResponse.SC_NOT_FOUND);
+                return;
             }
         }
 
         chain.doFilter(request, response);
+    }
+
+    private boolean isRpcRequest(HttpServletRequest request) {
+        return request.getRequestURI().equals(JSON_RPC_PATH) ||
+                ("POST".equals(request.getMethod()) && request.getRequestURI().equals(JSON_RPC_ALIAS_PATH));
+    }
+
+    private boolean isRequestToRpcPort(ServletRequest request) {
+        return rpcPort != null && request.getLocalPort() == rpcPort;
+    }
+
+    private boolean isRequestToWebPort(ServletRequest request) {
+        return webPort != null && request.getLocalPort() == webPort;
     }
 
     @Override

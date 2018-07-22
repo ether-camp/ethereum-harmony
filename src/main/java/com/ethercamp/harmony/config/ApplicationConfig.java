@@ -86,14 +86,16 @@ public class ApplicationConfig extends WebMvcConfigurerAdapter {
     }
 
     /**
-     * Configuration of filter which rejects requests to a service called on the wrong port
+     * Configuration of filter which rejects requests to a web or rpc service
+     * if called on the wrong port
      */
     @Bean
-    public ModulePortFilter modulePortFilter() {
-        return new ModulePortFilter(
-                HarmonyProperties.DEFAULT.isRpcEnabled() ? HarmonyProperties.DEFAULT.rpcPort() : null,
-                HarmonyProperties.DEFAULT.isWebEnabled() ? HarmonyProperties.DEFAULT.webPort() : null
-        );
+    public ModulePortFilter rpcModulePortFilter() {
+        if (!HarmonyProperties.DEFAULT.isWebRpcOnePort()) {
+            return new ModulePortFilter(HarmonyProperties.DEFAULT.rpcPort(), HarmonyProperties.DEFAULT.webPort());
+        }
+
+        return null;
     }
 
     @Bean
