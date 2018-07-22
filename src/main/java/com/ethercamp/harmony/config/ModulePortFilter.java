@@ -19,7 +19,6 @@
 package com.ethercamp.harmony.config;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Conditional;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -31,7 +30,6 @@ import javax.servlet.annotation.WebFilter;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Objects;
 
 import static com.ethercamp.harmony.util.AppConst.JSON_RPC_ALIAS_PATH;
 import static com.ethercamp.harmony.util.AppConst.JSON_RPC_PATH;
@@ -64,9 +62,11 @@ public class ModulePortFilter implements Filter {
                     ((HttpServletResponse) response).sendError(HttpServletResponse.SC_NOT_FOUND);
                     return;
                 }
-            } else if (isRequestToRpcPort(request)) { // Not rpc request
-                ((HttpServletResponse) response).sendError(HttpServletResponse.SC_NOT_FOUND);
-                return;
+            } else { // Not RPC request
+                if (isRequestToRpcPort(request)) {
+                    ((HttpServletResponse) response).sendError(HttpServletResponse.SC_NOT_FOUND);
+                    return;
+                }
             }
         }
 

@@ -49,6 +49,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j(topic = "jsonrpc")
 @WebFilter(urlPatterns = AppConst.JSON_RPC_PATH)
+@Conditional(RpcEnabledCondition.class)
 public class JsonRpcUsageFilter implements Filter {
 
     private static final List<String> EXCLUDE_LOGS = Arrays.asList("eth_getLogs", "eth_getFilterLogs",

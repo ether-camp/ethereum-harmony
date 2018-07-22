@@ -16,31 +16,13 @@
  * along with Ethereum Harmony.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 package com.ethercamp.harmony.config;
 
-import com.ethercamp.harmony.service.contracts.ContractsService;
-import com.ethercamp.harmony.service.contracts.ContractsServiceImpl;
-import com.ethercamp.harmony.service.contracts.DisabledContractService;
-import org.apache.catalina.connector.Connector;
-import org.apache.commons.lang3.StringUtils;
 import org.ethereum.config.CommonConfig;
 import org.ethereum.config.NoAutoscan;
-import org.ethereum.config.SystemProperties;
-import org.ethereum.datasource.DbSource;
-import org.ethereum.datasource.leveldb.LevelDbDataSource;
-import org.springframework.boot.context.embedded.EmbeddedServletContainerCustomizer;
-import org.springframework.boot.context.embedded.EmbeddedServletContainerFactory;
-import org.springframework.boot.context.embedded.tomcat.TomcatEmbeddedServletContainerFactory;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
 
 /**
  * Override default EthereumJ config to apply custom configuration.
