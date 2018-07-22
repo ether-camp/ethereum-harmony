@@ -43,8 +43,8 @@ public class HarmonyProperties {
     }
 
     public Integer rpcPort() {
-        if (config.getConfig().hasPath("modules.rpc.listen.port") && isRpcEnabled()) {
-            return config.getConfig().getInt("modules.rpc.listen.port");
+        if (config.getConfig().hasPath("modules.rpc.port") && isRpcEnabled()) {
+            return config.getConfig().getInt("modules.rpc.port");
         } else if (isRpcEnabled()) {
             return getServerPort();
         }
@@ -53,8 +53,8 @@ public class HarmonyProperties {
     }
 
     public Integer webPort() {
-        if (config.getConfig().hasPath("modules.web.listen.port") && isWebEnabled()) {
-            return config.getConfig().getInt("modules.web.listen.port");
+        if (config.getConfig().hasPath("modules.web.port") && isWebEnabled()) {
+            return config.getConfig().getInt("modules.web.port");
         } else if (isWebEnabled()) {
             return getServerPort();
         }
