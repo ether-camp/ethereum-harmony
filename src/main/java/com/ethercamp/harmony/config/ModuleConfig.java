@@ -23,7 +23,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 
 @Configuration
-public class ModuleInitConfig {
+public class ModuleConfig {
 
     private Integer firstPort;
     private Integer secondPort = null;
@@ -31,7 +31,7 @@ public class ModuleInitConfig {
 
     private static final String ERROR_RESOLVER_KEY = "jsonrpc.web3jCompliantError";
 
-    public ModuleInitConfig() {
+    public ModuleConfig() {
         LinkedHashSet<Integer> portSet = new LinkedHashSet<>();
 
         if (props.webPort() != null) {
