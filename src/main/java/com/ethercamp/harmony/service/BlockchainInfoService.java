@@ -25,11 +25,11 @@ import ch.qos.logback.classic.filter.ThresholdFilter;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.UnsynchronizedAppenderBase;
 
+import com.ethercamp.harmony.config.HarmonyProperties;
 import com.ethercamp.harmony.keystore.FileSystemKeystore;
 import com.ethercamp.harmony.util.BlockUtils;
 import org.ethereum.listener.RecommendedGasPriceTracker;
 import org.ethereum.util.BuildInfo;
-import org.ethereum.vm.VM;
 import org.slf4j.LoggerFactory;
 import ch.qos.logback.classic.Logger;
 import com.ethercamp.harmony.model.dto.*;
@@ -107,6 +107,9 @@ public class BlockchainInfoService implements ApplicationListener {
 
     @Autowired
     PrivateMinerService privateMinerService;
+
+    @Autowired
+    HarmonyProperties properties;
 
     /**
      * Concurrent queue of last blocks.
@@ -234,13 +237,6 @@ public class BlockchainInfoService implements ApplicationListener {
                         .orElse(Pair.of("Unknown network", Optional.empty()));
             }
 
-
-            final boolean isContractsFeatureEnabled = env.getProperty("feature.contract.enabled", "false").equalsIgnoreCase("true");
-            if (!isContractsFeatureEnabled) {
-                VM.setVmHook(null);
-                log.info("Disabled VM hook due to contracts feature disabled");
-            }
-
             initialInfo.set(new InitialInfoDTO(
                     config.projectVersion() + "-" + config.projectVersionModifier(),
                     "Hash: " + BuildInfo.buildHash + ",   Created: " + BuildInfo.buildTime,
@@ -250,11 +246,12 @@ public class BlockchainInfoService implements ApplicationListener {
                     blockHash.orElse(null),
                     System.currentTimeMillis(),
                     Hex.toHexString(config.nodeId()),
-                    serverPort,
+                    properties.rpcPort(),
                     isPrivateNetwork,
                     env.getProperty("portCheckerUrl"),
                     config.bindIp(),
-                    isContractsFeatureEnabled
+                    properties.isContractStorageEnabled(),
+                    properties.isRpcEnabled()
             ));
 
             final String ANSI_RESET = "\u001B[0m";

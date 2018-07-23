@@ -16,23 +16,24 @@
  * along with Ethereum Harmony.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.ethercamp.harmony.config;
+package com.ethercamp.harmony.web.controller;
 
-import org.ethereum.config.CommonConfig;
-import org.ethereum.config.NoAutoscan;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
+import com.ethercamp.harmony.config.RpcEnabledCondition;
+import com.ethercamp.harmony.util.AppConst;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 
+@Controller
+public class MainController {
 
-/**
- * Override default EthereumJ config to apply custom configuration.
- * This is entry point for starting EthereumJ core beans.
- *
- * Created by Stan Reshetnyk on 08.09.16.
- */
-@Configuration
-@ComponentScan(
-        basePackages = "org.ethereum",
-        excludeFilters = @ComponentScan.Filter(NoAutoscan.class))
-public class EthereumHarmonyConfig extends CommonConfig {
+    /**
+     * Handles JSON-RPC requests at site root
+     */
+    @Conditional(RpcEnabledCondition.class)
+    @RequestMapping(value = {AppConst.JSON_RPC_ALIAS_PATH}, method = RequestMethod.POST)
+    public String jsonrpcAlias() {
+        return "forward:" + AppConst.JSON_RPC_PATH;
+    }
 }

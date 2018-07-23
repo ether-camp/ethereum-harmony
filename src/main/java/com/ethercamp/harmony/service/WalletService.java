@@ -91,7 +91,7 @@ public class WalletService {
     @Autowired
     FileSystemWalletStore fileSystemWalletStore;
 
-    @Autowired(required = false)
+    @Autowired
     ClientMessageService clientMessageService;
 
     @Autowired

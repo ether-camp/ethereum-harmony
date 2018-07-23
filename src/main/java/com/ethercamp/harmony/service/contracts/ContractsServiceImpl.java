@@ -16,7 +16,7 @@
  * along with Ethereum Harmony.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.ethercamp.harmony.service;
+package com.ethercamp.harmony.service.contracts;
 
 import com.ethercamp.contrdata.ContractDataService;
 import com.ethercamp.contrdata.contract.Ast;
@@ -29,7 +29,8 @@ import com.ethercamp.contrdata.storage.dictionary.Layout;
 import com.ethercamp.contrdata.storage.dictionary.StorageDictionary;
 import com.ethercamp.contrdata.storage.dictionary.StorageDictionaryDb;
 import com.ethercamp.contrdata.storage.dictionary.StorageDictionaryVmHook;
-import com.ethercamp.harmony.service.contracts.Source;
+import com.ethercamp.harmony.config.HarmonyProperties;
+import com.ethercamp.harmony.service.BlockchainConsts;
 import com.ethercamp.harmony.util.SolcUtils;
 import com.ethercamp.harmony.util.TrustSSL;
 import com.ethercamp.harmony.util.exception.ContractException;
@@ -59,15 +60,16 @@ import org.ethereum.db.ByteArrayWrapper;
 import org.ethereum.facade.Ethereum;
 import org.ethereum.listener.EthereumListenerAdapter;
 import org.ethereum.solidity.compiler.SolidityCompiler;
+import org.ethereum.util.ByteUtil;
 import org.ethereum.vm.program.Program;
 import org.json.JSONObject;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.env.Environment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.PostConstruct;
@@ -101,8 +103,7 @@ import com.ethercamp.harmony.model.dto.ContractObjects.*;
  * Created by Stan Reshetnyk on 17.10.16.
  */
 @Slf4j(topic = "contracts")
-@Service
-public class ContractsService {
+public class ContractsServiceImpl implements ContractsService {
 
     private static final Pattern FUNC_HASHES_PATTERN = Pattern.compile("(PUSH4\\s+0x)([0-9a-fA-F]{2,8})(\\s+DUP2)?(\\s+EQ\\s+[PUSH1|PUSH2])");
     private static final Pattern SOLIDITY_HEADER_PATTERN = Pattern.compile("^\\s{0,}PUSH1\\s+0x60\\s+PUSH1\\s+0x40\\s+MSTORE.+");
@@ -123,6 +124,9 @@ public class ContractsService {
     SystemProperties config;
 
     @Autowired
+    HarmonyProperties properties;
+
+    @Autowired
     Ethereum ethereum;
 
     @Autowired
@@ -134,9 +138,11 @@ public class ContractsService {
     @Autowired
     private Blockchain blockchain;
 
-    DbSource<byte[]> contractsStorage;
-
+    @Autowired
+    @Qualifier("contractSettingsStorage")
     DbSource<byte[]> settingsStorage;
+
+    DbSource<byte[]> contractsStorage;
 
     DbSource<byte[]> contractCreation;
 
@@ -153,14 +159,13 @@ public class ContractsService {
         contractsStorage = new LevelDbDataSource("contractsStorage");
         contractsStorage.init();
 
-        settingsStorage = new LevelDbDataSource("settings");
-        settingsStorage.init();
-
         contractCreation = new LevelDbDataSource("contractCreation");
         contractCreation.init();
 
         syncedBlock = Optional.ofNullable(settingsStorage.get(SYNCED_BLOCK_KEY))
-                .map(bytes -> byteArrayToLong(bytes));
+                .map(ByteUtil::byteArrayToLong);
+
+        syncedBlock.ifPresent(syncStart -> log.info("Contract service is set to track from block #{}", syncStart));
 
         ethereum.addListener(new EthereumListenerAdapter() {
             @Override
@@ -190,15 +195,18 @@ public class ContractsService {
         TrustSSL.apply();
     }
 
+    @Override
     public boolean deleteContract(String address) {
         contractsStorage.delete(Hex.decode(address));
         return true;
     }
 
-    public ContractInfoDTO addContract(String address, String src) {
+    @Override
+    public ContractInfoDTO addContract(String address, String src) throws Exception {
         return compileAndSave(address, Arrays.asList(src));
     }
 
+    @Override
     public List<ContractInfoDTO> getContracts() {
         return contractsStorage.keys().stream()
                 .map(a -> {
@@ -214,11 +222,13 @@ public class ContractsService {
         return Optional.ofNullable(contractCreation.get(address)).map(b -> byteArrayToLong(b)).orElse(-1L);
     }
 
-    public ContractInfoDTO uploadContract(String address, MultipartFile[] files) {
+    @Override
+    public ContractInfoDTO uploadContract(String address, MultipartFile[] files) throws Exception {
         return compileAndSave(address, Source.toPlain(files));
     }
 
-    public IndexStatusDTO getIndexStatus() throws IOException {
+    @Override
+    public IndexStatusDTO getIndexStatus() throws Exception {
         final long totalSize = Arrays.asList("/storageDict", "/contractCreation").stream()
                 .mapToLong(name -> FileUtils.sizeOfDirectory(new File(config.databaseDir() + name)))
                 .sum();
@@ -236,6 +246,7 @@ public class ContractsService {
      * @param path - nested level of fields
      * @param pageable - for paging
      */
+    @Override
     public Page<StorageEntry> getContractStorage(String hexAddress, String path, Pageable pageable) {
         final byte[] address = Hex.decode(hexAddress);
         final ContractEntity contract = Optional.ofNullable(contractsStorage.get(address))
@@ -310,11 +321,11 @@ public class ContractsService {
         return abi;
     }
 
-    public static Set<String> extractFuncHashes(String asm) {
+    static Set<String> extractFuncHashes(String asm) {
         Set<String> result = new HashSet<>();
 
 //        String beforeJumpDest = substringBefore(asm, "JUMPDEST");
-        Matcher matcher = FUNC_HASHES_PATTERN.matcher(asm);
+        Matcher matcher = ContractsServiceImpl.FUNC_HASHES_PATTERN.matcher(asm);
         while (matcher.find()) {
             String hash = matcher.group(2);
             result.add(leftPad(hash, 8, "0"));
@@ -469,6 +480,7 @@ public class ContractsService {
         return new ByteArrayWrapper(b1).equals(new ByteArrayWrapper(b2));
     }
 
+    @Override
     public boolean importContractFromExplorer(String hexAddress) throws Exception {
         final byte[] address = Hex.decode(hexAddress);
         final String explorerHost = Optional.ofNullable(blockchain.getBlockByNumber(0l))
@@ -495,6 +507,7 @@ public class ContractsService {
     /**
      * For testing purpose.
      */
+    @Override
     public void clearContractStorage(String hexAddress) throws Exception {
         final byte[] address = Hex.decode(hexAddress);
         log.info("Clear storage of contract:{}", hexAddress);
@@ -504,6 +517,13 @@ public class ContractsService {
         // re-import to fill members
         final ContractEntity contractEntity = loadContract(address);
         compileAndSave(hexAddress, Arrays.asList(contractEntity.src));
+    }
+
+    public static boolean isContractStorageCreated(final DbSource<byte[]> settingsStorage) {
+        Optional<Long> syncedBlock = Optional.ofNullable(settingsStorage.get(SYNCED_BLOCK_KEY))
+                .map(ByteUtil::byteArrayToLong);
+
+        return syncedBlock.isPresent();
     }
 
     @Data

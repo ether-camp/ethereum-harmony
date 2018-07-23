@@ -18,6 +18,7 @@
 
 package com.ethercamp.harmony.service;
 
+import com.ethercamp.harmony.config.WebEnabledCondition;
 import com.ethercamp.harmony.model.dto.PeerDTO;
 import com.maxmind.geoip.Country;
 import com.maxmind.geoip.LookupService;
@@ -31,6 +32,7 @@ import org.ethereum.net.rlpx.discover.NodeManager;
 import org.ethereum.net.rlpx.discover.NodeStatistics;
 import org.ethereum.net.server.Channel;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -50,6 +52,7 @@ import static java.util.stream.Collectors.*;
  */
 @Service
 @Slf4j(topic = "harmony")
+@Conditional(WebEnabledCondition.class)
 public class PeersService {
 
     private Optional<LookupService> lookupService = Optional.empty();

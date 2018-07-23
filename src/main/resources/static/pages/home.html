@@ -42,8 +42,11 @@
                             <div class="col-sm-4">
                                 Genesis:
                             </div>
-                            <div class="col-sm-6">
+                            <div class="col-sm-6" ng-if="vm.data.featureRpc">
                                 <a href="/terminal#eth_getBlockByNumber%200%20true">{{vm.data.genesisHash}}</a>
+                            </div>
+                            <div class="col-sm-6" ng-if="!vm.data.featureRpc">
+                                <a href="#">{{vm.data.genesisHash}}</a>
                             </div>
                         </div>
 
@@ -78,8 +81,11 @@
                             <div class="col-sm-4">
                                 NodeID:
                             </div>
-                            <div class="col-sm-6">
+                            <div class="col-sm-6" ng-if="vm.data.featureRpc">
                                 <a href="/terminal#admin_nodeInfo">{{vm.data.nodeId}}</a>
+                            </div>
+                            <div class="col-sm-6" ng-if="!vm.data.featureRpc">
+                                <a href="#">{{vm.data.nodeId}}</a>
                             </div>
                         </div>
 

@@ -133,6 +133,7 @@
         $scope.contracts = $scope.contracts || [];
         $scope.scrollConfig = jQuery.extend(true, {}, scrollConfig);
         $scope.isViewingStorage = false;
+        $scope.isDisabled = false;
         $scope.storage = {entries: [], value: {decoded: ''}, blockNumber: -1};
         $scope.indexSizeString = 'n/a';
         $scope.solcVersionString = 'n/a';
@@ -166,6 +167,13 @@
                 $scope.solcVersionString = result.solcVersion;
                 $scope.syncedBlock = result.syncedBlock;
                 $scope.syncedBlockString = numberWithCommas(result.syncedBlock);
+            }, function (error) {
+                if (error.status === 410) { // Contracts service is disabled
+                    $scope.isDisabled = true;
+                } else {
+                    console.log(error);
+                    showToastr(true, "Error", "Failed to retrieve index data from server");
+                }
             });
         }
 

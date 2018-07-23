@@ -100,25 +100,39 @@
         /**
          * Load method names for code completion if not already
          */
-        if (terminalCompletionWords.length == 0) {
-            jsonrpc.request('ethj_listAvailableMethods', {})
-                .then(function(result) {
-                    //console.log(result);
-                    console.log('Result methods count available:' + result.length);
-                    terminalCompletionWords = result;
+        var loadCompletion = function() {
+            if ($scope.vm.data.featureRpc != null) {
+                if (terminalCompletionWords.length === 0) {
+                    jsonrpc.request('ethj_listAvailableMethods', {})
+                        .then(function (result) {
+                            //console.log(result);
+                            console.log('Result methods count available:' + result.length);
+                            terminalCompletionWords = result;
+                            $scope.filteredSuggestions = $scope.suggestions = extractMethods(terminalCompletionWords);
+                            createTerminal(terminalCompletionWords);
+                        })
+                        .catch(function (error) {
+                            console.log('Error loading available methods');
+                            console.log(error);
+                            createTerminal([], jsonrpc, $timeout);
+                        });
+                } else {
                     $scope.filteredSuggestions = $scope.suggestions = extractMethods(terminalCompletionWords);
                     createTerminal(terminalCompletionWords);
-                })
-                .catch(function(error) {
-                    console.log('Error loading available methods');
-                    console.log(error);
-                    createTerminal([], jsonrpc, $timeout);
-                });
-        } else {
-            $scope.filteredSuggestions = $scope.suggestions = extractMethods(terminalCompletionWords);
-            createTerminal(terminalCompletionWords);
+                }
+            }
+        };
+        loadCompletion();
+        // Need to wait until $scope.vm.data init
+        function awaitConfigLoadRun(func) {
+            if (terminalCompletionWords.length === 0) {
+                func();
+                setTimeout(function() {awaitConfigLoadRun(func);}, 20);
+            }
         }
-
+        if (terminalCompletionWords.length === 0) {
+            awaitConfigLoadRun(loadCompletion);
+        }
 
         /**
          * Resize table to fit all available space.
@@ -156,13 +170,25 @@
             }, 10);
         }
 
+        function awaitConfigLoadAndRun(func) {
+            if (terminalCompletionWords.length === 0) {
+                setTimeout(function() {awaitConfigLoadAndRun(func);}, 20);
+            } else {
+                func();
+            }
+        }
+
         function onInitAddon(term) {
             // Decodes the command after # in url and executes it on terminal init
             try {
                 var uriPart = location.hash.substring(1);
                 if (uriPart.length === 0) return;
                 var cmd = decodeURIComponent(uriPart);
-                term.exec(cmd);
+                var termExec = function() {
+                    term.exec(cmd);
+                };
+                // Need to wait until terminalCompletionWords load
+                awaitConfigLoadAndRun(termExec);
             } catch (error) {
               // do nothing
             }

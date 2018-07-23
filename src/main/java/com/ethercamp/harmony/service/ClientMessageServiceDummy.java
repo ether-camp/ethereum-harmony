@@ -16,23 +16,15 @@
  * along with Ethereum Harmony.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.ethercamp.harmony.config;
-
-import org.ethereum.config.CommonConfig;
-import org.ethereum.config.NoAutoscan;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-
+package com.ethercamp.harmony.service;
 
 /**
- * Override default EthereumJ config to apply custom configuration.
- * This is entry point for starting EthereumJ core beans.
- *
- * Created by Stan Reshetnyk on 08.09.16.
+ * Dummy for usage when ClientMessageService is not available
  */
-@Configuration
-@ComponentScan(
-        basePackages = "org.ethereum",
-        excludeFilters = @ComponentScan.Filter(NoAutoscan.class))
-public class EthereumHarmonyConfig extends CommonConfig {
+public class ClientMessageServiceDummy implements ClientMessageService {
+
+    @Override
+    public void sendToTopic(String topic, Object dto) {
+        // nothing to do
+    }
 }

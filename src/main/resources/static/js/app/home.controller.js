@@ -77,8 +77,33 @@
 
         var treeContainer = document.getElementById('blockchain-chart');
 
-        var chart = BlockchainView.create(treeContainer);
-        redrawChartLater();
+        // If RPC is enabled, link blocks in chart to block's info in Terminal
+        var chart = null;
+        function createChart() {
+            if ($scope.vm.data.featureRpc != null) {
+                var blkViewConfig = {};
+                if ($scope.vm.data.featureRpc) {
+                    blkViewConfig = {
+                        uriBlockFunc: function (block) {
+                            return '/terminal#' + encodeURIComponent('eth_getBlockByHash ' + block.blockHash + ' false');
+                        }
+                    }
+                }
+                chart = BlockchainView.create(treeContainer, blkViewConfig);
+                redrawChartLater();
+            }
+        }
+        createChart();
+        // Need to wait until $scope.vm.data init
+        function awaitConfigLoadRun(func) {
+            if (chart == null) {
+                func();
+                setTimeout(function() {awaitConfigLoadRun(func);}, 20);
+            }
+        }
+        if (chart == null) {
+            awaitConfigLoadRun(createChart);
+        }
 
         function addBlock(block) {
             var isExist = chartData.some(function(b) {

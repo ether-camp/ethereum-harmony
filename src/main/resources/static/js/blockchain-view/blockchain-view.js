@@ -248,7 +248,7 @@ var BlockchainView = (function () {
     /**
      * @param renderColumns - current state
      */
-    function renderState(svgContainer, width, height) {
+    function renderState(svgContainer, width, height, uriBlockFunc) {
 
         //console.log('renderColumns ' + renderColumns.length);
 
@@ -265,7 +265,7 @@ var BlockchainView = (function () {
                         block.y         = height - GAP * (block.index + 1) - BLOCK_HEIGHT * (block.index + 1);
                         block.width     = BLOCK_WIDTH;
                         block.height    = BLOCK_HEIGHT;
-                        block.uri       = '/terminal#' + encodeURIComponent('eth_getBlockByHash ' + block.blockHash + ' false');
+                        block.uri       = uriBlockFunc(block);
                     }
                 });
             });
@@ -360,7 +360,9 @@ var BlockchainView = (function () {
             .attr('y', 20)
             .text( function (d) { return d.text; })
             .on('click', function(d, i) {
-                window.location.href = d.uri;
+                if (d.uri != null) {
+                    window.location.href = d.uri;
+                }
             })
             .attr('font-family', 'sans-serif')
             .attr('text-anchor', 'middle')
@@ -568,7 +570,9 @@ var BlockchainView = (function () {
             var requiredWidth = Math.max(width, NUMBERING_WIDTH + BLOCK_WIDTH * colCount + GAP * (colCount + 1));
             //var renderColumns = addBlockViaSorting(data);
 
-            renderState(svgContainer, requiredWidth, requiredHeight);
+            var uriBlockFunc = config.uriBlockFunc || function() {return null};
+
+            renderState(svgContainer, requiredWidth, requiredHeight, uriBlockFunc);
             return self;
         };
 

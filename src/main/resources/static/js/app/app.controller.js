@@ -27,7 +27,8 @@
         scrollButtons: { enable: false }
     });
 
-    var JSON_RPC_URL = '/rpc';
+    var JSON_RPC_URI = '/rpc';
+    var jsonrpcConfigProviderHolder;
 
 
     /**
@@ -77,11 +78,7 @@
             });
 
         $locationProvider.html5Mode(true);
-
-        jsonrpcConfigProvider.set({
-            url: JSON_RPC_URL,
-            returnHttpPromise: false
-        });
+        jsonrpcConfigProviderHolder = jsonrpcConfigProvider;
     });
 
     /**
@@ -403,7 +400,15 @@
                 vm.data.publicIp = info.publicIp;
                 vm.data.portCheckerUrl = info.portCheckerUrl;
                 vm.data.featureContracts = info.featureContracts;
+                vm.data.featureRpc = info.featureRpc;
             });
+
+            if (vm.data.featureRpc) {
+                jsonrpcConfigProviderHolder.set({
+                    url: window.location.protocol + "//" + window.location.hostname + ":" + vm.data.rpcPort + JSON_RPC_URI,
+                    returnHttpPromise: false
+                });
+            }
 
             console.log('App version ' + info.appVersion + ', info.privateNetwork: ' + info.privateNetwork);
             $stomp.unsubscribe('/topic/initialInfo');

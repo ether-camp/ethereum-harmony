@@ -18,8 +18,10 @@
 
 package com.ethercamp.harmony.jsonrpc;
 
+import com.ethercamp.harmony.config.RpcEnabledCondition;
 import com.ethercamp.harmony.util.AppConst;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Conditional;
 
 import javax.servlet.*;
 import javax.servlet.annotation.WebFilter;
@@ -36,6 +38,7 @@ import java.util.List;
  */
 @Slf4j
 @WebFilter(urlPatterns = AppConst.JSON_RPC_PATH)
+@Conditional(RpcEnabledCondition.class)
 public class AddContentTypeFilter implements Filter {
 
 

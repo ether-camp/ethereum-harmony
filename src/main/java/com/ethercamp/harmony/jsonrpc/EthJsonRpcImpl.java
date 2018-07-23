@@ -18,6 +18,7 @@
 
 package com.ethercamp.harmony.jsonrpc;
 
+import com.ethercamp.harmony.config.RpcEnabledCondition;
 import com.ethercamp.harmony.keystore.Keystore;
 import com.ethercamp.harmony.model.Account;
 import com.ethercamp.harmony.service.BlockchainInfoService;
@@ -73,6 +74,7 @@ import org.ethereum.vm.LogInfo;
 import org.ethereum.vm.program.invoke.ProgramInvokeFactory;
 import org.spongycastle.util.encoders.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -99,6 +101,7 @@ import static org.ethereum.util.ByteUtil.longToBytes;
  */
 @Slf4j(topic = "jsonrpc")
 @Service
+@Conditional(RpcEnabledCondition.class)
 // renamed to not conflict with class from core
 // wait for core class to be removed
 public class EthJsonRpcImpl implements JsonRpc {
