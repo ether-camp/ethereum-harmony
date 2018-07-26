@@ -18,6 +18,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.filter.HiddenHttpMethodFilter;
 
+import javax.servlet.Filter;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -83,12 +84,12 @@ public class ModuleConfig {
      * if called on the wrong port
      */
     @Bean
-    public ModulePortFilter modulePortFilter() {
+    public Filter modulePortFilter() {
         if (secondPort != null) {
             return new ModulePortFilter(HarmonyProperties.DEFAULT.rpcPort(), HarmonyProperties.DEFAULT.webPort());
+        } else {
+            return ModulePortFilter.DUMMY;
         }
-
-        return null;
     }
 
     // RPC //

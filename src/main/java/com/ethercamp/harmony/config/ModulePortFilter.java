@@ -90,4 +90,16 @@ public class ModulePortFilter implements Filter {
     public void destroy() {
 
     }
+
+    public static final Filter DUMMY = new Filter() {
+        @Override
+        public void init(FilterConfig filterConfig) throws ServletException {
+        }
+        @Override
+        public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+        }
+        @Override
+        public void destroy() {
+        }
+    };
 }
