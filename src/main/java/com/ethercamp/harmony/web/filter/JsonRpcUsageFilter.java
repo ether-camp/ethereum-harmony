@@ -21,10 +21,10 @@ package com.ethercamp.harmony.web.filter;
 import com.ethercamp.harmony.config.RpcEnabledCondition;
 import com.ethercamp.harmony.service.JsonRpcUsageService;
 import com.ethercamp.harmony.util.AppConst;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Conditional;
 
