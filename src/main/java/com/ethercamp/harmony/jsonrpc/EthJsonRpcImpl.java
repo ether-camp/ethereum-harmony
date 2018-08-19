@@ -471,7 +471,7 @@ public class EthJsonRpcImpl implements JsonRpc {
     public String eth_getStorageAt(String address, String storageIdx, String blockId) throws Exception {
         byte[] addressAsByteArray = hexToByteArray(address);
         DataWord storageValue = getRepoByJsonBlockId(blockId).
-                getStorageValue(addressAsByteArray, new DataWord(hexToByteArray(storageIdx)));
+                getStorageValue(addressAsByteArray, DataWord.of(hexToByteArray(storageIdx)));
         return storageValue != null ? TypeConverter.toJsonHex(storageValue.getData()) : null;
     }
 
@@ -1042,11 +1042,11 @@ public class EthJsonRpcImpl implements JsonRpc {
                 if (topic == null) {
                     logFilter.withTopic((byte[][]) null);
                 } else if (topic instanceof String) {
-                    logFilter.withTopic(new DataWord(hexToByteArray((String) topic)).getData());
+                    logFilter.withTopic(DataWord.of(hexToByteArray((String) topic)).getData());
                 } else if (topic instanceof String[]) {
                     List<byte[]> t = new ArrayList<>();
                     for (String s : ((String[]) topic)) {
-                        t.add(new DataWord(hexToByteArray(s)).getData());
+                        t.add(DataWord.of(hexToByteArray(s)).getData());
                     }
                     logFilter.withTopic(t.toArray(new byte[0][]));
                 }

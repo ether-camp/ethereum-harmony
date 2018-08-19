@@ -150,9 +150,9 @@ public class ImportContractIndexTest extends BaseContextAwareTest {
             System.out.println();
 
             if (pe.key.length() == 64) {
-                pe.storageKey = new DataWord(Hex.decode(pe.key)).getData();
+                pe.storageKey = DataWord.of(Hex.decode(pe.key)).getData();
             } else {
-                pe.storageKey = new DataWord(Integer.valueOf(pe.key)).getData();
+                pe.storageKey = DataWord.of(Integer.valueOf(pe.key)).getData();
             }
 
             root.addChild(pe);
