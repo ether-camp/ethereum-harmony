@@ -291,6 +291,12 @@ task runCustom() {
             println('Using heap size from user input ' + project.jvmArgs)
         }
 
+        def resConfigs = "harmony.conf"
+        if (System.getProperty('ethereumj.conf.res') == null) {
+            resConfigs = resConfigs + "," + System.getProperty('ethereumj.conf.res')
+        }
+        newArgs.add('-Dethereumj.conf.res=' + resConfigs)
+
         bootRun.jvmArgs.addAll(newArgs)
         println 'Running Java with ' + bootRun.jvmArgs
 
@@ -305,13 +311,15 @@ def getDatabaseDir(String name) {
 
 def bootRunWithNetworkConfig(String name, boolean includePresets) {
     def newArgs = []
+    def resConfigs = "harmony.conf"
     if (includePresets) {
         addJvmArgIfEmpty "database.dir", getDatabaseDir("database-" + name)
+        resConfigs = resConfigs + "," + name + '.conf'
         newArgs.addAll([
-                '-Dethereumj.conf.res=' + name + '.conf',
                 '-Ddatabase.name=database-' + name,
                 '-DnetworkProfile=' + name])
     }
+    newArgs.add('-Dethereumj.conf.res=' + resConfigs)
 
     // set heap size configure in task
     if (!project.hasProperty('jvmArgs') || project.jvmArgs.indexOf('-Xmx') == -1) {

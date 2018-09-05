@@ -102,6 +102,10 @@ An example:
 
   sync.fast.enabled = false
   ```
+  
+  If you run Harmony without using Gradle, add `-Dethereumj.conf.res=harmony.conf` to command line, so Harmony properties will be applied to system context too.   
+  If you use some custom resource file as config, just add `-Dethereumj.conf.res=harmony.conf,custom.conf` to java exec command so both will be applied.
+
 .
 
 .
