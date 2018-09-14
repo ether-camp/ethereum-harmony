@@ -32,12 +32,16 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
+import static org.apache.commons.lang3.math.NumberUtils.toInt;
 import static org.ethereum.facade.EthereumFactory.createEthereum;
 
 @SpringBootApplication
@@ -92,10 +96,21 @@ public class Application {
         boolean loaded = false;
         try {
             Optional<Function<Path, BlockLoader.DumpWalker>> factory = getDumpWalkerFactory(config);
-            Path[] paths = Files.isDirectory(path)
-                    ? Files.list(path).sorted().toArray(Path[]::new)
-                    : new Path[] {path};
+            Path[] paths;
+            if (Files.isDirectory(path)) {
+                Pattern pattern = Pattern.compile("(\\D+)?(\\d+)?(.*)?");
 
+                paths = Files.list(path)
+                        .sorted(Comparator.comparingInt(filePath -> {
+                            String fileName = filePath.getFileName().toString();
+                            Matcher matcher = pattern.matcher(fileName);
+                            return matcher.matches() ? toInt(matcher.group(2)) : 0;
+                        }))
+
+                        .toArray(Path[]::new);
+            } else {
+                paths = new Path[]{path};
+            }
 
             BlockLoader blockLoader = createEthereum().getBlockLoader();
             loaded = factory.isPresent()
