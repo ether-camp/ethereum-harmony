@@ -25,6 +25,7 @@ import org.ethereum.util.RLP;
 import org.ethereum.util.RLPElement;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.context.annotation.Import;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
@@ -44,7 +45,7 @@ import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static org.apache.commons.lang3.math.NumberUtils.toInt;
 import static org.ethereum.facade.EthereumFactory.createEthereum;
 
-@SpringBootApplication
+@SpringBootApplication(exclude = HibernateJpaAutoConfiguration.class)
 @EnableScheduling
 @Import({EthereumHarmonyConfig.class})
 public class Application {

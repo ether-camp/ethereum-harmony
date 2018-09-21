@@ -13,6 +13,7 @@ import org.ethereum.datasource.leveldb.LevelDbDataSource;
 import org.springframework.boot.context.embedded.EmbeddedServletContainerCustomizer;
 import org.springframework.boot.context.embedded.EmbeddedServletContainerFactory;
 import org.springframework.boot.context.embedded.tomcat.TomcatEmbeddedServletContainerFactory;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
@@ -120,8 +121,8 @@ public class ModuleConfig {
     @Conditional(RpcEnabledCondition.class)
     @SuppressWarnings("deprecation")
     // full class path to avoid deprecation warning
-    public org.springframework.boot.context.embedded.FilterRegistrationBean registration(HiddenHttpMethodFilter filter) {
-        org.springframework.boot.context.embedded.FilterRegistrationBean registration = new org.springframework.boot.context.embedded.FilterRegistrationBean(filter);
+    public FilterRegistrationBean registration(HiddenHttpMethodFilter filter) {
+        FilterRegistrationBean registration = new FilterRegistrationBean(filter);
         registration.setEnabled(false);
         return registration;
     }
