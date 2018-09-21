@@ -108,7 +108,7 @@ dependencies {
         exclude group: "org.ethereum", module: "solcJ-all"
     }
 
-    compile "com.ethercamp:contract-data:1.9.2-SNAPSHOT"
+    compile "com.ethercamp:contract-data:1.9.2"
 
     compile "org.projectlombok:lombok:1.16.20"
     compile "com.maxmind.geoip:geoip-api:1.3.1"
