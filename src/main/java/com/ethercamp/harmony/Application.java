@@ -107,7 +107,6 @@ public class Application {
                             Matcher matcher = pattern.matcher(fileName);
                             return matcher.matches() ? toInt(matcher.group(2)) : 0;
                         }))
-
                         .toArray(Path[]::new);
             } else {
                 paths = new Path[]{path};
@@ -117,7 +116,7 @@ public class Application {
             loaded = factory.isPresent()
                     ? blockLoader.loadBlocks(factory.get(), paths)
                     : blockLoader.loadBlocks(paths);
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
