@@ -19,6 +19,8 @@
 package com.ethercamp.harmony.service.contracts;
 
 import com.ethercamp.contrdata.storage.Storage;
+import com.ethercamp.contrdata.storage.dictionary.Layout;
+import com.ethercamp.contrdata.storage.dictionary.StorageDictionaryDb;
 import org.ethereum.facade.Repository;
 import org.ethereum.vm.DataWord;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,36 +33,32 @@ import java.util.Set;
 @Component
 public class StorageImpl implements Storage {
 
+    private final Repository repository;
+    private final StorageDictionaryDb dictionaryDb;
+
     @Autowired
-    Repository repository;
+    public StorageImpl(Repository repository, StorageDictionaryDb dictionaryDb) {
+        this.repository = repository;
+        this.dictionaryDb = dictionaryDb;
+    }
 
-
-
-//    @Autowired
-//    public void setRepository(Ethereum ethereum) {
-//        this.repository = ethereum.getRepository();
-//    }
 
     @Override
-//    @Profiled
     public int size(byte[] address) {
         return repository.getStorageSize(address);
     }
 
     @Override
-//    @Profiled
     public Map<DataWord, DataWord> entries(byte[] address, List<DataWord> keys) {
         return repository.getStorage(address, keys);
     }
 
     @Override
-//    @Profiled
     public Set<DataWord> keys(byte[] address) {
-        return repository.getStorageKeys(address);
+        return dictionaryDb.getDictionaryFor(Layout.Lang.solidity, address).allKeys();
     }
 
     @Override
-//    @Profiled
     public DataWord get(byte[] address, DataWord key) {
         return repository.getStorageValue(address, key);
     }

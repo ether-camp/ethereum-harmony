@@ -26,7 +26,7 @@ import java.util.Optional;
 /**
  * Created by Stan Reshetnyk on 20.01.17.
  */
-class BlockchainConsts {
+public class BlockchainConsts {
 
     /**
      * Return pair of name and explorer url.

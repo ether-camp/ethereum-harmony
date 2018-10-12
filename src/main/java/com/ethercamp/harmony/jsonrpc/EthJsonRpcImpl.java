@@ -18,6 +18,7 @@
 
 package com.ethercamp.harmony.jsonrpc;
 
+import com.ethercamp.harmony.config.RpcEnabledCondition;
 import com.ethercamp.harmony.keystore.Keystore;
 import com.ethercamp.harmony.model.Account;
 import com.ethercamp.harmony.service.BlockchainInfoService;
@@ -73,6 +74,7 @@ import org.ethereum.vm.LogInfo;
 import org.ethereum.vm.program.invoke.ProgramInvokeFactory;
 import org.spongycastle.util.encoders.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -99,6 +101,7 @@ import static org.ethereum.util.ByteUtil.longToBytes;
  */
 @Slf4j(topic = "jsonrpc")
 @Service
+@Conditional(RpcEnabledCondition.class)
 // renamed to not conflict with class from core
 // wait for core class to be removed
 public class EthJsonRpcImpl implements JsonRpc {
@@ -468,7 +471,7 @@ public class EthJsonRpcImpl implements JsonRpc {
     public String eth_getStorageAt(String address, String storageIdx, String blockId) throws Exception {
         byte[] addressAsByteArray = hexToByteArray(address);
         DataWord storageValue = getRepoByJsonBlockId(blockId).
-                getStorageValue(addressAsByteArray, new DataWord(hexToByteArray(storageIdx)));
+                getStorageValue(addressAsByteArray, DataWord.of(hexToByteArray(storageIdx)));
         return storageValue != null ? TypeConverter.toJsonHex(storageValue.getData()) : null;
     }
 
@@ -914,12 +917,12 @@ public class EthJsonRpcImpl implements JsonRpc {
 
     static class NewBlockFilter extends Filter {
         class NewBlockFilterEvent extends FilterEvent {
-            public final Block b;
-            NewBlockFilterEvent(Block b) {this.b = b;}
+            private final String blockHash;
+            NewBlockFilterEvent(Block b) {this.blockHash = toJsonHex(b.getHash());}
 
             @Override
             public String getJsonEventObject() {
-                return toJsonHex(b.getHash());
+                return blockHash;
             }
         }
 
@@ -930,13 +933,13 @@ public class EthJsonRpcImpl implements JsonRpc {
 
     static class PendingTransactionFilter extends Filter {
         class PendingTransactionFilterEvent extends FilterEvent {
-            private final Transaction tx;
+            private final String txHash;
 
-            PendingTransactionFilterEvent(Transaction tx) {this.tx = tx;}
+            PendingTransactionFilterEvent(Transaction tx) {this.txHash = toJsonHex(tx.getHash());}
 
             @Override
             public String getJsonEventObject() {
-                return toJsonHex(tx.getHash());
+                return txHash;
             }
         }
 
@@ -1039,11 +1042,11 @@ public class EthJsonRpcImpl implements JsonRpc {
                 if (topic == null) {
                     logFilter.withTopic((byte[][]) null);
                 } else if (topic instanceof String) {
-                    logFilter.withTopic(new DataWord(hexToByteArray((String) topic)).getData());
+                    logFilter.withTopic(DataWord.of(hexToByteArray((String) topic)).getData());
                 } else if (topic instanceof String[]) {
                     List<byte[]> t = new ArrayList<>();
                     for (String s : ((String[]) topic)) {
-                        t.add(new DataWord(hexToByteArray(s)).getData());
+                        t.add(DataWord.of(hexToByteArray(s)).getData());
                     }
                     logFilter.withTopic(t.toArray(new byte[0][]));
                 }

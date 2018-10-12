@@ -18,6 +18,7 @@
 
 package com.ethercamp.harmony.jsonrpc;
 
+import com.ethercamp.harmony.config.RpcEnabledCondition;
 import com.ethercamp.harmony.util.AppConst;
 import com.googlecode.jsonrpc4j.JsonRpcService;
 import lombok.AllArgsConstructor;
@@ -28,6 +29,7 @@ import org.ethereum.core.Block;
 import org.ethereum.core.CallTransaction;
 import org.ethereum.core.Transaction;
 import org.ethereum.vm.LogInfo;
+import org.springframework.context.annotation.Conditional;
 
 import java.util.Arrays;
 import java.util.List;
@@ -39,6 +41,7 @@ import static com.ethercamp.harmony.jsonrpc.TypeConverter.toJsonHex;
  * Created by Anton Nashatyrev on 25.11.2015.
  */
 @JsonRpcService(AppConst.JSON_RPC_PATH)
+@Conditional(RpcEnabledCondition.class)
 public interface JsonRpc {
 
     @Value
@@ -193,7 +196,7 @@ public interface JsonRpc {
             blockHash = b == null ? null : toJsonHex(b.getHash());
             transactionIndex = b == null ? null : toJsonHex(txIndex);
             transactionHash = toJsonHex(tx.getHash());
-            address = tx.getReceiveAddress() == null ? null : toJsonHex(tx.getReceiveAddress());
+            address = toJsonHex(tx.getReceiveAddress());
             data = toJsonHex(logInfo.getData());
             topics = new String[logInfo.getTopics().size()];
             for (int i = 0; i < topics.length; i++) {

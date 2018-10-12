@@ -16,23 +16,11 @@
  * along with Ethereum Harmony.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.ethercamp.harmony.config;
+package com.ethercamp.harmony.service;
 
-import org.ethereum.config.CommonConfig;
-import org.ethereum.config.NoAutoscan;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
+public class DisabledException extends RuntimeException {
 
-
-/**
- * Override default EthereumJ config to apply custom configuration.
- * This is entry point for starting EthereumJ core beans.
- *
- * Created by Stan Reshetnyk on 08.09.16.
- */
-@Configuration
-@ComponentScan(
-        basePackages = "org.ethereum",
-        excludeFilters = @ComponentScan.Filter(NoAutoscan.class))
-public class EthereumHarmonyConfig extends CommonConfig {
+    public DisabledException(String message) {
+        super(message);
+    }
 }

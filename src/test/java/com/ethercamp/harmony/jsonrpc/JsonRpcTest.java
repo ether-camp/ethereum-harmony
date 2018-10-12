@@ -20,6 +20,8 @@ package com.ethercamp.harmony.jsonrpc;
 
 import com.ethercamp.harmony.keystore.FileSystemKeystore;
 import com.ethercamp.harmony.service.BlockchainInfoService;
+import com.ethercamp.harmony.service.ClientMessageService;
+import com.ethercamp.harmony.service.ClientMessageServiceDummy;
 import com.ethercamp.harmony.service.PrivateMinerService;
 import com.ethercamp.harmony.service.WalletService;
 import com.ethercamp.harmony.service.wallet.FileSystemWalletStore;
@@ -178,6 +180,11 @@ public class JsonRpcTest {
         public DbSource<byte[]> keyValueDataSource(String name, DbSettings settings) {
             System.out.println("Sample DB created name:" + name);
             return new HashMapDB<byte[]>();
+        }
+
+        @Bean
+        public ClientMessageService clientMessageService() {
+            return new ClientMessageServiceDummy();
         }
     }
 

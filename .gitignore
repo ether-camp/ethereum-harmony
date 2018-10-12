@@ -5,6 +5,7 @@
 .idea
 .gradle
 
+out
 logs
 build
 database*

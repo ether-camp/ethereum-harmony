@@ -162,7 +162,7 @@ public class PendingTxMonitor extends BasicNode {
         Pair<Long, TransactionResultDTO> removed = remoteTxs.remove(txHash);
         if (state == EthereumListener.PendingTransactionState.DROPPED) {
             if (localTxs.remove(txHash) != null) {
-                System.out.println("Dropped due to timeout (matchned: " + (removed != null) + "): " + Hex.toHexString(txHash));
+                System.out.println("Dropped due to timeout (matched: " + (removed != null) + "): " + Hex.toHexString(txHash));
             } else {
                 if (remoteTxs.containsKey(txHash)) {
                     System.err.println("Dropped but matching: "  + Hex.toHexString(txHash) + ": \n" + txReceipt);

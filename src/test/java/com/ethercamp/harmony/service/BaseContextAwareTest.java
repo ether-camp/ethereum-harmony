@@ -133,7 +133,7 @@ public class BaseContextAwareTest {
                 if (element.hasChildren()) {
                     findKeysIn(address, element, dataWords);
                 } else {
-                    DataWord key = new DataWord(element.storageKey);
+                    DataWord key = DataWord.of(element.storageKey);
                     if (repository.getStorageValue(address, key) != null) {
                         dataWords.add(key);
                     }

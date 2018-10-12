@@ -45,7 +45,7 @@ buildscript {
     }
 
     dependencies {
-        classpath("org.springframework.boot:spring-boot-gradle-plugin:1.4.1.RELEASE")
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:1.5.16.RELEASE")
         classpath "com.github.jengelman.gradle.plugins:shadow:1.2.4"
         classpath "co.riiid:gradle-github-plugin:0.4.2" // github releases
     }
@@ -53,7 +53,7 @@ buildscript {
 
 apply plugin: 'java'
 apply plugin: 'maven'
-apply plugin: 'spring-boot'
+apply plugin: 'org.springframework.boot'
 apply plugin: 'application'
 apply plugin: "com.github.johnrengelman.shadow"
 
@@ -108,7 +108,7 @@ dependencies {
         exclude group: "org.ethereum", module: "solcJ-all"
     }
 
-    compile "com.ethercamp:contract-data:1.4.0"
+    compile "com.ethercamp:contract-data:1.9.2"
 
     compile "org.projectlombok:lombok:1.16.20"
     compile "com.maxmind.geoip:geoip-api:1.3.1"
@@ -122,32 +122,34 @@ dependencies {
     compile "com.mashape.unirest:unirest-java:1.3.1"
 
     /* WEB DEPENDENCIES */
-    compile("org.webjars.bower:bootstrap:3.3.6")
-    compile("org.webjars.bower:jquery:2.2.4")
+    if (!project.hasProperty('rpcOnly')) {
+        compile("org.webjars.bower:bootstrap:3.3.6")
+        compile("org.webjars.bower:jquery:2.2.4")
 
 //    compile("org.webjars.bower:angular:1.5.8")
-    compile("org.webjars.bower:angular-route:1.5.8")
-    compile("org.webjars.bower:angular-animate:1.5.8")
+        compile("org.webjars.bower:angular-route:1.5.8")
+        compile("org.webjars.bower:angular-animate:1.5.8")
 
-    compile("org.webjars.bower:sockjs-client:1.1.1")
-    compile("org.webjars.bower:filesize:3.2.1")
-    compile("org.webjars.bower:toastr:2.1.2")
-    compile("org.webjars.bower:pace:1.0.2")
-    compile("org.webjars.bower:font-awesome:4.6.3")
-    compile("org.webjars.bower:animate.css:3.5.2")
-    compile("org.webjars.bower:moment:2.14.1")
+        compile("org.webjars.bower:sockjs-client:1.1.1")
+        compile("org.webjars.bower:filesize:3.2.1")
+        compile("org.webjars.bower:toastr:2.1.2")
+        compile("org.webjars.bower:pace:1.0.2")
+        compile("org.webjars.bower:font-awesome:4.6.3")
+        compile("org.webjars.bower:animate.css:3.5.2")
+        compile("org.webjars.bower:moment:2.14.1")
 
-    compile("org.webjars.bower:datamaps:0.5.7")
-    compile("org.webjars.bower:d3:3.5.17")
-    compile("org.webjars.bower:topojson:1.6.26")
+        compile("org.webjars.bower:datamaps:0.5.7")
+        compile("org.webjars.bower:d3:3.5.17")
+        compile("org.webjars.bower:topojson:1.6.26")
 
 //    compile("org.webjars:jquery.terminal:0.10.11")
-    compile("org.webjars.bower:jquery-mousewheel:3.1.13")
-    compile("org.webjars.bower:malihu-custom-scrollbar-plugin:3.1.5")
+        compile("org.webjars.bower:jquery-mousewheel:3.1.13")
+        compile("org.webjars.bower:malihu-custom-scrollbar-plugin:3.1.5")
 //    compile("org.webjars.bower:ng-scrollbars:0.0.10")
-    compile("org.webjars.bower:angular-ui:0.4.0")
-    compile("org.webjars.bower:underscore:1.8.3")
-    compile("org.webjars.npm:bignumber.js:2.4.0")
+        compile("org.webjars.bower:angular-ui:0.4.0")
+        compile("org.webjars.bower:underscore:1.8.3")
+        compile("org.webjars.npm:bignumber.js:2.4.0")
+    }
 
     // desktop GUI
     compile group: 'com.dorkbox', name: 'SystemTray', version: '2.20'
@@ -288,6 +290,12 @@ task runCustom() {
             println('Using heap size from user input ' + project.jvmArgs)
         }
 
+        def resConfigs = "harmony.conf"
+        if (System.getProperty('ethereumj.conf.res') == null) {
+            resConfigs = resConfigs + "," + System.getProperty('ethereumj.conf.res')
+        }
+        newArgs.add('-Dethereumj.conf.res=' + resConfigs)
+
         bootRun.jvmArgs.addAll(newArgs)
         println 'Running Java with ' + bootRun.jvmArgs
 
@@ -302,13 +310,15 @@ def getDatabaseDir(String name) {
 
 def bootRunWithNetworkConfig(String name, boolean includePresets) {
     def newArgs = []
+    def resConfigs = "harmony.conf"
     if (includePresets) {
         addJvmArgIfEmpty "database.dir", getDatabaseDir("database-" + name)
+        resConfigs = resConfigs + "," + name + '.conf'
         newArgs.addAll([
-                '-Dethereumj.conf.res=' + name + '.conf',
                 '-Ddatabase.name=database-' + name,
                 '-DnetworkProfile=' + name])
     }
+    newArgs.add('-Dethereumj.conf.res=' + resConfigs)
 
     // set heap size configure in task
     if (!project.hasProperty('jvmArgs') || project.jvmArgs.indexOf('-Xmx') == -1) {
@@ -316,6 +326,14 @@ def bootRunWithNetworkConfig(String name, boolean includePresets) {
         newArgs.add(maxHeapSize)
     } else {
         println('Using heap size from user input ' + project.jvmArgs)
+    }
+
+    // RPC only module
+    if (project.hasProperty('rpcOnly')) {
+        newArgs.addAll([
+                '-Dmodules.contracts.enabled=false',
+                '-Dmodules.web.enabled=false',
+                '-Dmodules.rpc.enabled=true'])
     }
 
     bootRun.jvmArgs.addAll(newArgs)

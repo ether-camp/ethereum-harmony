@@ -18,21 +18,20 @@
 
 package com.ethercamp.harmony.config;
 
-import org.ethereum.config.CommonConfig;
-import org.ethereum.config.NoAutoscan;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Condition;
+import org.springframework.context.annotation.ConditionContext;
+import org.springframework.core.type.AnnotatedTypeMetadata;
 
+public class WebEnabledCondition implements Condition {
 
-/**
- * Override default EthereumJ config to apply custom configuration.
- * This is entry point for starting EthereumJ core beans.
- *
- * Created by Stan Reshetnyk on 08.09.16.
- */
-@Configuration
-@ComponentScan(
-        basePackages = "org.ethereum",
-        excludeFilters = @ComponentScan.Filter(NoAutoscan.class))
-public class EthereumHarmonyConfig extends CommonConfig {
+    @Override
+    public boolean matches(ConditionContext context,
+                           AnnotatedTypeMetadata metadata) {
+
+        return WebEnabledCondition.matches();
+    }
+
+    public static boolean matches() {
+        return HarmonyProperties.DEFAULT.isWebEnabled();
+    }
 }

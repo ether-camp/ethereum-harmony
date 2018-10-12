@@ -33,7 +33,6 @@ import org.spongycastle.util.encoders.Hex;
 
 import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.Collections;
 
 import static org.ethereum.crypto.HashUtil.sha3;
 import static org.mockito.Mockito.*;
@@ -55,7 +54,7 @@ public class WalletTests {
     @Before
     public void before() {
         walletService = new WalletService();
-        walletService.clientMessageService = mock(ClientMessageService.class);
+        walletService.clientMessageService = mock(ClientMessageServiceImpl.class);
         walletService.fileSystemWalletStore = mock(FileSystemWalletStore.class);
         walletService.repository = mock(Repository.class);
         walletService.keystore = mock(Keystore.class);

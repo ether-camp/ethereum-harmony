@@ -18,10 +18,12 @@
 
 package com.ethercamp.harmony.web.controller;
 
+import com.ethercamp.harmony.config.WebEnabledCondition;
 import com.ethercamp.harmony.model.dto.WalletInfoDTO;
 import com.ethercamp.harmony.service.WalletService;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,6 +33,7 @@ import java.util.List;
  * Created by Stan Reshetnyk on 26.08.16.
  */
 @RestController
+@Conditional(WebEnabledCondition.class)
 public class WalletController {
 
     @Autowired
