@@ -47,7 +47,7 @@ https://www.youtube.com/watch?v=leaAMTgjvxg
 Navigate to web view `http://localhost:8080`
 JSON-RPC is available at either `http://localhost:8545/rpc` or `http://localhost:8545`
 
-In order to provide ability to disable unneeded features, any of app modules could be disabled: web, contracts, rpc. Check [configuration](https://github.com/ether-camp/ethereum-harmony/blob/develop/src/main/resources/user.conf) for more info.
+In order to provide ability to disable unneeded features, any of app modules could be disabled: web, contracts, rpc. Check [configuration](https://github.com/ether-camp/ethereum-harmony/blob/develop/src/main/resources/harmony.conf#L7-L32) for more info.
 
 Run RPC only: `gradlew runMain -PrpcOnly`
 
