@@ -67,7 +67,8 @@
 
 -Dsync.fast.enabled=true
 -Dlogback.configurationFile=src/main/resources/logback.xml
--Dserver.port=9090</content>
+-Dethereumj.conf.res=harmony.conf
+-Dmodules.web.port=9090</content>
       </vmOptionsFile>
       <customScript mode="1" file="">
         <content />
