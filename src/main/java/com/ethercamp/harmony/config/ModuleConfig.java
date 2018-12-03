@@ -1,5 +1,6 @@
 package com.ethercamp.harmony.config;
 
+import com.ethercamp.contrdata.storage.dictionary.StorageDictionaryVmHook;
 import com.ethercamp.harmony.service.ClientMessageService;
 import com.ethercamp.harmony.service.ClientMessageServiceDummy;
 import com.ethercamp.harmony.service.ClientMessageServiceImpl;
@@ -149,10 +150,11 @@ public class ModuleConfig {
     }
 
     @Bean
-    ContractsService contractsService() {
+    ContractsService contractsService(StorageDictionaryVmHook vmHook) {
         if (props.isContractStorageEnabled()) {
             return new ContractsServiceImpl();
         } else {
+            vmHook.disable();
             return new DisabledContractService(contractSettingsStorage());
         }
     }
