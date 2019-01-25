@@ -99,7 +99,7 @@ dependencies {
     compile "org.ethereum:solcJ-all:0.4.19"                   // Solidity Compiler win/mac/linux binaries
 
     // don't forget to adjust {ethereumJ.version} in application.properties
-    compile ("org.ethereum:ethereumj-core:1.11.0-SNAPSHOT") {
+    compile ("org.ethereum:ethereumj-core:1.12.0-SNAPSHOT") {
         changing = true
 
         exclude group: "log4j"
