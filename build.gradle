@@ -98,7 +98,7 @@ dependencies {
     // Be sure also change value inside `ContractsTests.java`
     compile "org.ethereum:solcJ-all:0.4.19"                   // Solidity Compiler win/mac/linux binaries
 
-    compile ("org.ethereum:ethereumj-core:1.12.0-SNAPSHOT") {
+    compile ("org.ethereum:ethereumj-core:1.13.0-SNAPSHOT") {
         changing = true
 
         exclude group: "log4j"
