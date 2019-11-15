@@ -2,6 +2,8 @@
 
 [![Slack Status](http://harmony-slack-ether-camp.herokuapp.com/badge.svg)](http://ether.camp) 
 
+## :no_entry: Deprecated :no_entry:
+This project is not supported anymore. If you have any question or would like to contribute find us on [Gitter](https://gitter.im/ethereum/ethereumj).
 
 # Ethereum Harmony
 
@@ -13,7 +15,6 @@ Ethereum network private peer. Based on EthereumJ implementation.
 Smart contract trace sample: 
 
 https://www.youtube.com/watch?v=leaAMTgjvxg
-
  
 ### Features: 
 
